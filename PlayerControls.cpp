@@ -31,28 +31,29 @@ APlayerControls::APlayerControls()
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void APlayerControls::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	SpringArm->Deactivate();
 }
 
 // Called to bind functionality to input
 void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	playerInput = PlayerInputComponent;
+
 
 	PlayerInputComponent->BindAxis("MoveForward / Backward", this, &APlayerControls::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &APlayerControls::MoveRight);
 
-	PlayerInputComponent->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAction("RightClick", IE_Pressed, this, &APlayerControls::StartCameraRotation);
+	PlayerInputComponent->BindAction("RightClick", IE_Released, this, &APlayerControls::StopCameraRotation);
 
 }
+
 
 void APlayerControls::MoveForward(float value)
 {
@@ -76,4 +77,17 @@ void APlayerControls::MoveRight(float value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
 	}
+}
+
+void APlayerControls::StartCameraRotation()
+{
+	playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
+	playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+	rightClicked = true;
+}
+void APlayerControls::StopCameraRotation()
+{
+	playerInput->AxisBindings.Pop();
+	playerInput->AxisBindings.Pop();
+	rightClicked = false;
 }

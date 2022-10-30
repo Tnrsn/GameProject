@@ -3,14 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <TimerManager.h>
-#include <Kismet/KismetMathLibrary.h>
-#include <Kismet/GameplayStatics.h>
 #include <Camera/CameraComponent.h>
-#include <Components/BoxComponent.h>
 #include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
-#include <DrawDebugHelpers.h>
 #include <GameFramework/PlayerController.h>
 #include "GameFramework/Character.h"
 #include "PlayerControls.generated.h"
@@ -24,19 +19,26 @@ public:
 	// Sets default values for this character's properties
 	APlayerControls();
 
-
+	UInputComponent* playerInput;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		class USpringArmComponent* SpringArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		class UCameraComponent* Camera;
+
+	bool rightClicked = false;
+	bool cameraRotation = false;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
+	void StartCameraRotation();
+	void StopCameraRotation();
+
 	void MoveForward(float value);
 	void MoveRight(float value);
+
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
