@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Engine/World.h>
+#include <Kismet/GameplayStatics.h>
 #include <Camera/CameraComponent.h>
 #include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
@@ -25,8 +27,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		class UCameraComponent* Camera;
 
-	bool rightClicked = false;
-	bool cameraRotation = false;
+	float targetArmLength = 250.f;
+	float newTargetArmLength = 250.f;
 
 protected:
 	// Called when the game starts or when spawned
@@ -36,10 +38,10 @@ public:
 	void StartCameraRotation();
 	void StopCameraRotation();
 
+	void CameraZoom(float value);
+
 	void MoveForward(float value);
 	void MoveRight(float value);
-
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

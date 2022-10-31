@@ -18,7 +18,7 @@ APlayerControls::APlayerControls()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = 250.0f;
+	SpringArm->TargetArmLength = targetArmLength;
 	SpringArm->bUsePawnControlRotation = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
@@ -37,6 +37,12 @@ void APlayerControls::BeginPlay()
 void APlayerControls::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//if (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::F) && GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::F)&&)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("test"));
+	//}
+
 }
 
 // Called to bind functionality to input
@@ -52,6 +58,7 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("RightClick", IE_Pressed, this, &APlayerControls::StartCameraRotation);
 	PlayerInputComponent->BindAction("RightClick", IE_Released, this, &APlayerControls::StopCameraRotation);
 
+	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
 }
 
 
@@ -83,11 +90,16 @@ void APlayerControls::StartCameraRotation()
 {
 	playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
 	playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
-	rightClicked = true;
 }
 void APlayerControls::StopCameraRotation()
 {
 	playerInput->AxisBindings.Pop();
 	playerInput->AxisBindings.Pop();
-	rightClicked = false;
+}
+
+void APlayerControls::CameraZoom(float value)
+{
+	newTargetArmLength -= value * 100;
+	newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
+	SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
 }
