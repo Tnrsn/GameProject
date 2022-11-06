@@ -135,9 +135,13 @@ void APlayerControls::OnMouseClick()
 
 	SelectedActor = HitResult.GetActor();
 
-	if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
+	if (SelectedActor)
 	{
-		lootObject = Cast<ALootObject>(SelectedActor);
-		lootObject->GetType();
+		if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
+		{
+			lootObject = Cast<ALootObject>(SelectedActor);
+			lootObject->GetType();
+		}
 	}
+
 }
