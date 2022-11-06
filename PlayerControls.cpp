@@ -25,12 +25,17 @@ APlayerControls::APlayerControls()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
+	playerController = UGameplayStatics::GetPlayerController(this, 0);
 }
 
 // Called when the game starts or when spawned
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 }
 
 // Called every frame
@@ -43,6 +48,13 @@ void APlayerControls::Tick(float DeltaTime)
 	//	UE_LOG(LogTemp, Warning, TEXT("test"));
 	//}
 
+	if (camRotating)
+	{
+		int x = 0;
+		int y = 0;
+		playerController->GetViewportSize(x, y);
+		playerController->SetMouseLocation(x/2, y/2);
+	}
 }
 
 // Called to bind functionality to input
@@ -57,6 +69,8 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("RightClick", IE_Pressed, this, &APlayerControls::StartCameraRotation);
 	PlayerInputComponent->BindAction("RightClick", IE_Released, this, &APlayerControls::StopCameraRotation);
+	PlayerInputComponent->BindAction("LeftClick", IE_Pressed, this, &APlayerControls::OnMouseClick);
+
 
 	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
 }
@@ -90,11 +104,21 @@ void APlayerControls::StartCameraRotation()
 {
 	playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
 	playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
+	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
+	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
+	camRotating = true;
 }
 void APlayerControls::StopCameraRotation()
 {
 	playerInput->AxisBindings.Pop();
 	playerInput->AxisBindings.Pop();
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+	camRotating = false;
 }
 
 void APlayerControls::CameraZoom(float value)
@@ -102,4 +126,18 @@ void APlayerControls::CameraZoom(float value)
 	newTargetArmLength -= value * 100;
 	newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
 	SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
+}
+
+void APlayerControls::OnMouseClick()
+{
+	FHitResult HitResult;
+	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
+
+	SelectedActor = HitResult.GetActor();
+
+	if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
+	{
+		lootObject = Cast<ALootObject>(SelectedActor);
+		lootObject->GetType();
+	}
 }

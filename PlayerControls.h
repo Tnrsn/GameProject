@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LootObject.h"
 #include <Engine/World.h>
 #include <Kismet/GameplayStatics.h>
 #include <Camera/CameraComponent.h>
@@ -27,6 +28,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		class UCameraComponent* Camera;
 
+	UPROPERTY()
+		AActor* SelectedActor;
+	UPROPERTY()
+		ALootObject* lootObject;
+
+	APlayerController* playerController;
+
+	bool camRotating = false;
 	float targetArmLength = 250.f;
 	float newTargetArmLength = 250.f;
 
@@ -38,10 +47,13 @@ public:
 	void StartCameraRotation();
 	void StopCameraRotation();
 
-	void CameraZoom(float value);
-
 	void MoveForward(float value);
 	void MoveRight(float value);
+
+	void CameraZoom(float value);
+	void OnMouseClick();
+
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
