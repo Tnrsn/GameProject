@@ -35,5 +35,11 @@ void ALootObject::Tick(float DeltaTime)
 
 void ALootObject::GetType()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *type.ToString());
+	if (LootUI)
+	{
+		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
+		HUD->AddToViewport();
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *type.ToString());
+	}
+	
 }

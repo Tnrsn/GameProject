@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include <Components/SphereComponent.h>
+#include <Kismet/GameplayStatics.h>
+#include "Public/ManageWidgets.h"
 #include "GameFramework/Actor.h"
 #include "LootObject.generated.h"
 
@@ -22,6 +24,10 @@ public:
 		class USphereComponent* SphereCollision;
 	UPROPERTY(EditAnywhere)
 		FName type;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> LootUI;
+	class UManageWidgets* HUD;
 
 protected:
 	// Called when the game starts or when spawned
