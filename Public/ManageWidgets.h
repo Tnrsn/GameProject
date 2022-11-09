@@ -17,7 +17,9 @@ class GAMEPROJECT_API UManageWidgets : public UUserWidget
 public:
 	UManageWidgets(const FObjectInitializer& ObjectInitializer);
 	
-
-
+	UFUNCTION(BlueprintCallable)
+		void ButtonPressed();
+	UFUNCTION(BlueprintCallable)
+		void ButtonReleased();
 
 };

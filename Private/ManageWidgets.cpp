@@ -8,3 +8,13 @@ UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Su
 
 
 }
+
+void UManageWidgets::ButtonPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Hey!"));
+}
+
+void UManageWidgets::ButtonReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Bye!"));
+}

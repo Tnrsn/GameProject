@@ -6,6 +6,7 @@
 #include <Components/SphereComponent.h>
 #include <Kismet/GameplayStatics.h>
 #include "Public/ManageWidgets.h"
+#include <Components/Button.h>
 #include "GameFramework/Actor.h"
 #include "LootObject.generated.h"
 
@@ -28,6 +29,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> LootUI;
 	class UManageWidgets* HUD;
+
+	UPROPERTY(EditAnywhere)
+		UButton* test;
+
 
 protected:
 	// Called when the game starts or when spawned
