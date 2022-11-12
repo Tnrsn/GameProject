@@ -37,8 +37,8 @@ void ALootObject::GetType()
 {
 	if (LootUI)
 	{
-		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
-		HUD->AddToViewport();
+		//HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
+		//HUD->AddToViewport();
 		UE_LOG(LogTemp, Warning, TEXT("%s"), *type.ToString());
 	}
 	

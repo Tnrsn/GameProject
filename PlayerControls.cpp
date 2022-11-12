@@ -71,6 +71,7 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("RightClick", IE_Released, this, &APlayerControls::StopCameraRotation);
 	PlayerInputComponent->BindAction("LeftClick", IE_Pressed, this, &APlayerControls::OnMouseClick);
 
+	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &APlayerControls::OpenInventory);
 
 	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
 }
@@ -102,23 +103,29 @@ void APlayerControls::MoveRight(float value)
 
 void APlayerControls::StartCameraRotation()
 {
-	playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-	playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+	if (!inventoryEnabled)
+	{
+		playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
+		playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
 
-	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
-	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
-	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
-	camRotating = true;
+		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
+		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
+		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
+		camRotating = true;
+	}
 }
 void APlayerControls::StopCameraRotation()
 {
-	playerInput->AxisBindings.Pop();
-	playerInput->AxisBindings.Pop();
+	if (camRotating)
+	{
+		playerInput->AxisBindings.Pop();
+		playerInput->AxisBindings.Pop();
 
-	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
-	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
-	camRotating = false;
+		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+		camRotating = false;
+	}
 }
 
 void APlayerControls::CameraZoom(float value)
@@ -144,4 +151,23 @@ void APlayerControls::OnMouseClick()
 		}
 	}
 
+}
+
+void APlayerControls::OpenInventory()
+{
+	if (inventoryUI && !inventoryEnabled)
+	{
+		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
+		HUD->AddToViewport();
+
+		inventoryEnabled = true;
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+	}
+	else if(inventoryUI && inventoryEnabled)
+	{
+		HUD->RemoveFromViewport();
+
+		inventoryEnabled = false;
+		UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+	}
 }

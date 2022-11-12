@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include <Engine/World.h>
 #include <Kismet/GameplayStatics.h>
@@ -35,6 +36,13 @@ public:
 
 	APlayerController* playerController;
 
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> inventoryUI;
+	class UManageWidgets* HUD;
+
+	bool inventoryEnabled = false;
+
 	bool camRotating = false;
 	float targetArmLength = 250.f;
 	float newTargetArmLength = 250.f;
@@ -53,6 +61,7 @@ public:
 	void CameraZoom(float value);
 	void OnMouseClick();
 
+	void OpenInventory();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -22,4 +22,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void ButtonReleased();
 
+	UPROPERTY(BlueprintReadWrite)
+		int32 testNum;
 };

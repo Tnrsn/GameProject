@@ -26,6 +26,7 @@ public:
 	UPROPERTY(EditAnywhere)
 		FName type;
 
+
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> LootUI;
 	class UManageWidgets* HUD;
