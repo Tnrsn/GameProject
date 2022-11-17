@@ -150,6 +150,7 @@ void APlayerControls::OnMouseClick()
 
 	if (SelectedActor)
 	{
+		
 		//Open Loot
 		if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
 		{

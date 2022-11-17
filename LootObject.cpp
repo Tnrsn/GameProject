@@ -31,7 +31,6 @@ ALootObject::ALootObject()
 void ALootObject::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 
