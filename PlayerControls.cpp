@@ -81,6 +81,8 @@ void APlayerControls::MoveForward(float value)
 {
 	if ((Controller != nullptr) && (value != 0))
 	{
+		lootObject->DisableLootUI(SelectedActor);
+
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -93,6 +95,8 @@ void APlayerControls::MoveRight(float value)
 {
 	if ((Controller != nullptr) && (value != 0))
 	{
+		lootObject->DisableLootUI(SelectedActor);
+
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -140,14 +144,17 @@ void APlayerControls::OnMouseClick()
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
+	lootObject->DisableLootUI(SelectedActor);
+
 	SelectedActor = HitResult.GetActor();
 
 	if (SelectedActor)
 	{
+		//Open Loot
 		if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
-			lootObject->GetType();
+			lootObject->EnableLootUI();
 		}
 	}
 
@@ -157,6 +164,8 @@ void APlayerControls::OpenInventory()
 {
 	if (inventoryUI && !inventoryEnabled)
 	{
+		lootObject->DisableLootUI(SelectedActor);
+
 		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
 		HUD->AddToViewport();
 

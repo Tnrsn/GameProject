@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Kismet/GameplayStatics.h>
 #include <Components/SphereComponent.h>
 #include <Kismet/GameplayStatics.h>
 #include "Public/ManageWidgets.h"
@@ -23,17 +24,26 @@ public:
 		class UStaticMeshComponent* Mesh;
 	UPROPERTY(VisibleAnywhere)
 		class USphereComponent* SphereCollision;
+
+	UPROPERTY(VisibleAnywhere)
+		class USphereComponent* TriggerCollision;
+
+	//UPROPERTY()
+	//	APlayerController* playerController;
+
 	UPROPERTY(EditAnywhere)
 		FName type;
-
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> LootUI;
 	class UManageWidgets* HUD;
 
-	UPROPERTY(EditAnywhere)
-		UButton* test;
+	bool lootUIEnabled = false;
+	bool canOpenLoot = false;
 
+	//2D position coordinates
+	float X;
+	float Y;
 
 protected:
 	// Called when the game starts or when spawned
@@ -41,7 +51,14 @@ protected:
 
 public:	
 
-	void GetType();
+	void EnableLootUI();
+	void DisableLootUI(AActor* SelectedActor);
+
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
