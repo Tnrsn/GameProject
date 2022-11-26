@@ -36,6 +36,12 @@ void APlayerControls::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
 	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+
+	HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	HUD->AddToViewport();
+
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
+	
 }
 
 // Called every frame
@@ -55,6 +61,7 @@ void APlayerControls::Tick(float DeltaTime)
 		playerController->GetViewportSize(x, y);
 		playerController->SetMouseLocation(x/2, y/2);
 	}
+	
 }
 
 // Called to bind functionality to input
@@ -181,3 +188,5 @@ void APlayerControls::OpenInventory()
 		UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 	}
 }
+
+

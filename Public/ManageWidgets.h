@@ -24,4 +24,13 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 		int32 testNum;
+
+	float playerMaximumHealth = 100;
+
+	UPROPERTY(BlueprintReadWrite)
+	float playerCurrentHealth = playerMaximumHealth;
+
+	UFUNCTION(BlueprintCallable)
+		float PlayerHealthBar();
+
 };

@@ -5,16 +5,23 @@
 
 UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-
 }
 
 void UManageWidgets::ButtonPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Hey!"));
 	testNum++;
+
+	
 }
 
 void UManageWidgets::ButtonReleased()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Bye!"));
+}
+
+float UManageWidgets::PlayerHealthBar()
+{
+	//playerCurrentHealth -= 0.1;
+	return playerCurrentHealth / playerMaximumHealth;
 }

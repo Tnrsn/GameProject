@@ -36,16 +36,19 @@ public:
 
 	APlayerController* playerController;
 
-
+	//Widget Management
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> inventoryUI;
 	class UManageWidgets* HUD;
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> mainUI;
 
 	bool inventoryEnabled = false;
 
 	bool camRotating = false;
 	float targetArmLength = 250.f;
 	float newTargetArmLength = 250.f;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -62,6 +65,8 @@ public:
 	void OnMouseClick();
 
 	void OpenInventory();
+
+
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
