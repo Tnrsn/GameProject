@@ -25,6 +25,8 @@ ALootObject::ALootObject()
 	Mesh->SetupAttachment(RootComponent);
 
 	//playerController = UGameplayStatics::GetPlayerController(UGameplayStatics::GetPlayerController(GetWorld(), 0), 0);
+
+
 }
 
 // Called when the game starts or when spawned
@@ -49,8 +51,8 @@ void ALootObject::EnableLootUI()
 		HUD->AddToViewport();
 		UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetMousePosition(X, Y);
 		HUD->SetPositionInViewport(FVector2D(X, Y));
-
 		lootUIEnabled = true;
+
 	}
 	
 }
@@ -59,7 +61,7 @@ void ALootObject::DisableLootUI(AActor* SelectedActor)
 {
 	if (SelectedActor)
 	{
-		if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C") && lootUIEnabled)
+		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C") && lootUIEnabled)
 		{
 			HUD->RemoveFromViewport();
 			lootUIEnabled = false;

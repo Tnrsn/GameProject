@@ -26,6 +26,9 @@ APlayerControls::APlayerControls()
 	Camera->bUsePawnControlRotation = false;
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
+
+
+
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +44,7 @@ void APlayerControls::BeginPlay()
 	HUD->AddToViewport();
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
-	
+
 }
 
 // Called every frame
@@ -62,6 +65,7 @@ void APlayerControls::Tick(float DeltaTime)
 		playerController->SetMouseLocation(x/2, y/2);
 	}
 	
+
 }
 
 // Called to bind functionality to input
@@ -151,18 +155,25 @@ void APlayerControls::OnMouseClick()
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
-	lootObject->DisableLootUI(SelectedActor);
+	//lootObject->DisableLootUI(SelectedActor);
 
 	SelectedActor = HitResult.GetActor();
 
 	if (SelectedActor)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
 		
 		//Open Loot
-		if (*SelectedActor->GetClass()->GetName() == FName("BP_LootObject_C"))
+		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
+		}
+
+		//itemRef
+		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))
+		{
+			itemRef = Cast<AMasterItem>(SelectedActor);
 		}
 	}
 

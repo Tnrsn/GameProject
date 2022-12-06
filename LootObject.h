@@ -51,7 +51,10 @@ protected:
 
 public:	
 
+	UFUNCTION(BlueprintCallable)
 	void EnableLootUI();
+
+
 	void DisableLootUI(AActor* SelectedActor);
 
 	UFUNCTION()

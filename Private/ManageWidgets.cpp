@@ -9,15 +9,15 @@ UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Su
 
 void UManageWidgets::ButtonPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Hey!"));
-	testNum++;
+	UE_LOG(LogTemp, Warning, TEXT("Pressed"));
+	counter0++;
 
 	
 }
 
 void UManageWidgets::ButtonReleased()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Bye!"));
+	UE_LOG(LogTemp, Warning, TEXT("Released"));
 }
 
 float UManageWidgets::PlayerHealthBar()

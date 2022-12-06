@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
+#include "Public/MasterItem.h"
 #include <Engine/World.h>
 #include <Kismet/GameplayStatics.h>
 #include <Camera/CameraComponent.h>
@@ -43,6 +44,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
 
+	//Looting
+	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
+		AMasterItem* itemRef;
+
+
 	bool inventoryEnabled = false;
 
 	bool camRotating = false;
@@ -75,3 +81,4 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };
+

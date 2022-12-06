@@ -23,7 +23,7 @@ public:
 		void ButtonReleased();
 
 	UPROPERTY(BlueprintReadWrite)
-		int32 testNum;
+		int counter0;
 
 	float playerMaximumHealth = 100;
 
