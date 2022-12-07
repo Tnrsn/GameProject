@@ -174,6 +174,14 @@ void APlayerControls::OnMouseClick()
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))
 		{
 			itemRef = Cast<AMasterItem>(SelectedActor);
+			inventory.Add(itemRef->ItemProperties);
+			itemRef->Destroy();
+
+			UE_LOG(LogTemp, Warning, TEXT("********"));
+			for (FItemProperties& var : inventory)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
+			}
 		}
 	}
 

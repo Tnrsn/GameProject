@@ -36,8 +36,6 @@ void AMasterItem::OnSelected(UPrimitiveComponent* PrimComp, FKey InKey)
 	/*UE_LOG(LogTemp, Warning, TEXT("Test"));*/
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetActorLocation().ToString());
 	
-	//test++;
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), test);
 }
 
 

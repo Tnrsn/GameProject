@@ -47,6 +47,7 @@ public:
 	//Looting
 	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
 		AMasterItem* itemRef;
+	TArray<FItemProperties> inventory;
 
 
 	bool inventoryEnabled = false;

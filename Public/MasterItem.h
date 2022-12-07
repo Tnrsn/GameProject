@@ -27,8 +27,14 @@ struct FItemProperties
 	UTexture* texture;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 	int weight;
-	//UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	//FItemEnum Category;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+	TEnumAsByte<FItemEnum> Category;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		int maximumAmount;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		bool isStackable;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		FString description;
 };
 
 UCLASS()
@@ -49,9 +55,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite, Category = "Item Properties")
 	FItemProperties ItemProperties;
-
-	//UPROPERTY(Blueprintreadwrite, EditAnywhere)
-	//	int test = 0;
 
 	UPROPERTY(EditAnywhere)
 	USphereComponent* SphereComponent;
