@@ -145,9 +145,12 @@ void APlayerControls::StopCameraRotation()
 
 void APlayerControls::CameraZoom(float value)
 {
-	newTargetArmLength -= value * 100;
-	newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
-	SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
+	if (!inventoryEnabled)
+	{
+		newTargetArmLength -= value * 100;
+		newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
+		SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
+	}
 }
 
 void APlayerControls::OnMouseClick()
@@ -155,7 +158,7 @@ void APlayerControls::OnMouseClick()
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
-	//lootObject->DisableLootUI(SelectedActor);
+	lootObject->DisableLootUI(SelectedActor);
 
 	SelectedActor = HitResult.GetActor();
 
@@ -174,13 +177,36 @@ void APlayerControls::OnMouseClick()
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))
 		{
 			itemRef = Cast<AMasterItem>(SelectedActor);
-			inventory.Add(itemRef->ItemProperties);
-			itemRef->Destroy();
-
-			UE_LOG(LogTemp, Warning, TEXT("********"));
-			for (FItemProperties& var : inventory)
+			if (itemRef->canLoot)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
+				bool added = false;
+
+				for (FItemProperties& var : inventory)
+				{
+					if (itemRef->ItemProperties.name == var.name)
+					{
+						if (itemRef->ItemProperties.isStackable && var.currentAmount < var.maximumAmount)
+						{
+							var.currentAmount++;
+							added = true;
+							//UE_LOG(LogTemp, Warning, TEXT("%d"), var.currentAmount);
+						}
+					}
+					//UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
+				}
+				if (!added)
+				{
+					inventory.Add(itemRef->ItemProperties);
+				}
+
+				itemRef->Destroy();
+
+				//UE_LOG(LogTemp, Warning, TEXT("********"));
+				//for (FItemProperties& var : inventory)
+				//{
+				//	UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
+				//}
+
 			}
 		}
 	}

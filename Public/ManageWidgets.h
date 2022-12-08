@@ -22,9 +22,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void ButtonReleased();
 
-	UPROPERTY(BlueprintReadWrite)
-		int counter0;
-
 	float playerMaximumHealth = 100;
 
 	UPROPERTY(BlueprintReadWrite)

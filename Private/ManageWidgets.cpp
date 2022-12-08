@@ -10,8 +10,6 @@ UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Su
 void UManageWidgets::ButtonPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Pressed"));
-	counter0++;
-
 	
 }
 

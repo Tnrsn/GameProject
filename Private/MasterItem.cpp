@@ -8,12 +8,19 @@ AMasterItem::AMasterItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	//SphereComponent->OnClicked.AddDynamic(this, &AMasterItem::OnSelected);
+	TriggerCollision = CreateDefaultSubobject<USphereComponent>(TEXT("Trigger Sphere"));
+	TriggerCollision->InitSphereRadius(300);
+	TriggerCollision->SetCollisionProfileName("Trigger");
+	RootComponent = TriggerCollision;
+
+	TriggerCollision->OnComponentBeginOverlap.AddDynamic(this, &AMasterItem::OnOverlapBegin);
+	TriggerCollision->OnComponentEndOverlap.AddDynamic(this, &AMasterItem::OnOverlapEnd);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>("OnClicked_Component");
 	SphereComponent->InitSphereRadius(100);
-
-	SphereComponent->OnClicked.AddDynamic(this, &AMasterItem::OnSelected);
-
+	SphereComponent->SetupAttachment(TriggerCollision);
 }
 
 // Called when the game starts or when spawned
@@ -39,12 +46,31 @@ void AMasterItem::OnSelected(UPrimitiveComponent* PrimComp, FKey InKey)
 }
 
 
-AMasterItem* AMasterItem::ItemReference()
+//AMasterItem* AMasterItem::ItemReference()
+//{
+//	return this;
+//}
+
+//void AMasterItem::DestroyObject()
+//{
+//	Destroy();
+//}
+
+void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	return this;
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
+		canLoot = true;
+	}
 }
 
-void AMasterItem::DestroyObject()
+void AMasterItem::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	Destroy();
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
+		canLoot = false;
+	}
 }

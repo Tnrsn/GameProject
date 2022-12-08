@@ -35,6 +35,8 @@ struct FItemProperties
 		bool isStackable;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		FString description;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		int currentAmount = 1;
 };
 
 UCLASS()
@@ -48,10 +50,10 @@ public:
 
 	UFUNCTION()
 		void OnSelected(UPrimitiveComponent* PrimComp, FKey InKey);
-	UFUNCTION(BlueprintCallable)
-		AMasterItem* ItemReference();
-	UFUNCTION(BlueprintCallable)
-		void DestroyObject();
+	//UFUNCTION(BlueprintCallable)
+	//	AMasterItem* ItemReference();
+	//UFUNCTION(BlueprintCallable)
+	//	void DestroyObject();
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite, Category = "Item Properties")
 	FItemProperties ItemProperties;
@@ -59,14 +61,27 @@ public:
 	UPROPERTY(EditAnywhere)
 	USphereComponent* SphereComponent;
 
+	UPROPERTY(VisibleAnywhere)
+		class USphereComponent* TriggerCollision;
+
+	bool canLoot = false;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+
 
 };
 
