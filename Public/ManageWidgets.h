@@ -6,9 +6,6 @@
 #include "Blueprint/UserWidget.h"
 #include "ManageWidgets.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class GAMEPROJECT_API UManageWidgets : public UUserWidget
 {
@@ -29,5 +26,4 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
-
 };

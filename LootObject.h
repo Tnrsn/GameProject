@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/MasterItem.h"
 #include <Kismet/GameplayStatics.h>
 #include <Components/SphereComponent.h>
 #include <Kismet/GameplayStatics.h>
@@ -24,15 +25,23 @@ public:
 		class UStaticMeshComponent* Mesh;
 	UPROPERTY(VisibleAnywhere)
 		class USphereComponent* SphereCollision;
-
 	UPROPERTY(VisibleAnywhere)
 		class USphereComponent* TriggerCollision;
 
-	//UPROPERTY()
-	//	APlayerController* playerController;
-
+	//Looting
+	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
+		TArray<FItemProperties> storage;
+	UPROPERTY()
+		UChildActorComponent* childActorRef;
 	UPROPERTY(EditAnywhere)
-		FName type;
+		int lootLevet = 0;
+
+	UPROPERTY()
+		AMasterItem* item;
+
+
+	UPROPERTY()
+		APlayerController* playerController;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> LootUI;
@@ -41,9 +50,6 @@ public:
 	bool lootUIEnabled = false;
 	bool canOpenLoot = false;
 
-	//2D position coordinates
-	float X;
-	float Y;
 
 protected:
 	// Called when the game starts or when spawned
@@ -62,6 +68,9 @@ public:
 
 	UFUNCTION()
 		void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(Blueprintcallable)
+		void GenerateRandomItems(TArray<UClass*> itemsRef);
 
 
 	// Called every frame

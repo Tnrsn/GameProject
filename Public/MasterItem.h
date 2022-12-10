@@ -37,6 +37,8 @@ struct FItemProperties
 		FString description;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		int currentAmount = 1;
+	UPROPERTY(Blueprintreadonly, EditAnywhere)
+		float rarity;
 };
 
 UCLASS()

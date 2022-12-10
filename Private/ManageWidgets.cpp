@@ -5,12 +5,12 @@
 
 UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+
 }
 
 void UManageWidgets::ButtonPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Pressed"));
-	
 }
 
 void UManageWidgets::ButtonReleased()

@@ -24,15 +24,17 @@ ALootObject::ALootObject()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Object Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 
+	childActorRef = CreateDefaultSubobject<UChildActorComponent>(TEXT("Child Actor"));
+	childActorRef->SetupAttachment(RootComponent);
+
 	//playerController = UGameplayStatics::GetPlayerController(UGameplayStatics::GetPlayerController(GetWorld(), 0), 0);
-
-
 }
 
 // Called when the game starts or when spawned
 void ALootObject::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 
@@ -49,8 +51,7 @@ void ALootObject::EnableLootUI()
 
 		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
 		HUD->AddToViewport();
-		UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetMousePosition(X, Y);
-		HUD->SetPositionInViewport(FVector2D(X, Y));
+
 		lootUIEnabled = true;
 
 	}
@@ -85,5 +86,26 @@ void ALootObject::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
 		canOpenLoot = false;
+	}
+}
+
+void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
+{
+	for (int i = 0; i < FMath::RandRange(0, lootLevet); i++)
+	{
+		for (UClass* el : itemsRef)
+		{
+			childActorRef->SetChildActorClass(el);
+			item = Cast<AMasterItem>(childActorRef->GetChildActor());
+			if (item->ItemProperties.rarity < FMath::RandRange(0, 100))
+			{
+				storage.Add(item->ItemProperties);
+				for (FItemProperties items : storage)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("hey"));
+					UE_LOG(LogTemp, Warning, TEXT("%s"), *items.name);
+				}
+			}
+		}
 	}
 }

@@ -171,6 +171,11 @@ void APlayerControls::OnMouseClick()
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
+
+			for (FItemProperties& var : lootObject->storage)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name)
+			}
 		}
 
 		//itemRef

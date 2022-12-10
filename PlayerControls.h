@@ -32,7 +32,7 @@ public:
 
 	UPROPERTY()
 		AActor* SelectedActor;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadonly)
 		ALootObject* lootObject;
 
 	APlayerController* playerController;
