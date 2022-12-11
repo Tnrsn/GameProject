@@ -70,6 +70,8 @@ public:
 
 	UFUNCTION(Blueprintcallable)
 		void GenerateRandomItems(TArray<UClass*> itemsRef);
+	UFUNCTION()
+		void AddItemToLoot(FItemProperties itemProperties);
 
 
 	// Called every frame

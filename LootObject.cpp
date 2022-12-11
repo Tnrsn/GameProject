@@ -75,7 +75,7 @@ void ALootObject::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
+		//UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
 		canOpenLoot = true;
 	}
 }
@@ -84,7 +84,7 @@ void ALootObject::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
+		//UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
 		canOpenLoot = false;
 	}
 }
@@ -95,24 +95,32 @@ void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
 	{
 		for (UClass* el : itemsRef)
 		{
-			bool added = false;
+			
 			childActorRef->SetChildActorClass(el);
 			item = Cast<AMasterItem>(childActorRef->GetChildActor());
 			if (item->ItemProperties.rarity > FMath::RandRange(0, 100))
 			{
-				for (FItemProperties& storageItems : storage)
-				{
-					if (item->ItemProperties.name == storageItems.name && item->ItemProperties.isStackable)
-					{
-						storageItems.currentAmount++;
-						added = true;
-					}
-				}
-				if (!added)
-				{
-					storage.Add(item->ItemProperties);
-				}
+				AddItemToLoot(item->ItemProperties);
 			}
 		}
+	}
+}
+
+void ALootObject::AddItemToLoot(FItemProperties itemProperties)
+{
+	bool added = false;
+	for (FItemProperties& storageItems : storage)
+	{
+		if (itemProperties.name == storageItems.name && itemProperties.isStackable && storageItems.currentAmount < storageItems.maximumAmount)
+		{
+			storageItems.currentAmount++;
+			added = true;
+		}
+	}
+	if (!added)
+	{
+		itemProperties.inInventory = false;
+		itemProperties.currentAmount = 1;
+		storage.Add(itemProperties);
 	}
 }

@@ -8,7 +8,16 @@
 #include "MasterItem.generated.h"
 
 UENUM(BlueprintType)
-enum FItemEnum
+enum FConsumableEffect
+{
+	Nothing,
+	Heal,
+	DamageHealth,
+	BoostSpeed
+};
+
+UENUM(BlueprintType)
+enum FItemCategory
 {
 	Weapon,
 	Armor,
@@ -28,7 +37,7 @@ struct FItemProperties
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 	int weight;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	TEnumAsByte<FItemEnum> Category;
+	TEnumAsByte<FItemCategory> Category;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		int maximumAmount;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
@@ -39,6 +48,8 @@ struct FItemProperties
 		int currentAmount = 1;
 	UPROPERTY(Blueprintreadonly, EditAnywhere)
 		float rarity;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		bool inInventory;
 };
 
 UCLASS()

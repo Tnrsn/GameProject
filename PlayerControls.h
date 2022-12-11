@@ -45,8 +45,8 @@ public:
 		TSubclassOf<UUserWidget> mainUI;
 
 	//Looting
-	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
-		AMasterItem* itemRef;
+	//UPROPERTY()
+	//	AMasterItem* itemRef;
 	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
 	TArray<FItemProperties> inventory;
 
@@ -76,6 +76,12 @@ public:
 
 	void OpenInventory();
 
+	UFUNCTION()
+	void AddItemToInventoryFromGround(AMasterItem* itemRef);
+	UFUNCTION(BlueprintCallable)
+		void ItemTransfer(FItemProperties itemProperties);
+	UFUNCTION()
+		void AddItemToInventory(FItemProperties itemProperties);
 
 
 	// Called every frame

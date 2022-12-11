@@ -171,48 +171,12 @@ void APlayerControls::OnMouseClick()
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
-
-			for (FItemProperties& var : lootObject->storage)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name)
-			}
 		}
 
 		//itemRef
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))
 		{
-			itemRef = Cast<AMasterItem>(SelectedActor);
-			if (itemRef->canLoot)
-			{
-				bool added = false;
-
-				for (FItemProperties& var : inventory)
-				{
-					if (itemRef->ItemProperties.name == var.name)
-					{
-						if (itemRef->ItemProperties.isStackable && var.currentAmount < var.maximumAmount)
-						{
-							var.currentAmount++;
-							added = true;
-							//UE_LOG(LogTemp, Warning, TEXT("%d"), var.currentAmount);
-						}
-					}
-					//UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
-				}
-				if (!added)
-				{
-					inventory.Add(itemRef->ItemProperties);
-				}
-
-				itemRef->Destroy();
-
-				//UE_LOG(LogTemp, Warning, TEXT("********"));
-				//for (FItemProperties& var : inventory)
-				//{
-				//	UE_LOG(LogTemp, Warning, TEXT("%s"), *var.name);
-				//}
-
-			}
+			AddItemToInventoryFromGround(Cast<AMasterItem>(SelectedActor));
 		}
 	}
 
@@ -236,6 +200,89 @@ void APlayerControls::OpenInventory()
 
 		inventoryEnabled = false;
 		UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+	}
+}
+
+void APlayerControls::AddItemToInventoryFromGround(AMasterItem* itemRef)
+{
+	//itemRef = Cast<AMasterItem>(SelectedActor);
+	if (itemRef->canLoot)
+	{
+		AddItemToInventory(itemRef->ItemProperties);
+		itemRef->Destroy();
+	}
+}
+
+void APlayerControls::ItemTransfer(FItemProperties itemProperties)
+{
+	int itemIndex = 0;
+	if (itemProperties.inInventory)
+	{
+		lootObject->AddItemToLoot(itemProperties);
+
+		
+		for (FItemProperties el : inventory)
+		{
+			if (el.name == itemProperties.name)
+			{
+				if (el.currentAmount > 1)
+				{
+					inventory[itemIndex].currentAmount--;
+					break;
+				}
+				else
+				{
+					inventory.RemoveAt(itemIndex);
+					break;
+				}
+			}
+			itemIndex++;
+		}
+	}
+	else
+	{
+		AddItemToInventory(itemProperties);
+
+		for (FItemProperties el : lootObject->storage)
+		{
+			if (el.name == itemProperties.name)
+			{
+				if (el.currentAmount > 1)
+				{
+					lootObject->storage[itemIndex].currentAmount--;
+					break;
+				}
+				else
+				{
+					lootObject->storage.RemoveAt(itemIndex);
+					break;
+				}
+			}
+			itemIndex++;
+		}
+	}
+}
+
+void APlayerControls::AddItemToInventory(FItemProperties itemProperties)
+{
+	bool added = false;
+
+	for (FItemProperties& var : inventory)
+	{
+		if (itemProperties.name == var.name)
+		{
+			if (itemProperties.isStackable && var.currentAmount < var.maximumAmount)
+			{
+				var.currentAmount++;
+				added = true;
+			}
+		}
+	}
+	if (!added)
+	{
+		itemProperties.inInventory = true;
+		itemProperties.currentAmount = 1;
+		inventory.Add(itemProperties);
 	}
 }
 
