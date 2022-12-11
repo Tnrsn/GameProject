@@ -52,7 +52,7 @@ public:
 
 
 
-
+	UPROPERTY(BlueprintReadOnly)
 	bool inventoryEnabled = false;
 
 	bool camRotating = false;
@@ -73,6 +73,7 @@ public:
 
 	void CameraZoom(float value);
 	void OnMouseClick();
+	void ClickEvents();
 
 	void OpenInventory();
 

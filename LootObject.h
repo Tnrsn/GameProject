@@ -45,7 +45,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> LootUI;
 	class UManageWidgets* HUD;
-
+	
+	UPROPERTY(BlueprintReadOnly)
 	bool lootUIEnabled = false;
 	bool canOpenLoot = false;
 

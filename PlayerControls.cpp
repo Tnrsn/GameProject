@@ -118,7 +118,20 @@ void APlayerControls::MoveRight(float value)
 
 void APlayerControls::StartCameraRotation()
 {
-	if (!inventoryEnabled)
+	if (lootObject)
+	{
+		if (!lootObject->lootUIEnabled && !inventoryEnabled)
+		{
+			playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
+			playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+
+			GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
+			GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
+			GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
+			camRotating = true;
+		}
+	}
+	else if (!inventoryEnabled)
 	{
 		playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
 		playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
@@ -155,6 +168,24 @@ void APlayerControls::CameraZoom(float value)
 
 void APlayerControls::OnMouseClick()
 {
+	if (lootObject)
+	{
+		if (!lootObject->lootUIEnabled && !inventoryEnabled)
+		{
+			ClickEvents();
+		}
+	}
+	else
+	{
+		if (!inventoryEnabled)
+		{
+			ClickEvents();
+		}
+	}
+}
+
+void APlayerControls::ClickEvents()
+{
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
@@ -165,7 +196,7 @@ void APlayerControls::OnMouseClick()
 	if (SelectedActor)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
-		
+
 		//Open Loot
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))
 		{
@@ -179,22 +210,20 @@ void APlayerControls::OnMouseClick()
 			AddItemToInventoryFromGround(Cast<AMasterItem>(SelectedActor));
 		}
 	}
-
 }
 
 void APlayerControls::OpenInventory()
 {
-	if (inventoryUI && !inventoryEnabled)
+	//lootObject = nullptr;
+	if (!inventoryEnabled)
 	{
-		lootObject->DisableLootUI(SelectedActor);
-
 		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
 		HUD->AddToViewport();
 
 		inventoryEnabled = true;
 		UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
 	}
-	else if(inventoryUI && inventoryEnabled)
+	else if(inventoryEnabled)
 	{
 		HUD->RemoveFromViewport();
 
@@ -215,52 +244,62 @@ void APlayerControls::AddItemToInventoryFromGround(AMasterItem* itemRef)
 
 void APlayerControls::ItemTransfer(FItemProperties itemProperties)
 {
-	int itemIndex = 0;
-	if (itemProperties.inInventory)
+	if (!inventoryEnabled)
 	{
-		lootObject->AddItemToLoot(itemProperties);
+		int itemIndex = 0;
+		int lastItemIndex = 0;
 
-		
-		for (FItemProperties el : inventory)
+		if (itemProperties.inInventory)
 		{
-			if (el.name == itemProperties.name)
-			{
-				if (el.currentAmount > 1)
-				{
-					inventory[itemIndex].currentAmount--;
-					break;
-				}
-				else
-				{
-					inventory.RemoveAt(itemIndex);
-					break;
-				}
-			}
-			itemIndex++;
-		}
-	}
-	else
-	{
-		AddItemToInventory(itemProperties);
+			//inventory to loot
+			lootObject->AddItemToLoot(itemProperties);
 
-		for (FItemProperties el : lootObject->storage)
-		{
-			if (el.name == itemProperties.name)
+			for (FItemProperties el : inventory)
 			{
-				if (el.currentAmount > 1)
+				if (el.name == itemProperties.name)
 				{
-					lootObject->storage[itemIndex].currentAmount--;
-					break;
+					lastItemIndex = itemIndex;
 				}
-				else
-				{
-					lootObject->storage.RemoveAt(itemIndex);
-					break;
-				}
+				itemIndex++;
 			}
-			itemIndex++;
+
+			if (inventory[lastItemIndex].currentAmount > 1)
+			{
+				inventory[lastItemIndex].currentAmount--;
+			}
+			else
+			{
+				inventory.RemoveAt(lastItemIndex);
+			}
 		}
+		else
+		{
+			//loot to inventory
+			AddItemToInventory(itemProperties);
+
+			for (FItemProperties el : lootObject->storage)
+			{
+				if (el.name == itemProperties.name)
+				{
+					lastItemIndex = itemIndex;
+				}
+				itemIndex++;
+			}
+
+			if (lootObject->storage[lastItemIndex].currentAmount > 1)
+			{
+				lootObject->storage[lastItemIndex].currentAmount--;
+			}
+			else
+			{
+				lootObject->storage.RemoveAt(lastItemIndex);
+			}
+		}
+		lootObject->HUD->RemoveFromParent();
+		lootObject->HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), lootObject->LootUI);
+		lootObject->HUD->AddToViewport();
 	}
+
 }
 
 void APlayerControls::AddItemToInventory(FItemProperties itemProperties)

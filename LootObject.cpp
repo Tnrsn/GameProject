@@ -48,12 +48,9 @@ void ALootObject::EnableLootUI()
 {
 	if (LootUI && !lootUIEnabled && canOpenLoot)
 	{
-
+		lootUIEnabled = true;
 		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
 		HUD->AddToViewport();
-
-		lootUIEnabled = true;
-
 	}
 	
 }
@@ -65,6 +62,7 @@ void ALootObject::DisableLootUI(AActor* SelectedActor)
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C") && lootUIEnabled)
 		{
 			HUD->RemoveFromViewport();
+
 			lootUIEnabled = false;
 		}
 	}

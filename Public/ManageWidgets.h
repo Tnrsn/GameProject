@@ -22,7 +22,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
 
-
 	float playerMaximumHealth = 100;
 
 	UPROPERTY(BlueprintReadWrite)
