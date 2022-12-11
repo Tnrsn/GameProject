@@ -33,12 +33,11 @@ public:
 		TArray<FItemProperties> storage;
 	UPROPERTY()
 		UChildActorComponent* childActorRef;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Loot")
 		int lootLevet = 0;
 
 	UPROPERTY()
 		AMasterItem* item;
-
 
 	UPROPERTY()
 		APlayerController* playerController;

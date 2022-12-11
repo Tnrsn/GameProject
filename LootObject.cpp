@@ -95,15 +95,22 @@ void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
 	{
 		for (UClass* el : itemsRef)
 		{
+			bool added = false;
 			childActorRef->SetChildActorClass(el);
 			item = Cast<AMasterItem>(childActorRef->GetChildActor());
-			if (item->ItemProperties.rarity < FMath::RandRange(0, 100))
+			if (item->ItemProperties.rarity > FMath::RandRange(0, 100))
 			{
-				storage.Add(item->ItemProperties);
-				for (FItemProperties items : storage)
+				for (FItemProperties& storageItems : storage)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("hey"));
-					UE_LOG(LogTemp, Warning, TEXT("%s"), *items.name);
+					if (item->ItemProperties.name == storageItems.name && item->ItemProperties.isStackable)
+					{
+						storageItems.currentAmount++;
+						added = true;
+					}
+				}
+				if (!added)
+				{
+					storage.Add(item->ItemProperties);
 				}
 			}
 		}

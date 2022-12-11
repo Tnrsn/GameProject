@@ -19,11 +19,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void ButtonReleased();
 
+	UFUNCTION(BlueprintCallable)
+		float PlayerHealthBar();
+
+
 	float playerMaximumHealth = 100;
 
 	UPROPERTY(BlueprintReadWrite)
 	float playerCurrentHealth = playerMaximumHealth;
 
-	UFUNCTION(BlueprintCallable)
-		float PlayerHealthBar();
+	UPROPERTY(BlueprintReadWrite)
+		int currentAmountNum = 1;
+
 };
