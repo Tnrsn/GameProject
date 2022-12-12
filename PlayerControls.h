@@ -40,14 +40,18 @@ public:
 	//Widget Management
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> inventoryUI;
-	class UManageWidgets* HUD;
+	class UManageWidgets* inventoryHUD;
+
+
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
+	UPROPERTY(BlueprintReadOnly)
+	class UManageWidgets* mainHUD;
 
 	//Looting
 	//UPROPERTY()
 	//	AMasterItem* itemRef;
-	UPROPERTY(Blueprintreadwrite, EditAnywhere, Category = "Loot")
+	UPROPERTY(Blueprintreadwrite)
 	TArray<FItemProperties> inventory;
 
 
@@ -77,12 +81,18 @@ public:
 
 	void OpenInventory();
 
+	UFUNCTION(BlueprintCallable)
+		void ItemInteraction(FItemProperties item);
+
 	UFUNCTION()
 	void AddItemToInventoryFromGround(AMasterItem* itemRef);
 	UFUNCTION(BlueprintCallable)
 		void ItemTransfer(FItemProperties itemProperties);
 	UFUNCTION()
 		void AddItemToInventory(FItemProperties itemProperties);
+
+	UFUNCTION()
+		void ResetInventoryUI();
 
 
 	// Called every frame

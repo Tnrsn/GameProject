@@ -40,8 +40,8 @@ void APlayerControls::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
 	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 
-	HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	HUD->AddToViewport();
+	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	mainHUD->AddToViewport();
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
 
@@ -86,7 +86,6 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
 }
-
 
 void APlayerControls::MoveForward(float value)
 {
@@ -214,22 +213,46 @@ void APlayerControls::ClickEvents()
 
 void APlayerControls::OpenInventory()
 {
-	//lootObject = nullptr;
-	if (!inventoryEnabled)
+	if (lootObject)
 	{
-		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
-		HUD->AddToViewport();
+		if (!lootObject->lootUIEnabled)
+		{
+			if (!inventoryEnabled)
+			{
+				inventoryHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
+				inventoryHUD->AddToViewport();
 
-		inventoryEnabled = true;
-		UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+				inventoryEnabled = true;
+				UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+			}
+			else if (inventoryEnabled)
+			{
+				inventoryHUD->RemoveFromViewport();
+
+				inventoryEnabled = false;
+				UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+			}
+		}
 	}
-	else if(inventoryEnabled)
+	else
 	{
-		HUD->RemoveFromViewport();
+		if (!inventoryEnabled)
+		{
+			inventoryHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
+			inventoryHUD->AddToViewport();
 
-		inventoryEnabled = false;
-		UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+			inventoryEnabled = true;
+			UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+		}
+		else if (inventoryEnabled)
+		{
+			inventoryHUD->RemoveFromViewport();
+
+			inventoryEnabled = false;
+			UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+		}
 	}
+
 }
 
 void APlayerControls::AddItemToInventoryFromGround(AMasterItem* itemRef)
@@ -322,6 +345,80 @@ void APlayerControls::AddItemToInventory(FItemProperties itemProperties)
 		itemProperties.inInventory = true;
 		itemProperties.currentAmount = 1;
 		inventory.Add(itemProperties);
+	}
+}
+
+void APlayerControls::ResetInventoryUI()
+{
+	inventoryHUD->RemoveFromParent();
+	inventoryHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), inventoryUI);
+	inventoryHUD->AddToViewport();
+}
+
+void APlayerControls::ItemInteraction(FItemProperties itemProperties)
+{
+	// Weapon *******************************************************************
+	if (itemProperties.Category == 0) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Weapon"));
+	}
+	//Armor *******************************************************************
+	else if (itemProperties.Category == 1) 
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Armor"));
+		if (itemProperties.ArmorType == Head)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *itemProperties.name);
+			mainHUD->characterArmor.head = itemProperties;
+		}
+	}
+	//Consumables**************************************************************
+	else if (itemProperties.Category == 2) 
+	{
+		//Resets inventory UI
+		int lastItemIndex = 0;
+		int itemIndex = 0;
+
+		for (FItemProperties el : inventory)
+		{
+			if (el.name == itemProperties.name)
+			{
+				lastItemIndex = itemIndex;
+			}
+			itemIndex++;
+		}
+
+		if (inventory[lastItemIndex].currentAmount > 1)
+		{
+			inventory[lastItemIndex].currentAmount--;
+		}
+		else
+		{
+			inventory.RemoveAt(lastItemIndex);
+		}
+
+		ResetInventoryUI();
+		//********
+		//Consumable Effects ***
+
+		if (itemProperties.ConsumableEffect == Heal)
+		{
+			mainHUD->playerCurrentHealth += itemProperties.effectStrength;
+		}
+		else if (itemProperties.ConsumableEffect == DamageHealth)
+		{
+			mainHUD->playerCurrentHealth -= itemProperties.effectStrength;
+		}
+		else if (itemProperties.ConsumableEffect == BoostSpeed)
+		{
+			GetCharacterMovement()->MaxWalkSpeed += itemProperties.effectStrength;
+			FTimerHandle effectTimer;
+			GetWorldTimerManager().SetTimer(effectTimer, FTimerDelegate::CreateLambda([=]() {
+				GetCharacterMovement()->MaxWalkSpeed -= itemProperties.effectStrength;
+				}), itemProperties.effectTime, false);
+		}
+
+		//******************* Consumable Effects end
 	}
 }
 

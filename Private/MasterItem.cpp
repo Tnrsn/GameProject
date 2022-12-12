@@ -45,17 +45,6 @@ void AMasterItem::OnSelected(UPrimitiveComponent* PrimComp, FKey InKey)
 	
 }
 
-
-//AMasterItem* AMasterItem::ItemReference()
-//{
-//	return this;
-//}
-
-//void AMasterItem::DestroyObject()
-//{
-//	Destroy();
-//}
-
 void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

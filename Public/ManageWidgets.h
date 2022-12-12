@@ -3,9 +3,45 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MasterItem.h"
 #include "Blueprint/UserWidget.h"
 #include "ManageWidgets.generated.h"
 
+UENUM(BlueprintType, Category = "Character Properties")
+enum FPlayerClasses
+{
+	Warrior,
+	Mage,
+	Rogue
+};
+USTRUCT(BlueprintType, Category = "Character Properties")
+struct FCharacterStats
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character Properties")
+		TEnumAsByte<FPlayerClasses> playerClass;
+	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+		int strength = 0;
+	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+		int dexterity = 0;
+	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+		int constitution = 0;
+	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+		int intelligence = 0;
+	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+		int wisdom = 0;
+};
+USTRUCT(BlueprintType, Category = "Character Properties")
+struct FCharacterArmor
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	FItemProperties head;
+
+
+};
 UCLASS()
 class GAMEPROJECT_API UManageWidgets : public UUserWidget
 {
@@ -22,12 +58,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
 
+	//PlayerStats
 	float playerMaximumHealth = 100;
-
 	UPROPERTY(BlueprintReadWrite)
 	float playerCurrentHealth = playerMaximumHealth;
 
-	UPROPERTY(BlueprintReadWrite)
-		int currentAmountNum = 1;
-
+	UPROPERTY(BlueprintReadOnly)
+	FCharacterStats characterStats;
+	UPROPERTY(BlueprintReadOnly)
+	FCharacterArmor characterArmor;
 };

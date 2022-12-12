@@ -7,16 +7,27 @@
 #include "GameFramework/Actor.h"
 #include "MasterItem.generated.h"
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, Category = "Item Properties")
 enum FConsumableEffect
 {
-	Nothing,
+	NotConsumable,
 	Heal,
 	DamageHealth,
 	BoostSpeed
 };
+UENUM(BlueprintType, Category = "Item Properties")
+enum FArmorType
+{
+	NotArmor,
+	Head,
+	Top,
+	Hand,
+	Foot,
+	Ring,
+	Necklace
+};
 
-UENUM(BlueprintType)
+UENUM(BlueprintType, Category = "Item Properties")
 enum FItemCategory
 {
 	Weapon,
@@ -25,31 +36,43 @@ enum FItemCategory
 };
 
 
-USTRUCT(BlueprintType)
+USTRUCT(BlueprintType, Category = "Item Properties")
 struct FItemProperties
 {
 	GENERATED_BODY();
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	FString name;
+		FString name;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	UTexture* texture;
+		FString description;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	int weight;
+		UTexture* texture;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-	TEnumAsByte<FItemCategory> Category;
+		int weight;
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		TEnumAsByte<FItemCategory> Category;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		int maximumAmount;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		bool isStackable;
-	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-		FString description;
-	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+	UPROPERTY(Blueprintreadwrite)
 		int currentAmount = 1;
 	UPROPERTY(Blueprintreadonly, EditAnywhere)
 		float rarity;
-	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+	UPROPERTY(Blueprintreadwrite)
 		bool inInventory;
+	//Consumable Inputs
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		TEnumAsByte<FConsumableEffect> ConsumableEffect;
+	UPROPERTY(EditAnywhere)
+		int effectStrength;
+	UPROPERTY(EditAnywhere)
+		int effectTime;
+	//Armor
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		TEnumAsByte<FArmorType> ArmorType;
+	UPROPERTY(BlueprintReadOnly)
+		bool isEquipped = false;
 };
 
 UCLASS()
@@ -63,10 +86,6 @@ public:
 
 	UFUNCTION()
 		void OnSelected(UPrimitiveComponent* PrimComp, FKey InKey);
-	//UFUNCTION(BlueprintCallable)
-	//	AMasterItem* ItemReference();
-	//UFUNCTION(BlueprintCallable)
-	//	void DestroyObject();
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite, Category = "Item Properties")
 	FItemProperties ItemProperties;
