@@ -23,8 +23,9 @@ enum FArmorType
 	Top,
 	Hand,
 	Foot,
-	Ring,
-	Necklace
+	FirstRing,
+	SecondRing,
+	Neck
 };
 
 UENUM(BlueprintType, Category = "Item Properties")
@@ -71,7 +72,7 @@ struct FItemProperties
 	//Armor
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TEnumAsByte<FArmorType> ArmorType;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		bool isEquipped = false;
 };
 

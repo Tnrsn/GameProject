@@ -27,8 +27,6 @@ APlayerControls::APlayerControls()
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 
-
-
 }
 
 // Called when the game starts or when spawned
@@ -276,24 +274,7 @@ void APlayerControls::ItemTransfer(FItemProperties itemProperties)
 		{
 			//inventory to loot
 			lootObject->AddItemToLoot(itemProperties);
-
-			for (FItemProperties el : inventory)
-			{
-				if (el.name == itemProperties.name)
-				{
-					lastItemIndex = itemIndex;
-				}
-				itemIndex++;
-			}
-
-			if (inventory[lastItemIndex].currentAmount > 1)
-			{
-				inventory[lastItemIndex].currentAmount--;
-			}
-			else
-			{
-				inventory.RemoveAt(lastItemIndex);
-			}
+			DecreaseItemFromInventory(itemProperties);
 		}
 		else
 		{
@@ -355,50 +336,71 @@ void APlayerControls::ResetInventoryUI()
 	inventoryHUD->AddToViewport();
 }
 
-void APlayerControls::ItemInteraction(FItemProperties itemProperties)
+void APlayerControls::DecreaseItemFromInventory(FItemProperties itemProperties)
+{
+	int lastItemIndex = 0;
+	int itemIndex = 0;
+
+	for (FItemProperties el : inventory)
+	{
+		if (el.name == itemProperties.name)
+		{
+			lastItemIndex = itemIndex;
+		}
+		itemIndex++;
+	}
+
+	if (inventory[lastItemIndex].currentAmount > 1)
+	{
+		inventory[lastItemIndex].currentAmount--;
+	}
+	else
+	{
+		inventory.RemoveAt(lastItemIndex);
+	}
+}
+
+
+void APlayerControls::PutOffItem(UManageWidgets* itemProperties)
+{
+	if (itemProperties->characterArmor.head.isEquipped)
+	{
+		AddItemToInventory(itemProperties->characterArmor.head);
+		itemProperties->characterArmor.head.isEquipped = false;
+		ResetInventoryUI();
+
+	}
+}
+
+void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called in Item Slot blueprint
 {
 	// Weapon *******************************************************************
-	if (itemProperties.Category == 0) 
+	if (itemProperties.Category == Weapon) 
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Weapon"));
 	}
+	//Weapons END **************
+	// ******************
 	//Armor *******************************************************************
-	else if (itemProperties.Category == 1) 
+	else if (itemProperties.Category == Armor) 
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Armor"));
 		if (itemProperties.ArmorType == Head)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *itemProperties.name);
 			mainHUD->characterArmor.head = itemProperties;
+			mainHUD->characterArmor.head.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.head);
+			ResetInventoryUI();
 		}
 	}
+	//Armor END************
+	//************
 	//Consumables**************************************************************
-	else if (itemProperties.Category == 2) 
+	else if (itemProperties.Category == Consumable) 
 	{
 		//Resets inventory UI
-		int lastItemIndex = 0;
-		int itemIndex = 0;
-
-		for (FItemProperties el : inventory)
-		{
-			if (el.name == itemProperties.name)
-			{
-				lastItemIndex = itemIndex;
-			}
-			itemIndex++;
-		}
-
-		if (inventory[lastItemIndex].currentAmount > 1)
-		{
-			inventory[lastItemIndex].currentAmount--;
-		}
-		else
-		{
-			inventory.RemoveAt(lastItemIndex);
-		}
-
+		DecreaseItemFromInventory(itemProperties);
 		ResetInventoryUI();
-		//********
 		//Consumable Effects ***
 
 		if (itemProperties.ConsumableEffect == Heal)

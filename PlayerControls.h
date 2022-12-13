@@ -49,8 +49,6 @@ public:
 	class UManageWidgets* mainHUD;
 
 	//Looting
-	//UPROPERTY()
-	//	AMasterItem* itemRef;
 	UPROPERTY(Blueprintreadwrite)
 	TArray<FItemProperties> inventory;
 
@@ -93,6 +91,10 @@ public:
 
 	UFUNCTION()
 		void ResetInventoryUI();
+	UFUNCTION()
+		void DecreaseItemFromInventory(FItemProperties itemProperties);
+	UFUNCTION(BlueprintCallable)
+		void PutOffItem(UManageWidgets* itemProperties);
 
 
 	// Called every frame

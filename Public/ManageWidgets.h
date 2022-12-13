@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MasterItem.h"
+#include <Kismet/GameplayStatics.h>
 #include "Blueprint/UserWidget.h"
 #include "ManageWidgets.generated.h"
 
@@ -38,9 +39,19 @@ struct FCharacterArmor
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadOnly)
-	FItemProperties head;
-
-
+		FItemProperties head;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties top;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties hand;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties foot;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties firstRing;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties secondRing;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties neck;
 };
 UCLASS()
 class GAMEPROJECT_API UManageWidgets : public UUserWidget
@@ -57,6 +68,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
+
 
 	//PlayerStats
 	float playerMaximumHealth = 100;
