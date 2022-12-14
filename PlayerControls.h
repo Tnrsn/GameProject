@@ -94,7 +94,7 @@ public:
 	UFUNCTION()
 		void DecreaseItemFromInventory(FItemProperties itemProperties);
 	UFUNCTION(BlueprintCallable)
-		void PutOffItem(UManageWidgets* itemProperties);
+		void PutOffItem(UManageWidgets* itemProperties, int GearSlotIndex);
 
 
 	// Called every frame

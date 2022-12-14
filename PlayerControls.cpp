@@ -361,15 +361,45 @@ void APlayerControls::DecreaseItemFromInventory(FItemProperties itemProperties)
 }
 
 
-void APlayerControls::PutOffItem(UManageWidgets* itemProperties)
+void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int GearSlotIndex)
 {
-	if (itemProperties->characterArmor.head.isEquipped)
+	if (GearSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddGearSlots in WP_Inventory Blueprint.)
 	{
+		
 		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head.isEquipped = false;
-		ResetInventoryUI();
-
 	}
+	else if (GearSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
+	{
+		AddItemToInventory(itemProperties->characterArmor.top);
+		itemProperties->characterArmor.top.isEquipped = false;
+	}
+	else if (GearSlotIndex + 1 == Hand && itemProperties->characterArmor.hand.isEquipped) //Hand
+	{
+		AddItemToInventory(itemProperties->characterArmor.hand);
+		itemProperties->characterArmor.hand.isEquipped = false;
+	}
+	else if (GearSlotIndex + 1 == Foot && itemProperties->characterArmor.foot.isEquipped) //Foot
+	{
+		AddItemToInventory(itemProperties->characterArmor.foot);
+		itemProperties->characterArmor.foot.isEquipped = false;
+	}
+	else if (GearSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
+	{
+		AddItemToInventory(itemProperties->characterArmor.firstRing);
+		itemProperties->characterArmor.firstRing.isEquipped = false;
+	}
+	else if (GearSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
+	{
+		AddItemToInventory(itemProperties->characterArmor.secondRing);
+		itemProperties->characterArmor.secondRing.isEquipped = false;
+	}
+	else if (GearSlotIndex + 1 == Neck && itemProperties->characterArmor.neck.isEquipped) //Neck
+	{
+		AddItemToInventory(itemProperties->characterArmor.neck);
+		itemProperties->characterArmor.neck.isEquipped = false;
+	}
+	ResetInventoryUI();
 }
 
 void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called in Item Slot blueprint
@@ -384,14 +414,78 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 	//Armor *******************************************************************
 	else if (itemProperties.Category == Armor) 
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Armor"));
 		if (itemProperties.ArmorType == Head)
 		{
+			if (mainHUD->characterArmor.head.isEquipped)
+			{
+				PutOffItem(mainHUD, 0);
+			}
 			mainHUD->characterArmor.head = itemProperties;
+			//UE_LOG(LogTemp, Warning, TEXT("%s"), *itemProperties.name);
 			mainHUD->characterArmor.head.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.head);
-			ResetInventoryUI();
 		}
+		else if (itemProperties.ArmorType == Top)
+		{
+			if (mainHUD->characterArmor.top.isEquipped)
+			{
+				PutOffItem(mainHUD, 1);
+			}
+			mainHUD->characterArmor.top = itemProperties;
+			mainHUD->characterArmor.top.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.top);
+		}
+		else if (itemProperties.ArmorType == Hand)
+		{
+			if (mainHUD->characterArmor.hand.isEquipped)
+			{
+				PutOffItem(mainHUD, 2);
+			}
+			mainHUD->characterArmor.hand = itemProperties;
+			mainHUD->characterArmor.hand.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.hand);
+		}
+		else if (itemProperties.ArmorType == Foot)
+		{
+			if (mainHUD->characterArmor.foot.isEquipped)
+			{
+				PutOffItem(mainHUD, 3);
+			}
+			mainHUD->characterArmor.foot = itemProperties;
+			mainHUD->characterArmor.foot.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.foot);
+		}
+		else if (itemProperties.ArmorType == FirstRing)
+		{
+			if (mainHUD->characterArmor.firstRing.isEquipped)
+			{
+				PutOffItem(mainHUD, 4);
+			}
+			mainHUD->characterArmor.firstRing = itemProperties;
+			mainHUD->characterArmor.firstRing.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.firstRing);
+		}
+		else if (itemProperties.ArmorType == SecondRing)
+		{
+			if (mainHUD->characterArmor.secondRing.isEquipped)
+			{
+				PutOffItem(mainHUD, 5);
+			}
+			mainHUD->characterArmor.secondRing = itemProperties;
+			mainHUD->characterArmor.secondRing.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.secondRing);
+		}
+		else if (itemProperties.ArmorType == Neck)
+		{
+			if (mainHUD->characterArmor.neck.isEquipped)
+			{
+				PutOffItem(mainHUD, 6);
+			}
+			mainHUD->characterArmor.neck = itemProperties;
+			mainHUD->characterArmor.neck.isEquipped = true;
+			DecreaseItemFromInventory(mainHUD->characterArmor.neck);
+		}
+		ResetInventoryUI();
 	}
 	//Armor END************
 	//************
