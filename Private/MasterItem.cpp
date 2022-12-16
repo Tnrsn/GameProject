@@ -52,6 +52,7 @@ void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
 		canLoot = true;
+
 	}
 }
 

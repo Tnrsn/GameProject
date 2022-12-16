@@ -27,6 +27,9 @@ APlayerControls::APlayerControls()
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 
+
+	
+
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +45,7 @@ void APlayerControls::BeginPlay()
 	mainHUD->AddToViewport();
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
+
 
 }
 
@@ -62,8 +66,14 @@ void APlayerControls::Tick(float DeltaTime)
 		playerController->GetViewportSize(x, y);
 		playerController->SetMouseLocation(x/2, y/2);
 	}
-	
 
+	if (itemRef)
+	{
+		if (itemRef->canLoot && itemRef->moveToObject)
+		{
+			AddItemToInventoryFromGround();
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -89,7 +99,15 @@ void APlayerControls::MoveForward(float value)
 {
 	if ((Controller != nullptr) && (value != 0))
 	{
-		lootObject->DisableLootUI(SelectedActor);
+		if (lootObject)
+		{
+			lootObject->moveToLootObject = false;
+			lootObject->DisableLootUI(SelectedActor);
+		}
+		if (itemRef)
+		{
+			itemRef->moveToObject = false;
+		}
 
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -103,7 +121,15 @@ void APlayerControls::MoveRight(float value)
 {
 	if ((Controller != nullptr) && (value != 0))
 	{
-		lootObject->DisableLootUI(SelectedActor);
+		if (lootObject)
+		{
+			lootObject->moveToLootObject = false;
+			lootObject->DisableLootUI(SelectedActor);
+		}
+		if (itemRef)
+		{
+			itemRef->moveToObject = false;
+		}
 
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
@@ -186,27 +212,30 @@ void APlayerControls::ClickEvents()
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
-	lootObject->DisableLootUI(SelectedActor);
+	if (lootObject)
+	{
+		lootObject->moveToLootObject = false;
+		lootObject->DisableLootUI(SelectedActor);
+	}
+
 
 	SelectedActor = HitResult.GetActor();
 
 	if (SelectedActor)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
-
-		//Open Loot
-		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))
+		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
 		}
-
-		//itemRef
-		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))
+		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))//itemRef
 		{
-			AddItemToInventoryFromGround(Cast<AMasterItem>(SelectedActor));
+			itemRef = Cast<AMasterItem>(SelectedActor);
+			AddItemToInventoryFromGround();
 		}
 	}
+
 }
 
 void APlayerControls::OpenInventory()
@@ -225,7 +254,7 @@ void APlayerControls::OpenInventory()
 			}
 			else if (inventoryEnabled)
 			{
-				inventoryHUD->RemoveFromViewport();
+				inventoryHUD->RemoveFromParent();
 
 				inventoryEnabled = false;
 				UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
@@ -244,7 +273,7 @@ void APlayerControls::OpenInventory()
 		}
 		else if (inventoryEnabled)
 		{
-			inventoryHUD->RemoveFromViewport();
+			inventoryHUD->RemoveFromParent();
 
 			inventoryEnabled = false;
 			UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
@@ -253,13 +282,18 @@ void APlayerControls::OpenInventory()
 
 }
 
-void APlayerControls::AddItemToInventoryFromGround(AMasterItem* itemRef)
+void APlayerControls::AddItemToInventoryFromGround()
 {
 	//itemRef = Cast<AMasterItem>(SelectedActor);
 	if (itemRef->canLoot)
 	{
 		AddItemToInventory(itemRef->ItemProperties);
+		itemTaken = true;
 		itemRef->Destroy();
+	}
+	else
+	{
+		itemRef->moveToObject = true;
 	}
 }
 

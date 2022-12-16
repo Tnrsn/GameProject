@@ -50,6 +50,9 @@ public:
 	bool lootUIEnabled = false;
 	bool canOpenLoot = false;
 
+	UPROPERTY(BlueprintReadWrite)
+		bool moveToLootObject = false;
+
 
 protected:
 	// Called when the game starts or when spawned

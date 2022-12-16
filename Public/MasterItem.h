@@ -99,6 +99,9 @@ public:
 
 	bool canLoot = false;
 
+	UPROPERTY(BlueprintReadWrite)
+		bool moveToObject = false;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

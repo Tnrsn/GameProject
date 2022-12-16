@@ -52,6 +52,10 @@ void ALootObject::EnableLootUI()
 		HUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), LootUI);
 		HUD->AddToViewport();
 	}
+	else if (!canOpenLoot)
+	{
+		moveToLootObject = true;
+	}
 	
 }
 
@@ -75,6 +79,11 @@ void ALootObject::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
 		canOpenLoot = true;
+		if (moveToLootObject)
+		{
+			EnableLootUI();
+			moveToLootObject = false;
+		}
 	}
 }
 

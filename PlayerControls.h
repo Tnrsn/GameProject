@@ -50,16 +50,21 @@ public:
 
 	//Looting
 	UPROPERTY(Blueprintreadwrite)
-	TArray<FItemProperties> inventory;
-
-
+		TArray<FItemProperties> inventory;
+	UPROPERTY(BlueprintReadWrite)
+		AMasterItem* itemRef;
+	UPROPERTY(BlueprintReadWrite)
+		bool itemTaken = false;
 
 	UPROPERTY(BlueprintReadOnly)
-	bool inventoryEnabled = false;
+		bool inventoryEnabled = false;
 
 	bool camRotating = false;
 	float targetArmLength = 250.f;
 	float newTargetArmLength = 250.f;
+
+	UPROPERTY(BlueprintReadWrite)
+		bool onAIControl = true;
 
 
 protected:
@@ -83,7 +88,7 @@ public:
 		void ItemInteraction(FItemProperties item);
 
 	UFUNCTION()
-	void AddItemToInventoryFromGround(AMasterItem* itemRef);
+	void AddItemToInventoryFromGround();
 	UFUNCTION(BlueprintCallable)
 		void ItemTransfer(FItemProperties itemProperties);
 	UFUNCTION()
