@@ -76,7 +76,17 @@ public:
 	float playerCurrentHealth = playerMaximumHealth;
 
 	UPROPERTY(BlueprintReadOnly)
-	FCharacterStats characterStats;
+		int armorRating = 0;
+
 	UPROPERTY(BlueprintReadOnly)
-	FCharacterArmor characterArmor;
+		int maxInventoryCapacity = 0;
+	UPROPERTY(BlueprintReadOnly)
+		int currentInventoryWeight = 0;
+
+	UPROPERTY()
+		FCharacterStats beginningStats;
+	UPROPERTY(BlueprintReadOnly)
+		FCharacterStats characterStats;
+	UPROPERTY(BlueprintReadOnly)
+		FCharacterArmor characterArmor;
 };

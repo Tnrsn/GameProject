@@ -72,6 +72,8 @@ struct FItemProperties
 	//Armor
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TEnumAsByte<FArmorType> ArmorType;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		int armorBonus;
 	UPROPERTY(BlueprintReadWrite)
 		bool isEquipped = false;
 };

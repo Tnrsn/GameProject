@@ -59,13 +59,14 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool inventoryEnabled = false;
 
+	//Camera
 	bool camRotating = false;
 	float targetArmLength = 250.f;
 	float newTargetArmLength = 250.f;
 
+	//PathFinding
 	UPROPERTY(BlueprintReadWrite)
 		bool onAIControl = true;
-
 
 protected:
 	// Called when the game starts or when spawned
@@ -92,7 +93,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void ItemTransfer(FItemProperties itemProperties);
 	UFUNCTION()
-		void AddItemToInventory(FItemProperties itemProperties);
+		bool AddItemToInventory(FItemProperties itemProperties);
 
 	UFUNCTION()
 		void ResetInventoryUI();

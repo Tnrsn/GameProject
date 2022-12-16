@@ -27,7 +27,6 @@ APlayerControls::APlayerControls()
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 
-
 	
 
 }
@@ -42,9 +41,20 @@ void APlayerControls::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	
+	mainHUD->characterStats.playerClass = Mage;
+	mainHUD->characterStats.strength = 10;
+	mainHUD->characterStats.dexterity = 10;
+	mainHUD->characterStats.intelligence = 10;
+	mainHUD->characterStats.constitution = 10;
+	mainHUD->characterStats.wisdom = 10;
 	mainHUD->AddToViewport();
 
+	mainHUD->beginningStats = mainHUD->characterStats;
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
+
+	mainHUD->maxInventoryCapacity = (mainHUD->beginningStats.strength * 10) + ((mainHUD->characterStats.strength - mainHUD->beginningStats.strength) * 2);
 
 
 }
@@ -218,6 +228,10 @@ void APlayerControls::ClickEvents()
 		lootObject->DisableLootUI(SelectedActor);
 	}
 
+	if (itemRef)
+	{
+		itemRef->moveToObject = false;
+	}
 
 	SelectedActor = HitResult.GetActor();
 
@@ -287,9 +301,13 @@ void APlayerControls::AddItemToInventoryFromGround()
 	//itemRef = Cast<AMasterItem>(SelectedActor);
 	if (itemRef->canLoot)
 	{
-		AddItemToInventory(itemRef->ItemProperties);
+		bool taken = AddItemToInventory(itemRef->ItemProperties);
 		itemTaken = true;
-		itemRef->Destroy();
+		
+		if (taken)
+		{
+			itemRef->Destroy();
+		}
 	}
 	else
 	{
@@ -309,28 +327,32 @@ void APlayerControls::ItemTransfer(FItemProperties itemProperties)
 			//inventory to loot
 			lootObject->AddItemToLoot(itemProperties);
 			DecreaseItemFromInventory(itemProperties);
+			mainHUD->currentInventoryWeight -= itemProperties.weight;
 		}
 		else
 		{
 			//loot to inventory
-			AddItemToInventory(itemProperties);
+			bool taken = AddItemToInventory(itemProperties);
 
-			for (FItemProperties el : lootObject->storage)
+			if (taken)
 			{
-				if (el.name == itemProperties.name)
+				for (FItemProperties el : lootObject->storage)
 				{
-					lastItemIndex = itemIndex;
+					if (el.name == itemProperties.name)
+					{
+						lastItemIndex = itemIndex;
+					}
+					itemIndex++;
 				}
-				itemIndex++;
-			}
 
-			if (lootObject->storage[lastItemIndex].currentAmount > 1)
-			{
-				lootObject->storage[lastItemIndex].currentAmount--;
-			}
-			else
-			{
-				lootObject->storage.RemoveAt(lastItemIndex);
+				if (lootObject->storage[lastItemIndex].currentAmount > 1)
+				{
+					lootObject->storage[lastItemIndex].currentAmount--;
+				}
+				else
+				{
+					lootObject->storage.RemoveAt(lastItemIndex);
+				}
 			}
 		}
 		lootObject->HUD->RemoveFromParent();
@@ -340,26 +362,37 @@ void APlayerControls::ItemTransfer(FItemProperties itemProperties)
 
 }
 
-void APlayerControls::AddItemToInventory(FItemProperties itemProperties)
+bool APlayerControls::AddItemToInventory(FItemProperties itemProperties)
 {
-	bool added = false;
-
-	for (FItemProperties& var : inventory)
+	
+	
+	if (mainHUD->currentInventoryWeight + itemProperties.weight <= mainHUD->maxInventoryCapacity)
 	{
-		if (itemProperties.name == var.name)
+		bool added = false;
+
+		for (FItemProperties& var : inventory)
 		{
-			if (itemProperties.isStackable && var.currentAmount < var.maximumAmount)
+			if (itemProperties.name == var.name)
 			{
-				var.currentAmount++;
-				added = true;
+				if (itemProperties.isStackable && var.currentAmount < var.maximumAmount)
+				{
+					var.currentAmount++;
+					added = true;
+				}
 			}
 		}
+		if (!added)
+		{
+			itemProperties.inInventory = true;
+			itemProperties.currentAmount = 1;
+			inventory.Add(itemProperties);
+		}
+		mainHUD->currentInventoryWeight += itemProperties.weight;
+		return true;
 	}
-	if (!added)
+	else
 	{
-		itemProperties.inInventory = true;
-		itemProperties.currentAmount = 1;
-		inventory.Add(itemProperties);
+		return false;
 	}
 }
 
@@ -392,6 +425,8 @@ void APlayerControls::DecreaseItemFromInventory(FItemProperties itemProperties)
 	{
 		inventory.RemoveAt(lastItemIndex);
 	}
+
+	mainHUD->currentInventoryWeight -= itemProperties.weight;
 }
 
 
@@ -402,36 +437,43 @@ void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int GearSlotInd
 		
 		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
 	}
 	else if (GearSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
 	{
 		AddItemToInventory(itemProperties->characterArmor.top);
 		itemProperties->characterArmor.top.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
 	}
 	else if (GearSlotIndex + 1 == Hand && itemProperties->characterArmor.hand.isEquipped) //Hand
 	{
 		AddItemToInventory(itemProperties->characterArmor.hand);
 		itemProperties->characterArmor.hand.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.hand.weight;
 	}
 	else if (GearSlotIndex + 1 == Foot && itemProperties->characterArmor.foot.isEquipped) //Foot
 	{
 		AddItemToInventory(itemProperties->characterArmor.foot);
 		itemProperties->characterArmor.foot.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.foot.weight;
 	}
 	else if (GearSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
 	{
 		AddItemToInventory(itemProperties->characterArmor.firstRing);
 		itemProperties->characterArmor.firstRing.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
 	}
 	else if (GearSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
 	{
 		AddItemToInventory(itemProperties->characterArmor.secondRing);
 		itemProperties->characterArmor.secondRing.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
 	}
 	else if (GearSlotIndex + 1 == Neck && itemProperties->characterArmor.neck.isEquipped) //Neck
 	{
 		AddItemToInventory(itemProperties->characterArmor.neck);
 		itemProperties->characterArmor.neck.isEquipped = false;
+		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.neck.weight;
 	}
 	ResetInventoryUI();
 }
@@ -455,9 +497,9 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 				PutOffItem(mainHUD, 0);
 			}
 			mainHUD->characterArmor.head = itemProperties;
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *itemProperties.name);
 			mainHUD->characterArmor.head.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.head);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.head.weight;
 		}
 		else if (itemProperties.ArmorType == Top)
 		{
@@ -468,6 +510,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.top = itemProperties;
 			mainHUD->characterArmor.top.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.top);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.top.weight;
 		}
 		else if (itemProperties.ArmorType == Hand)
 		{
@@ -478,6 +521,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.hand = itemProperties;
 			mainHUD->characterArmor.hand.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.hand);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.hand.weight;
 		}
 		else if (itemProperties.ArmorType == Foot)
 		{
@@ -488,6 +532,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.foot = itemProperties;
 			mainHUD->characterArmor.foot.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.foot);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.foot.weight;
 		}
 		else if (itemProperties.ArmorType == FirstRing)
 		{
@@ -498,6 +543,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.firstRing = itemProperties;
 			mainHUD->characterArmor.firstRing.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.firstRing);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.firstRing.weight;
 		}
 		else if (itemProperties.ArmorType == SecondRing)
 		{
@@ -508,6 +554,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.secondRing = itemProperties;
 			mainHUD->characterArmor.secondRing.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.secondRing);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.secondRing.weight;
 		}
 		else if (itemProperties.ArmorType == Neck)
 		{
@@ -518,6 +565,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			mainHUD->characterArmor.neck = itemProperties;
 			mainHUD->characterArmor.neck.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.neck);
+			mainHUD->currentInventoryWeight += mainHUD->characterArmor.neck.weight;
 		}
 		ResetInventoryUI();
 	}
