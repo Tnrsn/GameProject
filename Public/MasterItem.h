@@ -16,16 +16,19 @@ enum FConsumableEffect
 	BoostSpeed
 };
 UENUM(BlueprintType, Category = "Item Properties")
-enum FArmorType
+enum FWearableType
 {
-	NotArmor,
+	NotWearable,
 	Head,
 	Top,
 	Hand,
 	Foot,
 	FirstRing,
 	SecondRing,
-	Neck
+	Neck,
+	TwoHandedWeapon,
+	OneHandedWeapon,
+	Shield
 };
 
 UENUM(BlueprintType, Category = "Item Properties")
@@ -69,13 +72,19 @@ struct FItemProperties
 		int effectStrength;
 	UPROPERTY(EditAnywhere)
 		int effectTime;
-	//Armor
+	//Wearables
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		TEnumAsByte<FArmorType> ArmorType;
+		TEnumAsByte<FWearableType> WearableType;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		int armorBonus;
 	UPROPERTY(BlueprintReadWrite)
 		bool isEquipped = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool weapon2Item = false;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		int physicalDamageBonus;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		int magicalDamageBonus;
 };
 
 UCLASS()

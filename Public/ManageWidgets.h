@@ -34,7 +34,7 @@ struct FCharacterStats
 		int wisdom = 0;
 };
 USTRUCT(BlueprintType, Category = "Character Properties")
-struct FCharacterArmor
+struct FCharacterWearables
 {
 	GENERATED_BODY()
 
@@ -52,6 +52,10 @@ struct FCharacterArmor
 		FItemProperties secondRing;
 	UPROPERTY(BlueprintReadOnly)
 		FItemProperties neck;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties weapon1;
+	UPROPERTY(BlueprintReadOnly)
+		FItemProperties weapon2;
 };
 UCLASS()
 class GAMEPROJECT_API UManageWidgets : public UUserWidget
@@ -69,11 +73,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
 
-
 	//PlayerStats
-	float playerMaximumHealth = 100;
-	UPROPERTY(BlueprintReadWrite)
-	float playerCurrentHealth = playerMaximumHealth;
+	UPROPERTY(BlueprintReadOnly)
+		float playerMaximumHealth;
+	UPROPERTY(BlueprintReadOnly)
+		float playerCurrentHealth;
 
 	UPROPERTY(BlueprintReadOnly)
 		int armorRating = 0;
@@ -88,5 +92,5 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		FCharacterStats characterStats;
 	UPROPERTY(BlueprintReadOnly)
-		FCharacterArmor characterArmor;
+		FCharacterWearables characterArmor;
 };

@@ -67,6 +67,8 @@ public:
 	//PathFinding
 	UPROPERTY(BlueprintReadWrite)
 		bool onAIControl = true;
+	UPROPERTY(BlueprintReadOnly)
+		bool characterOnMove = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -100,7 +102,9 @@ public:
 	UFUNCTION()
 		void DecreaseItemFromInventory(FItemProperties itemProperties);
 	UFUNCTION(BlueprintCallable)
-		void PutOffItem(UManageWidgets* itemProperties, int GearSlotIndex);
+		void PutOffItem(UManageWidgets* itemProperties, int WearableSlotIndex);
+	UFUNCTION(BlueprintCallable)
+		int GetArmorRating();
 
 
 	// Called every frame
