@@ -44,6 +44,9 @@ USTRUCT(BlueprintType, Category = "Item Properties")
 struct FItemProperties
 {
 	GENERATED_BODY();
+	FItemProperties(): name(""), description(""), weight(0), Category(0), maximumAmount(0), isStackable(0), currentAmount(0)
+	, rarity(0), inInventory(0), ConsumableEffect(0), effectStrength(0), effectTime(0), WearableType(0), armorBonus(0), isEquipped(0), weapon2Item(0)
+	, physicalDamageBonus(0), magicalDamageBonus(0) {}
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		FString name;

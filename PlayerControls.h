@@ -85,7 +85,7 @@ public:
 	void OnMouseClick();
 	void ClickEvents();
 
-	void OpenInventory();
+	void ToggleInventory();
 
 	UFUNCTION(BlueprintCallable)
 		void ItemInteraction(FItemProperties item);
