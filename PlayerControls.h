@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DefaultGameMode.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
@@ -70,6 +71,10 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool characterOnMove = false;
 
+	//Group Management
+	UPROPERTY()
+		ADefaultGameMode* gameMode;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -105,6 +110,18 @@ public:
 		void PutOffItem(UManageWidgets* itemProperties, int WearableSlotIndex);
 	UFUNCTION(BlueprintCallable)
 		int GetArmorRating();
+
+	UPROPERTY(EditAnywhere)
+	TArray<APawn*> groupMembers;
+
+	UFUNCTION(BlueprintCallable)
+		void ControlFirstCharacter();
+	UFUNCTION(BlueprintCallable)
+		void ControlSecondCharacter();
+	UFUNCTION(BlueprintCallable)
+		void ControlThirdCharacter();
+	UFUNCTION(BlueprintCallable)
+		void ControlFourthCharacter();
 
 
 	// Called every frame

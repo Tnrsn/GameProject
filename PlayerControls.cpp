@@ -25,16 +25,28 @@ APlayerControls::APlayerControls()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	playerController = UGameplayStatics::GetPlayerController(this, 0);
-	
 	
 
+	/*playerController = UGameplayStatics::GetPlayerController(this, 0);*/
 }
 
 // Called when the game starts or when spawned
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
+
+	gameMode = ADefaultGameMode::GetDefaultObject();
+
+	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation().ToString());
+
+	if (gameMode->groupMembers.Num() == 0)
+	{
+		gameMode->groupMembers.Add(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+	
+
+	playerController = UGameplayStatics::GetPlayerController(this, 0);
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
@@ -60,7 +72,6 @@ void APlayerControls::BeginPlay()
 	//Calculates Maximum Health
 	mainHUD->playerMaximumHealth = (mainHUD->beginningStats.constitution * 10) + ((mainHUD->characterStats.constitution - mainHUD->beginningStats.constitution) * 2);
 	mainHUD->playerCurrentHealth = mainHUD->playerMaximumHealth;
-
 
 }
 
@@ -101,6 +112,8 @@ void APlayerControls::Tick(float DeltaTime)
 		characterOnMove = false;
 	}
 	
+
+	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
 }
 
 // Called to bind functionality to input
@@ -120,6 +133,11 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("ToggleInventory", IE_Pressed, this, &APlayerControls::ToggleInventory);
 
 	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
+
+	PlayerInputComponent->BindAction("PassToFirstCharacter", IE_Pressed, this, &APlayerControls::ControlFirstCharacter);
+	PlayerInputComponent->BindAction("PassToSecondCharacter", IE_Pressed, this, &APlayerControls::ControlSecondCharacter);
+	PlayerInputComponent->BindAction("PassToThirdCharacter", IE_Pressed, this, &APlayerControls::ControlThirdCharacter);
+	PlayerInputComponent->BindAction("PassToFourthCharacter", IE_Pressed, this, &APlayerControls::ControlFourthCharacter);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -462,50 +480,50 @@ void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int WearableSlo
 {
 	if (WearableSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddWearableSlots in WP_Inventory Blueprint.)
 	{
-		AddItemToInventory(itemProperties->characterArmor.head);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
+		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
 	{
-		AddItemToInventory(itemProperties->characterArmor.top);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
+		AddItemToInventory(itemProperties->characterArmor.top);
 		itemProperties->characterArmor.top = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Hand && itemProperties->characterArmor.hand.isEquipped) //Hand
 	{
-		AddItemToInventory(itemProperties->characterArmor.hand);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.hand.weight;
+		AddItemToInventory(itemProperties->characterArmor.hand);
 		itemProperties->characterArmor.hand = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Foot && itemProperties->characterArmor.foot.isEquipped) //Foot
 	{
-		AddItemToInventory(itemProperties->characterArmor.foot);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.foot.weight;
+		AddItemToInventory(itemProperties->characterArmor.foot);
 		itemProperties->characterArmor.foot = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
 	{
-		AddItemToInventory(itemProperties->characterArmor.firstRing);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
+		AddItemToInventory(itemProperties->characterArmor.firstRing);
 		itemProperties->characterArmor.firstRing = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
 	{
-		AddItemToInventory(itemProperties->characterArmor.secondRing);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
+		AddItemToInventory(itemProperties->characterArmor.secondRing);
 		itemProperties->characterArmor.secondRing = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Neck && itemProperties->characterArmor.neck.isEquipped) //Neck
 	{
-		AddItemToInventory(itemProperties->characterArmor.neck);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.neck.weight;
+		AddItemToInventory(itemProperties->characterArmor.neck);
 		itemProperties->characterArmor.neck = FItemProperties();
 	}
 	else if (WearableSlotIndex == 7 && itemProperties->characterArmor.weapon1.isEquipped)
 	{
-		AddItemToInventory(itemProperties->characterArmor.weapon1);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.weapon1.weight;
+		AddItemToInventory(itemProperties->characterArmor.weapon1);
 		itemProperties->characterArmor.weapon1 = FItemProperties();
 
 		if (itemProperties->characterArmor.weapon2.isEquipped && itemProperties->characterArmor.weapon2.WearableType != Shield)
@@ -516,8 +534,8 @@ void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int WearableSlo
 	}
 	else if (WearableSlotIndex == 8 && itemProperties->characterArmor.weapon2.isEquipped)
 	{
-		AddItemToInventory(itemProperties->characterArmor.weapon2);
 		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.weapon2.weight;
+		AddItemToInventory(itemProperties->characterArmor.weapon2);
 		itemProperties->characterArmor.weapon2 = FItemProperties();
 	}
 	ResetInventoryUI();
@@ -593,13 +611,13 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 		}//One Handed Weapons End
 		else if (itemProperties.WearableType == TwoHandedWeapon)
 		{
-			if (mainHUD->characterArmor.weapon2.isEquipped)
-			{
-				PutOffItem(mainHUD, 8);
-			}
 			if (mainHUD->characterArmor.weapon1.isEquipped)
 			{
 				PutOffItem(mainHUD, 7);
+			}
+			if (mainHUD->characterArmor.weapon2.isEquipped)
+			{
+				PutOffItem(mainHUD, 8);
 			}
 			mainHUD->characterArmor.weapon1 = itemProperties;
 			mainHUD->characterArmor.weapon1.isEquipped = true;
@@ -634,7 +652,6 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(mainHUD, 0);
 			}
-			UE_LOG(LogTemp, Warning, TEXT("test"));
 			mainHUD->characterArmor.head = itemProperties;
 			mainHUD->characterArmor.head.isEquipped = true;
 			DecreaseItemFromInventory(mainHUD->characterArmor.head);
@@ -740,4 +757,36 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 	ResetInventoryUI();
 }
 
+
+void APlayerControls::ControlFirstCharacter()
+{
+	if (gameMode->groupMembers.Num() >= 1)
+	{
+		Controller->Possess(gameMode->groupMembers[0]);
+	}
+}
+
+void APlayerControls::ControlSecondCharacter()
+{
+	if (gameMode->groupMembers.Num() >= 2)
+	{
+		Controller->Possess(gameMode->groupMembers[1]);
+	}
+}
+
+void APlayerControls::ControlThirdCharacter()
+{
+	if (gameMode->groupMembers.Num() >= 3)
+	{
+		Controller->Possess(gameMode->groupMembers[2]);
+	}
+}
+
+void APlayerControls::ControlFourthCharacter()
+{
+	if (gameMode->groupMembers.Num() >= 4)
+	{
+		Controller->Possess(gameMode->groupMembers[3]);
+	}
+}
 

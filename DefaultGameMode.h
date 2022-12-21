@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Kismet/GameplayStatics.h>
 #include "GameFramework/GameModeBase.h"
 #include "DefaultGameMode.generated.h"
 
@@ -14,5 +15,13 @@ class GAMEPROJECT_API ADefaultGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
+
+public:
+	ADefaultGameMode();
+
+	UPROPERTY(EditAnywhere)
+	TArray<APawn*> groupMembers;
+
+	static ADefaultGameMode* GetDefaultObject();
 
 };
