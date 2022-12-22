@@ -46,7 +46,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	class UManageWidgets* mainHUD;
 
 	//Looting
@@ -111,8 +111,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int GetArmorRating();
 
-	UPROPERTY(EditAnywhere)
-	TArray<APawn*> groupMembers;
+	//UPROPERTY(EditAnywhere)
+	//TArray<APawn*> groupMembers;
 
 	UFUNCTION(BlueprintCallable)
 		void ControlFirstCharacter();

@@ -20,17 +20,17 @@ struct FCharacterStats
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, Category = "Character Properties")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Properties")
 		TEnumAsByte<FPlayerClasses> playerClass;
-	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
 		int strength = 0;
-	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
 		int dexterity = 0;
-	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
 		int constitution = 0;
-	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
 		int intelligence = 0;
-	UPROPERTY(Blueprintreadonly, Category = "Character Properties")
+	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
 		int wisdom = 0;
 };
 USTRUCT(BlueprintType, Category = "Character Properties")
@@ -89,7 +89,7 @@ public:
 
 	UPROPERTY()
 		FCharacterStats beginningStats;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
 		FCharacterStats characterStats;
 	UPROPERTY(BlueprintReadOnly)
 		FCharacterWearables characterArmor;

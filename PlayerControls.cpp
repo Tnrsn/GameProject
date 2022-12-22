@@ -114,6 +114,7 @@ void APlayerControls::Tick(float DeltaTime)
 	
 
 	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
+
 }
 
 // Called to bind functionality to input
