@@ -93,4 +93,6 @@ public:
 		FCharacterStats characterStats;
 	UPROPERTY(BlueprintReadOnly)
 		FCharacterWearables characterArmor;
+
+
 };

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/NPCDialogSystem.h"
 #include "DefaultGameMode.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
@@ -47,7 +48,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-	class UManageWidgets* mainHUD;
+		class UManageWidgets* mainHUD;
+
+
 
 	//Looting
 	UPROPERTY(Blueprintreadwrite)
@@ -75,6 +78,16 @@ public:
 	UPROPERTY()
 		ADefaultGameMode* gameMode;
 
+	//Dialog management
+	UPROPERTY(BlueprintReadOnly)
+		APlayerControls* companion;
+	UPROPERTY()
+		UNPCDialogSystem* dialogSystem;
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> dialogBoxUI;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		TArray<FConversations> Conversations;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -96,7 +109,7 @@ public:
 		void ItemInteraction(FItemProperties item);
 
 	UFUNCTION()
-	void AddItemToInventoryFromGround();
+		void AddItemToInventoryFromGround();
 	UFUNCTION(BlueprintCallable)
 		void ItemTransfer(FItemProperties itemProperties);
 	UFUNCTION()
