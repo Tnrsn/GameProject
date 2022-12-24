@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/NPCManagement.h"
 #include "Public/NPCDialogSystem.h"
 #include "DefaultGameMode.h"
 #include "Public/ManageWidgets.h"
@@ -26,31 +27,35 @@ public:
 	// Sets default values for this character's properties
 	APlayerControls();
 
-	UInputComponent* playerInput;
+	//Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		class USpringArmComponent* SpringArm;
+		USpringArmComponent* SpringArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		class UCameraComponent* Camera;
+		UCameraComponent* Camera;
 
+	//ClickEvent Objects
 	UPROPERTY()
 		AActor* SelectedActor;
 	UPROPERTY(BlueprintReadonly)
 		ALootObject* lootObject;
+	UPROPERTY(BlueprintReadOnly)
+		ANPCManagement* NPC;
 
-	APlayerController* playerController;
+	//Player controller
+	UPROPERTY()
+		APlayerController* playerController;
+	UPROPERTY()
+		UInputComponent* playerInput;
 
 	//Widget Management
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> inventoryUI;
-	class UManageWidgets* inventoryHUD;
-
-
+	UPROPERTY()
+		UManageWidgets* inventoryHUD;
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		class UManageWidgets* mainHUD;
-
-
+		UManageWidgets* mainHUD;
 
 	//Looting
 	UPROPERTY(Blueprintreadwrite)
@@ -78,16 +83,6 @@ public:
 	UPROPERTY()
 		ADefaultGameMode* gameMode;
 
-	//Dialog management
-	UPROPERTY(BlueprintReadOnly)
-		APlayerControls* companion;
-	UPROPERTY()
-		UNPCDialogSystem* dialogSystem;
-	UPROPERTY(EditDefaultsOnly, Category = "Widget")
-		TSubclassOf<UUserWidget> dialogBoxUI;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
-		TArray<FConversations> Conversations;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -107,7 +102,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void ItemInteraction(FItemProperties item);
-
 	UFUNCTION()
 		void AddItemToInventoryFromGround();
 	UFUNCTION(BlueprintCallable)

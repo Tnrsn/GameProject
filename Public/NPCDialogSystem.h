@@ -16,9 +16,21 @@ struct FDialogAnswer
 	GENERATED_BODY();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		FString Answer;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		int newTalkIndex = 0;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		int newConversationIndex = 0;
+};
+USTRUCT(BlueprintType)
+struct FDialogTalk
+{
+	GENERATED_BODY();
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		FString NPCTalk;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
-		TArray<FString> Answer;
+		TArray<FDialogAnswer> Answer;
 };
 USTRUCT(BlueprintType)
 struct FConversations
@@ -26,7 +38,7 @@ struct FConversations
 	GENERATED_BODY();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		TArray<FDialogAnswer> Talk;
+		TArray<FDialogTalk> Talk;
 };
 
 UCLASS()
@@ -44,12 +56,10 @@ public:
 	//Dialog
 	TArray<FConversations> conversation;
 
-	int test = 5;
-
 	//Function
 	UFUNCTION()
-		void EnableDialogBox(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor);
+		void EnableDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor);
 
 	UFUNCTION()
-		void DisableDialogBox();
+		void DisableDialogUI();
 };

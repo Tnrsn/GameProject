@@ -73,7 +73,7 @@ void APlayerControls::BeginPlay()
 	mainHUD->playerMaximumHealth = (mainHUD->beginningStats.constitution * 10) + ((mainHUD->characterStats.constitution - mainHUD->beginningStats.constitution) * 2);
 	mainHUD->playerCurrentHealth = mainHUD->playerMaximumHealth;
 
-	dialogSystem = NewObject<UNPCDialogSystem>();
+	//dialogSystem = NewObject<UNPCDialogSystem>();
 
 }
 
@@ -294,20 +294,13 @@ void APlayerControls::ClickEvents()
 			itemRef = Cast<AMasterItem>(SelectedActor);
 			AddItemToInventoryFromGround();
 		}
-		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("PlayerControls"))
+		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPCManagement_C"))
 		{
-			companion = Cast<APlayerControls>(SelectedActor);
-			if (companion)
+			NPC = Cast<ANPCManagement>(SelectedActor);
+			if (NPC)
 			{
-				if (companion->dialogSystem)
-				{
-					//UE_LOG(LogTemp, Warning, TEXT("%d"), companion->dialogSystem->test);
-					dialogSystem->conversation = Conversations;
-					dialogSystem->EnableDialogBox(dialogBoxUI, Cast<AActor>(companion));
-				}
+				NPC->StartDialog();
 			}
-			
-
 		}
 	}
 

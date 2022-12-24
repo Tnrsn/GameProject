@@ -8,17 +8,16 @@ UNPCDialogSystem::UNPCDialogSystem()
 
 }
 
-void UNPCDialogSystem::EnableDialogBox(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor)
+void UNPCDialogSystem::EnableDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor)
 {
 	dialogBox = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(actor->GetWorld(), 0), dialogBoxUI);
 	if (dialogBox)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("test"));
 		dialogBox->AddToViewport();
 	}
 }
 
-void UNPCDialogSystem::DisableDialogBox()
+void UNPCDialogSystem::DisableDialogUI()
 {
 	if (dialogBox)
 	{
