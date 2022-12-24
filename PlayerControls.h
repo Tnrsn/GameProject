@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/CharacterProfiles.h"
 #include "Public/NPCManagement.h"
 #include "Public/NPCDialogSystem.h"
 #include "DefaultGameMode.h"
@@ -83,6 +84,12 @@ public:
 	UPROPERTY()
 		ADefaultGameMode* gameMode;
 
+	UPROPERTY(BlueprintReadWrite)
+		bool inDialog = false;
+
+	UPROPERTY(BlueprintReadOnly)
+		UCharacterProfiles* characterProfile;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -114,7 +121,7 @@ public:
 	UFUNCTION()
 		void DecreaseItemFromInventory(FItemProperties itemProperties);
 	UFUNCTION(BlueprintCallable)
-		void PutOffItem(UManageWidgets* itemProperties, int WearableSlotIndex);
+		void PutOffItem(UCharacterProfiles* itemProperties, int WearableSlotIndex);
 	UFUNCTION(BlueprintCallable)
 		int GetArmorRating();
 

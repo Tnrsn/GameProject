@@ -26,7 +26,7 @@ public:
 
 
 	//Dialog System
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 		UNPCDialogSystem* dialogSystem;
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> dialogBoxUI;

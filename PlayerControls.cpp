@@ -54,24 +54,27 @@ void APlayerControls::BeginPlay()
 
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
 
-	mainHUD->characterStats.playerClass = Mage;
-	mainHUD->characterStats.strength = 15;
-	mainHUD->characterStats.dexterity = 10;
-	mainHUD->characterStats.intelligence = 10;
-	mainHUD->characterStats.constitution = 12;
-	mainHUD->characterStats.wisdom = 10;
+	characterProfile = NewObject<UCharacterProfiles>();
+	mainHUD->characterProfiles = characterProfile;
 	mainHUD->AddToViewport();
 
-	mainHUD->beginningStats = mainHUD->characterStats;
+	characterProfile->characterStats.playerClass = Mage;
+	characterProfile->characterStats.strength = 15;
+	characterProfile->characterStats.dexterity = 10;
+	characterProfile->characterStats.intelligence = 10;
+	characterProfile->characterStats.constitution = 12;
+	characterProfile->characterStats.wisdom = 10;
+
+	characterProfile->beginningStats = characterProfile->characterStats;
 
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
 
 	//Calculates Maximum Inventory Capacity
-	mainHUD->maxInventoryCapacity = (mainHUD->beginningStats.strength * 10) + ((mainHUD->characterStats.strength - mainHUD->beginningStats.strength) * 2);
+	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
 	//Calculates Maximum Health
-	mainHUD->playerMaximumHealth = (mainHUD->beginningStats.constitution * 10) + ((mainHUD->characterStats.constitution - mainHUD->beginningStats.constitution) * 2);
-	mainHUD->playerCurrentHealth = mainHUD->playerMaximumHealth;
+	characterProfile->playerMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+	characterProfile->playerCurrentHealth = characterProfile->playerMaximumHealth;
 
 	//dialogSystem = NewObject<UNPCDialogSystem>();
 
@@ -145,7 +148,7 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void APlayerControls::MoveForward(float value)
 {
-	if ((Controller != nullptr) && (value != 0))
+	if ((Controller != nullptr) && (value != 0) && (!inDialog))
 	{
 		if (lootObject)
 		{
@@ -171,7 +174,7 @@ void APlayerControls::MoveForward(float value)
 
 void APlayerControls::MoveRight(float value)
 {
-	if ((Controller != nullptr) && (value != 0))
+	if ((Controller != nullptr) && (value != 0) && (!inDialog))
 	{
 		if (lootObject)
 		{
@@ -247,18 +250,21 @@ void APlayerControls::CameraZoom(float value)
 
 void APlayerControls::OnMouseClick()
 {
-	if (lootObject)
+	if (!inDialog)
 	{
-		if (!lootObject->lootUIEnabled && !inventoryEnabled)
+		if (lootObject)
 		{
-			ClickEvents();
+			if (!lootObject->lootUIEnabled && !inventoryEnabled)
+			{
+				ClickEvents();
+			}
 		}
-	}
-	else
-	{
-		if (!inventoryEnabled)
+		else
 		{
-			ClickEvents();
+			if (!inventoryEnabled)
+			{
+				ClickEvents();
+			}
 		}
 	}
 }
@@ -300,6 +306,7 @@ void APlayerControls::ClickEvents()
 			if (NPC)
 			{
 				NPC->StartDialog();
+				inDialog = true;
 			}
 		}
 	}
@@ -423,7 +430,7 @@ bool APlayerControls::AddItemToInventory(FItemProperties itemProperties)
 {
 	
 	
-	if (mainHUD->currentInventoryWeight + itemProperties.weight <= mainHUD->maxInventoryCapacity)
+	if (characterProfile->currentInventoryWeight + itemProperties.weight <= characterProfile->maxInventoryCapacity)
 	{
 		bool added = false;
 
@@ -444,7 +451,7 @@ bool APlayerControls::AddItemToInventory(FItemProperties itemProperties)
 			itemProperties.currentAmount = 1;
 			inventory.Add(itemProperties);
 		}
-		mainHUD->currentInventoryWeight += itemProperties.weight;
+		characterProfile->currentInventoryWeight += itemProperties.weight;
 		return true;
 	}
 	else
@@ -483,57 +490,57 @@ void APlayerControls::DecreaseItemFromInventory(FItemProperties itemProperties)
 		inventory.RemoveAt(lastItemIndex);
 	}
 
-	mainHUD->currentInventoryWeight -= itemProperties.weight;
+	characterProfile->currentInventoryWeight -= itemProperties.weight;
 }
 
 
-void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int WearableSlotIndex)
+void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int WearableSlotIndex)
 {
 	if (WearableSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddWearableSlots in WP_Inventory Blueprint.)
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
 		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
 		AddItemToInventory(itemProperties->characterArmor.top);
 		itemProperties->characterArmor.top = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Hand && itemProperties->characterArmor.hand.isEquipped) //Hand
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.hand.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.hand.weight;
 		AddItemToInventory(itemProperties->characterArmor.hand);
 		itemProperties->characterArmor.hand = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Foot && itemProperties->characterArmor.foot.isEquipped) //Foot
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.foot.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.foot.weight;
 		AddItemToInventory(itemProperties->characterArmor.foot);
 		itemProperties->characterArmor.foot = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
 		AddItemToInventory(itemProperties->characterArmor.firstRing);
 		itemProperties->characterArmor.firstRing = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
 		AddItemToInventory(itemProperties->characterArmor.secondRing);
 		itemProperties->characterArmor.secondRing = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Neck && itemProperties->characterArmor.neck.isEquipped) //Neck
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.neck.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.neck.weight;
 		AddItemToInventory(itemProperties->characterArmor.neck);
 		itemProperties->characterArmor.neck = FItemProperties();
 	}
 	else if (WearableSlotIndex == 7 && itemProperties->characterArmor.weapon1.isEquipped)
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.weapon1.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.weapon1.weight;
 		AddItemToInventory(itemProperties->characterArmor.weapon1);
 		itemProperties->characterArmor.weapon1 = FItemProperties();
 
@@ -545,7 +552,7 @@ void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int WearableSlo
 	}
 	else if (WearableSlotIndex == 8 && itemProperties->characterArmor.weapon2.isEquipped)
 	{
-		mainHUD->currentInventoryWeight -= itemProperties->characterArmor.weapon2.weight;
+		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.weapon2.weight;
 		AddItemToInventory(itemProperties->characterArmor.weapon2);
 		itemProperties->characterArmor.weapon2 = FItemProperties();
 	}
@@ -555,15 +562,15 @@ void APlayerControls::PutOffItem(UManageWidgets* itemProperties, int WearableSlo
 int APlayerControls::GetArmorRating()
 {
 	int totalArmorRating = 0;
-	totalArmorRating += mainHUD->characterArmor.head.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.top.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.hand.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.neck.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.firstRing.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.secondRing.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.foot.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.weapon1.armorBonus;
-	totalArmorRating += mainHUD->characterArmor.weapon2.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.head.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.top.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.hand.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.neck.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.firstRing.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.secondRing.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.foot.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.weapon1.armorBonus;
+	totalArmorRating += characterProfile->characterArmor.weapon2.armorBonus;
 	return totalArmorRating;
 }
 
@@ -574,81 +581,81 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 	{
 		if (itemProperties.WearableType == OneHandedWeapon)
 		{
-			if (mainHUD->characterArmor.weapon1.isEquipped)
+			if (characterProfile->characterArmor.weapon1.isEquipped)
 			{
-				if (mainHUD->characterArmor.weapon1.WearableType == TwoHandedWeapon)
+				if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
 				{
-					PutOffItem(mainHUD, 7);
+					PutOffItem(characterProfile, 7);
 				}
-				else if (mainHUD->characterArmor.weapon2.isEquipped)
+				else if (characterProfile->characterArmor.weapon2.isEquipped)
 				{
-					if (mainHUD->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
+					if (characterProfile->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
 					{
-						PutOffItem(mainHUD, 7);
-						mainHUD->characterArmor.weapon1 = itemProperties;
-						mainHUD->characterArmor.weapon1.isEquipped = true;
-						DecreaseItemFromInventory(mainHUD->characterArmor.weapon1);
-						mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon1.weight;
+						PutOffItem(characterProfile, 7);
+						characterProfile->characterArmor.weapon1 = itemProperties;
+						characterProfile->characterArmor.weapon1.isEquipped = true;
+						DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
+						characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
 					}
-					else if(mainHUD->characterArmor.weapon2.WearableType == OneHandedWeapon)
+					else if(characterProfile->characterArmor.weapon2.WearableType == OneHandedWeapon)
 					{
-						PutOffItem(mainHUD, 8);
-						mainHUD->characterArmor.weapon2 = itemProperties;
-						mainHUD->characterArmor.weapon2.isEquipped = true;
-						mainHUD->characterArmor.weapon2.weapon2Item = true;
-						DecreaseItemFromInventory(mainHUD->characterArmor.weapon2);
-						mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon2.weight;
+						PutOffItem(characterProfile, 8);
+						characterProfile->characterArmor.weapon2 = itemProperties;
+						characterProfile->characterArmor.weapon2.isEquipped = true;
+						characterProfile->characterArmor.weapon2.weapon2Item = true;
+						DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
+						characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
 					}
 
 				}
 				else
 				{
 					//UE_LOG(LogTemp, Warning, TEXT("Weapon2 One handed weapon equipped"));
-					mainHUD->characterArmor.weapon2 = itemProperties;
-					mainHUD->characterArmor.weapon2.isEquipped = true;
-					mainHUD->characterArmor.weapon2.weapon2Item = true;
-					DecreaseItemFromInventory(mainHUD->characterArmor.weapon2);
-					mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon2.weight;
+					characterProfile->characterArmor.weapon2 = itemProperties;
+					characterProfile->characterArmor.weapon2.isEquipped = true;
+					characterProfile->characterArmor.weapon2.weapon2Item = true;
+					DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
+					characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
 				}/*_*/
 			}
 			else
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Weapon1 One handed weapon equipped"));
-				mainHUD->characterArmor.weapon1 = itemProperties;
-				mainHUD->characterArmor.weapon1.isEquipped = true;
-				DecreaseItemFromInventory(mainHUD->characterArmor.weapon1);
-				mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon1.weight;
+				characterProfile->characterArmor.weapon1 = itemProperties;
+				characterProfile->characterArmor.weapon1.isEquipped = true;
+				DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
+				characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
 			}
 		}//One Handed Weapons End
 		else if (itemProperties.WearableType == TwoHandedWeapon)
 		{
-			if (mainHUD->characterArmor.weapon1.isEquipped)
+			if (characterProfile->characterArmor.weapon1.isEquipped)
 			{
-				PutOffItem(mainHUD, 7);
+				PutOffItem(characterProfile, 7);
 			}
-			if (mainHUD->characterArmor.weapon2.isEquipped)
+			if (characterProfile->characterArmor.weapon2.isEquipped)
 			{
-				PutOffItem(mainHUD, 8);
+				PutOffItem(characterProfile, 8);
 			}
-			mainHUD->characterArmor.weapon1 = itemProperties;
-			mainHUD->characterArmor.weapon1.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.weapon1);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon1.weight;
+			characterProfile->characterArmor.weapon1 = itemProperties;
+			characterProfile->characterArmor.weapon1.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
 		}//Two Handede Weapons End
 		else if (itemProperties.WearableType == Shield)
 		{
-			if (mainHUD->characterArmor.weapon1.WearableType == TwoHandedWeapon)
+			if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
 			{
-				PutOffItem(mainHUD, 7);
+				PutOffItem(characterProfile, 7);
 			}
-			if (mainHUD->characterArmor.weapon2.isEquipped)
+			if (characterProfile->characterArmor.weapon2.isEquipped)
 			{
-				PutOffItem(mainHUD, 8);
+				PutOffItem(characterProfile, 8);
 			}
-			mainHUD->characterArmor.weapon2 = itemProperties;
-			mainHUD->characterArmor.weapon2.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.weapon2);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.weapon2.weight;
+			characterProfile->characterArmor.weapon2 = itemProperties;
+			characterProfile->characterArmor.weapon2.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
 		}
 
 	}
@@ -659,80 +666,80 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 	{
 		if (itemProperties.WearableType == Head)
 		{
-			if (mainHUD->characterArmor.head.isEquipped)
+			if (characterProfile->characterArmor.head.isEquipped)
 			{
-				PutOffItem(mainHUD, 0);
+				PutOffItem(characterProfile, 0);
 			}
-			mainHUD->characterArmor.head = itemProperties;
-			mainHUD->characterArmor.head.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.head);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.head.weight;
+			characterProfile->characterArmor.head = itemProperties;
+			characterProfile->characterArmor.head.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.head);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.head.weight;
 		}
 		else if (itemProperties.WearableType == Top)
 		{
-			if (mainHUD->characterArmor.top.isEquipped)
+			if (characterProfile->characterArmor.top.isEquipped)
 			{
-				PutOffItem(mainHUD, 1);
+				PutOffItem(characterProfile, 1);
 			}
-			mainHUD->characterArmor.top = itemProperties;
-			mainHUD->characterArmor.top.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.top);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.top.weight;
+			characterProfile->characterArmor.top = itemProperties;
+			characterProfile->characterArmor.top.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.top);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
 		}
 		else if (itemProperties.WearableType == Hand)
 		{
-			if (mainHUD->characterArmor.hand.isEquipped)
+			if (characterProfile->characterArmor.hand.isEquipped)
 			{
-				PutOffItem(mainHUD, 2);
+				PutOffItem(characterProfile, 2);
 			}
-			mainHUD->characterArmor.hand = itemProperties;
-			mainHUD->characterArmor.hand.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.hand);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.hand.weight;
+			characterProfile->characterArmor.hand = itemProperties;
+			characterProfile->characterArmor.hand.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.hand);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.hand.weight;
 		}
 		else if (itemProperties.WearableType == Foot)
 		{
-			if (mainHUD->characterArmor.foot.isEquipped)
+			if (characterProfile->characterArmor.foot.isEquipped)
 			{
-				PutOffItem(mainHUD, 3);
+				PutOffItem(characterProfile, 3);
 			}
-			mainHUD->characterArmor.foot = itemProperties;
-			mainHUD->characterArmor.foot.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.foot);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.foot.weight;
+			characterProfile->characterArmor.foot = itemProperties;
+			characterProfile->characterArmor.foot.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.foot);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.foot.weight;
 		}
 		else if (itemProperties.WearableType == FirstRing)
 		{
-			if (mainHUD->characterArmor.firstRing.isEquipped)
+			if (characterProfile->characterArmor.firstRing.isEquipped)
 			{
-				PutOffItem(mainHUD, 4);
+				PutOffItem(characterProfile, 4);
 			}
-			mainHUD->characterArmor.firstRing = itemProperties;
-			mainHUD->characterArmor.firstRing.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.firstRing);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.firstRing.weight;
+			characterProfile->characterArmor.firstRing = itemProperties;
+			characterProfile->characterArmor.firstRing.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.firstRing);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.firstRing.weight;
 		}
 		else if (itemProperties.WearableType == SecondRing)
 		{
-			if (mainHUD->characterArmor.secondRing.isEquipped)
+			if (characterProfile->characterArmor.secondRing.isEquipped)
 			{
-				PutOffItem(mainHUD, 5);
+				PutOffItem(characterProfile, 5);
 			}
-			mainHUD->characterArmor.secondRing = itemProperties;
-			mainHUD->characterArmor.secondRing.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.secondRing);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.secondRing.weight;
+			characterProfile->characterArmor.secondRing = itemProperties;
+			characterProfile->characterArmor.secondRing.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.secondRing);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.secondRing.weight;
 		}
 		else if (itemProperties.WearableType == Neck)
 		{
-			if (mainHUD->characterArmor.neck.isEquipped)
+			if (characterProfile->characterArmor.neck.isEquipped)
 			{
-				PutOffItem(mainHUD, 6);
+				PutOffItem(characterProfile, 6);
 			}
-			mainHUD->characterArmor.neck = itemProperties;
-			mainHUD->characterArmor.neck.isEquipped = true;
-			DecreaseItemFromInventory(mainHUD->characterArmor.neck);
-			mainHUD->currentInventoryWeight += mainHUD->characterArmor.neck.weight;
+			characterProfile->characterArmor.neck = itemProperties;
+			characterProfile->characterArmor.neck.isEquipped = true;
+			DecreaseItemFromInventory(characterProfile->characterArmor.neck);
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.neck.weight;
 		}
 
 	}
@@ -748,11 +755,11 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 
 		if (itemProperties.ConsumableEffect == Heal)
 		{
-			mainHUD->playerCurrentHealth += itemProperties.effectStrength;
+			characterProfile->playerCurrentHealth += itemProperties.effectStrength;
 		}
 		else if (itemProperties.ConsumableEffect == DamageHealth)
 		{
-			mainHUD->playerCurrentHealth -= itemProperties.effectStrength;
+			characterProfile->playerCurrentHealth -= itemProperties.effectStrength;
 		}
 		else if (itemProperties.ConsumableEffect == BoostSpeed)
 		{

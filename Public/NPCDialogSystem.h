@@ -18,7 +18,7 @@ struct FDialogAnswer
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		FString Answer;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
-		int newTalkIndex = 0;
+		int NPCReplyIndex = 0;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		int newConversationIndex = 0;
 };
@@ -35,7 +35,7 @@ struct FDialogTalk
 USTRUCT(BlueprintType)
 struct FConversations
 {
-	GENERATED_BODY();
+	GENERATED_BODY(); //Cevap verince ui yý yenilet
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TArray<FDialogTalk> Talk;
@@ -59,7 +59,8 @@ public:
 	//Function
 	UFUNCTION()
 		void EnableDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor);
-
 	UFUNCTION()
 		void DisableDialogUI();
+	UFUNCTION(BlueprintCallable)
+		void RefreshDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor);
 };

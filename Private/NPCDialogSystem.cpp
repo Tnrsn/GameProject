@@ -25,3 +25,9 @@ void UNPCDialogSystem::DisableDialogUI()
 	}
 }
 
+void UNPCDialogSystem::RefreshDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor)
+{
+	DisableDialogUI();
+	EnableDialogUI(dialogBoxUI, actor);
+}
+
