@@ -5,7 +5,7 @@
 
 UManageWidgets::UManageWidgets(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	characterProfiles = NewObject<UCharacterProfiles>();
+	//characterProfiles = NewObject<UCharacterProfiles>();
 }
 
 void UManageWidgets::ButtonPressed()
@@ -21,5 +21,5 @@ void UManageWidgets::ButtonReleased()
 float UManageWidgets::PlayerHealthBar()
 {
 	//playerCurrentHealth -= 0.1;
-	return characterProfiles->playerCurrentHealth / characterProfiles->playerMaximumHealth;
+	return characterProfiles->characterCurrentHealth / characterProfiles->characterMaximumHealth;
 }

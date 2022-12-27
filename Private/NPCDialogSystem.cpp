@@ -11,6 +11,7 @@ UNPCDialogSystem::UNPCDialogSystem()
 void UNPCDialogSystem::EnableDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor)
 {
 	dialogBox = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(actor->GetWorld(), 0), dialogBoxUI);
+
 	if (dialogBox)
 	{
 		dialogBox->AddToViewport();
@@ -30,4 +31,3 @@ void UNPCDialogSystem::RefreshDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AAc
 	DisableDialogUI();
 	EnableDialogUI(dialogBoxUI, actor);
 }
-

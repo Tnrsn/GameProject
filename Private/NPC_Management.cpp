@@ -1,0 +1,67 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "NPC_Management.h"
+
+//ANPC_Management::ANPC_Management()
+//{
+//
+//
+//}
+
+
+// Called when the game starts or when spawned
+void ANPC_Management::BeginPlay()
+{
+	Super::BeginPlay();
+
+	dialogSystem = NewObject<UNPCDialogSystem>();
+	characterProfile = NewObject<UCharacterProfiles>();
+}
+
+// Called every frame
+void ANPC_Management::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+}
+
+void ANPC_Management::StartDialog()
+{
+	playerControl = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	playerControl->SelectedActor = this;
+	dialogSystem->conversation = Conversations;
+	dialogSystem->EnableDialogUI(dialogBoxUI, this);
+}
+
+bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect)
+{
+	if (type == Neutral)
+	{
+		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+		return true;
+	}
+	else if (type == EndDialog)
+	{
+		dialogSystem->DisableDialogUI();
+		return false;
+	}
+	else if (type == Fight)
+	{
+		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+		return true;
+	}
+	else if (type == JoinToPlayer)
+	{
+		playerControl->groupMembers.Add(this);
+		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+		return true;
+	}
+	else if (type == ChangeRelation)
+	{
+		characterProfile->relationWithPlayer = FMath::Clamp(characterProfile->relationWithPlayer + relationEffect, -100, 100);
+		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+		return true;
+	}
+	return false;
+}

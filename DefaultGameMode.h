@@ -19,9 +19,4 @@ class GAMEPROJECT_API ADefaultGameMode : public AGameModeBase
 public:
 	ADefaultGameMode();
 
-	UPROPERTY(EditAnywhere)
-	TArray<APawn*> groupMembers;
-
-	static ADefaultGameMode* GetDefaultObject();
-
 };

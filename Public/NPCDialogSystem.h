@@ -10,6 +10,15 @@
 /**
  * 
  */
+UENUM(BlueprintType, Category = "Dialog System")
+enum FAnswerType
+{
+	Neutral,
+	EndDialog,
+	Fight,
+	JoinToPlayer,
+	ChangeRelation
+};
 USTRUCT(BlueprintType)
 struct FDialogAnswer
 {
@@ -20,7 +29,11 @@ struct FDialogAnswer
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		int NPCReplyIndex = 0;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
-		int newConversationIndex = 0;
+		int newConversationIndex = -1;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		TEnumAsByte<FAnswerType> Type;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		int relationEffect = 0;
 };
 USTRUCT(BlueprintType)
 struct FDialogTalk
@@ -35,7 +48,7 @@ struct FDialogTalk
 USTRUCT(BlueprintType)
 struct FConversations
 {
-	GENERATED_BODY(); //Cevap verince ui yý yenilet
+	GENERATED_BODY();
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TArray<FDialogTalk> Talk;
@@ -63,4 +76,5 @@ public:
 		void DisableDialogUI();
 	UFUNCTION(BlueprintCallable)
 		void RefreshDialogUI(TSubclassOf<UUserWidget> dialogBoxUI, AActor* actor);
+
 };

@@ -66,10 +66,13 @@ class GAMEPROJECT_API UCharacterProfiles : public UObject
 	
 
 public:
+	UPROPERTY() //It'll be between -100 and 100
+		int relationWithPlayer = 0;
+
 	UPROPERTY(BlueprintReadOnly)
-		float playerMaximumHealth;
+		float characterMaximumHealth;
 	UPROPERTY(BlueprintReadOnly)
-		float playerCurrentHealth;
+		float characterCurrentHealth;
 
 	UPROPERTY(BlueprintReadOnly)
 		int armorRating = 0;

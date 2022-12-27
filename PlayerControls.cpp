@@ -25,8 +25,6 @@ APlayerControls::APlayerControls()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	
-
 	/*playerController = UGameplayStatics::GetPlayerController(this, 0);*/
 }
 
@@ -35,14 +33,12 @@ void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
 
-	gameMode = ADefaultGameMode::GetDefaultObject();
-
 	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation().ToString());
 
-	if (gameMode->groupMembers.Num() == 0)
+	if (groupMembers.Num() == 0)
 	{
-		gameMode->groupMembers.Add(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		groupMembers.Add(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	}
 	
 
@@ -53,6 +49,7 @@ void APlayerControls::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 
 	characterProfile = NewObject<UCharacterProfiles>();
 	mainHUD->characterProfiles = characterProfile;
@@ -73,8 +70,8 @@ void APlayerControls::BeginPlay()
 	//Calculates Maximum Inventory Capacity
 	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
 	//Calculates Maximum Health
-	characterProfile->playerMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
-	characterProfile->playerCurrentHealth = characterProfile->playerMaximumHealth;
+	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 
 	//dialogSystem = NewObject<UNPCDialogSystem>();
 
@@ -163,7 +160,6 @@ void APlayerControls::MoveForward(float value)
 		{
 			ToggleInventory();
 		}
-
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -240,7 +236,7 @@ void APlayerControls::StopCameraRotation()
 
 void APlayerControls::CameraZoom(float value)
 {
-	if (!inventoryEnabled)
+	if (!inventoryEnabled && !inDialog)
 	{
 		newTargetArmLength -= value * 100;
 		newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
@@ -300,14 +296,9 @@ void APlayerControls::ClickEvents()
 			itemRef = Cast<AMasterItem>(SelectedActor);
 			AddItemToInventoryFromGround();
 		}
-		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPCManagement_C"))
+		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPC_Management_C"))
 		{
-			NPC = Cast<ANPCManagement>(SelectedActor);
-			if (NPC)
-			{
-				NPC->StartDialog();
-				inDialog = true;
-			}
+			inDialog = true;
 		}
 	}
 
@@ -755,11 +746,11 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 
 		if (itemProperties.ConsumableEffect == Heal)
 		{
-			characterProfile->playerCurrentHealth += itemProperties.effectStrength;
+			characterProfile->characterCurrentHealth += itemProperties.effectStrength;
 		}
 		else if (itemProperties.ConsumableEffect == DamageHealth)
 		{
-			characterProfile->playerCurrentHealth -= itemProperties.effectStrength;
+			characterProfile->characterCurrentHealth -= itemProperties.effectStrength;
 		}
 		else if (itemProperties.ConsumableEffect == BoostSpeed)
 		{
@@ -778,33 +769,42 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 
 void APlayerControls::ControlFirstCharacter()
 {
-	if (gameMode->groupMembers.Num() >= 1)
+	if (groupMembers.Num() >= 1)
 	{
-		Controller->Possess(gameMode->groupMembers[0]);
+		UE_LOG(LogTemp, Warning, TEXT("0"));
+		playerController->Possess(groupMembers[0]);
+		playerController->SetPawn(groupMembers[0]);
 	}
 }
 
 void APlayerControls::ControlSecondCharacter()
 {
-	if (gameMode->groupMembers.Num() >= 2)
+	UE_LOG(LogTemp, Warning, TEXT("%d"), groupMembers.Num());
+	if (groupMembers.Num() >= 2)
 	{
-		Controller->Possess(gameMode->groupMembers[1]);
+		UE_LOG(LogTemp, Warning, TEXT("1"));
+		playerController->Possess(groupMembers[1]);
+		playerController->SetPawn(groupMembers[1]);
 	}
 }
 
 void APlayerControls::ControlThirdCharacter()
 {
-	if (gameMode->groupMembers.Num() >= 3)
+	if (groupMembers.Num() >= 3)
 	{
-		Controller->Possess(gameMode->groupMembers[2]);
+		UE_LOG(LogTemp, Warning, TEXT("2"));
+		playerController->Possess(groupMembers[2]);
+		playerController->SetPawn(groupMembers[2]);
 	}
 }
 
 void APlayerControls::ControlFourthCharacter()
 {
-	if (gameMode->groupMembers.Num() >= 4)
+	if (groupMembers.Num() >= 4)
 	{
-		Controller->Possess(gameMode->groupMembers[3]);
+		UE_LOG(LogTemp, Warning, TEXT("3"));
+		playerController->Possess(groupMembers[3]);
+		playerController->SetPawn(groupMembers[3]);
 	}
 }
 

@@ -4,9 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Public/CharacterProfiles.h"
-#include "Public/NPCManagement.h"
+//#include "Public/NPCManagement.h"
 #include "Public/NPCDialogSystem.h"
-#include "DefaultGameMode.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
@@ -33,14 +32,16 @@ public:
 		USpringArmComponent* SpringArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		UCameraComponent* Camera;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UCapsuleComponent* capsuleComp;
 
 	//ClickEvent Objects
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 		AActor* SelectedActor;
 	UPROPERTY(BlueprintReadonly)
 		ALootObject* lootObject;
-	UPROPERTY(BlueprintReadOnly)
-		ANPCManagement* NPC;
+	//UPROPERTY(BlueprintReadOnly)
+	//	ANPCManagement* NPC;
 
 	//Player controller
 	UPROPERTY()
@@ -70,9 +71,12 @@ public:
 		bool inventoryEnabled = false;
 
 	//Camera
-	bool camRotating = false;
-	float targetArmLength = 250.f;
-	float newTargetArmLength = 250.f;
+	UPROPERTY()
+		bool camRotating = false;
+	UPROPERTY()
+		float targetArmLength = 250.f;
+	UPROPERTY()
+		float newTargetArmLength = 250.f;
 
 	//PathFinding
 	UPROPERTY(BlueprintReadWrite)
@@ -80,15 +84,14 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool characterOnMove = false;
 
-	//Group Management
-	UPROPERTY()
-		ADefaultGameMode* gameMode;
-
 	UPROPERTY(BlueprintReadWrite)
 		bool inDialog = false;
 
 	UPROPERTY(BlueprintReadOnly)
 		UCharacterProfiles* characterProfile;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		TArray<APawn*> groupMembers;
 
 protected:
 	// Called when the game starts or when spawned
@@ -98,8 +101,10 @@ public:
 	void StartCameraRotation();
 	void StopCameraRotation();
 
-	void MoveForward(float value);
-	void MoveRight(float value);
+	UFUNCTION(BlueprintCallable)
+		void MoveForward(float value);
+	UFUNCTION(BlueprintCallable)
+		void MoveRight(float value);
 
 	void CameraZoom(float value);
 	void OnMouseClick();

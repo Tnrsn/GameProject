@@ -7,8 +7,3 @@ ADefaultGameMode::ADefaultGameMode()
 {
 
 }
-
-ADefaultGameMode* ADefaultGameMode::GetDefaultObject()
-{
-	return Cast<ADefaultGameMode>(ADefaultGameMode::StaticClass()->GetDefaultObject());
-}

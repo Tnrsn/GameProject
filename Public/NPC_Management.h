@@ -3,27 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <Components/CapsuleComponent.h>
-#include "ManageWidgets.h"
-#include "NPCDialogSystem.h"
-#include "GameFramework/Actor.h"
-#include "NPCManagement.generated.h"
+#include "../PlayerControls.h"
+#include "NPC_Management.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class GAMEPROJECT_API ANPCManagement : public AActor
+class GAMEPROJECT_API ANPC_Management : public APlayerControls
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ANPCManagement();
 
-	//Components
-	UPROPERTY(VisibleAnywhere)
-		USkeletalMeshComponent* SkeletalMesh;
-	UPROPERTY(VisibleAnywhere)
-		UCapsuleComponent* capsuleComponent;
-
+public:
+	//ANPC_Management();
 
 	//Dialog System
 	UPROPERTY(BlueprintReadOnly)
@@ -37,16 +29,19 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 		int currentTalk = 0;
 
+	APlayerControls* playerControl;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void StartDialog();
+	UFUNCTION(BlueprintCallable)
+		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect); //Returns if player still in a dialog
 
 };
