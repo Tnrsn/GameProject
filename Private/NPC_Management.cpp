@@ -17,6 +17,28 @@ void ANPC_Management::BeginPlay()
 
 	dialogSystem = NewObject<UNPCDialogSystem>();
 	characterProfile = NewObject<UCharacterProfiles>();
+
+
+	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
+
+	characterProfile = NewObject<UCharacterProfiles>();
+	mainHUD->characterProfiles = characterProfile;
+
+	characterProfile->characterStats.playerClass = Mage;
+	characterProfile->characterStats.strength = 15;
+	characterProfile->characterStats.dexterity = 10;
+	characterProfile->characterStats.intelligence = 10;
+	characterProfile->characterStats.constitution = 12;
+	characterProfile->characterStats.wisdom = 10;
+
+	characterProfile->beginningStats = characterProfile->characterStats;
+
+	//Calculates Maximum Inventory Capacity
+	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
+	//Calculates Maximum Health
+	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 }
 
 // Called every frame
@@ -30,6 +52,7 @@ void ANPC_Management::StartDialog()
 {
 	playerControl = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	playerControl->SelectedActor = this;
+	playerControl->inDialog = true;
 	dialogSystem->conversation = Conversations;
 	dialogSystem->EnableDialogUI(dialogBoxUI, this);
 }
@@ -53,7 +76,10 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 	}
 	else if (type == JoinToPlayer)
 	{
-		playerControl->groupMembers.Add(this);
+		if (!playerControl->groupMembers.Contains(this))
+		{
+			playerControl->groupMembers.Add(this);
+		}
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 		return true;
 	}

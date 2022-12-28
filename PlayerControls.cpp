@@ -18,7 +18,7 @@ APlayerControls::APlayerControls()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = targetArmLength;
+	SpringArm->TargetArmLength = 250;
 	SpringArm->bUsePawnControlRotation = true;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
@@ -38,7 +38,7 @@ void APlayerControls::BeginPlay()
 
 	if (groupMembers.Num() == 0)
 	{
-		groupMembers.Add(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
 	}
 	
 
@@ -64,16 +64,13 @@ void APlayerControls::BeginPlay()
 
 	characterProfile->beginningStats = characterProfile->characterStats;
 
-
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), HUD->playerCurrentHealth);
-
 	//Calculates Maximum Inventory Capacity
 	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
 	//Calculates Maximum Health
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 
-	//dialogSystem = NewObject<UNPCDialogSystem>();
+
 
 }
 
@@ -113,10 +110,8 @@ void APlayerControls::Tick(float DeltaTime)
 	{
 		characterOnMove = false;
 	}
-	
 
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
-
+	UE_LOG(LogTemp, Warning, TEXT("%s: %f"), *GetName(), SpringArm->TargetArmLength);
 }
 
 // Called to bind functionality to input
@@ -285,7 +280,7 @@ void APlayerControls::ClickEvents()
 
 	if (SelectedActor)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
@@ -769,42 +764,40 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 
 void APlayerControls::ControlFirstCharacter()
 {
-	if (groupMembers.Num() >= 1)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("0"));
-		playerController->Possess(groupMembers[0]);
-		playerController->SetPawn(groupMembers[0]);
-	}
+	ControlNPC(0);
 }
 
 void APlayerControls::ControlSecondCharacter()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%d"), groupMembers.Num());
-	if (groupMembers.Num() >= 2)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("1"));
-		playerController->Possess(groupMembers[1]);
-		playerController->SetPawn(groupMembers[1]);
-	}
+	ControlNPC(1);
 }
 
 void APlayerControls::ControlThirdCharacter()
 {
-	if (groupMembers.Num() >= 3)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("2"));
-		playerController->Possess(groupMembers[2]);
-		playerController->SetPawn(groupMembers[2]);
-	}
+	ControlNPC(2);
 }
 
 void APlayerControls::ControlFourthCharacter()
 {
-	if (groupMembers.Num() >= 4)
+	ControlNPC(3);
+}
+
+void APlayerControls::ControlNPC(int index)
+{
+	if (groupMembers.Num() >= index + 1)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("3"));
-		playerController->Possess(groupMembers[3]);
-		playerController->SetPawn(groupMembers[3]);
+		camRotating = false;
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Camera->GetComponentRotation().ToString());
+
+		groupMembers[index]->groupMembers = groupMembers;
+
+		//SpringArm->AddRelativeRotation(FRotator(0, 50, 0));
+
+		playerController->Possess(groupMembers[index]);
+		//playerController->SetPawn(groupMembers[index]);
+
+		groupMembers[index]->newTargetArmLength = newTargetArmLength;
+		groupMembers[index]->SpringArm->TargetArmLength = SpringArm->TargetArmLength;
 	}
 }
 

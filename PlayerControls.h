@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Public/CharacterProfiles.h"
 //#include "Public/NPCManagement.h"
-#include "Public/NPCDialogSystem.h"
+//#include "Public/NPCDialogSystem.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
@@ -73,8 +73,8 @@ public:
 	//Camera
 	UPROPERTY()
 		bool camRotating = false;
-	UPROPERTY()
-		float targetArmLength = 250.f;
+	//UPROPERTY()
+	//	float targetArmLength = 250.f;
 	UPROPERTY()
 		float newTargetArmLength = 250.f;
 
@@ -91,7 +91,7 @@ public:
 		UCharacterProfiles* characterProfile;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		TArray<APawn*> groupMembers;
+		TArray<APlayerControls*> groupMembers;
 
 protected:
 	// Called when the game starts or when spawned
@@ -133,14 +133,16 @@ public:
 	//UPROPERTY(EditAnywhere)
 	//TArray<APawn*> groupMembers;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void ControlFirstCharacter();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void ControlSecondCharacter();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void ControlThirdCharacter();
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		void ControlFourthCharacter();
+	UFUNCTION()
+		void ControlNPC(int index);
 
 
 	// Called every frame

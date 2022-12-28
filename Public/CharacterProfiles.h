@@ -82,7 +82,7 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		int currentInventoryWeight = 0;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 		FCharacterStats beginningStats;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
 		FCharacterStats characterStats;

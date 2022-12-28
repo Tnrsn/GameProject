@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NPCDialogSystem.h"
 #include "../PlayerControls.h"
 #include "NPC_Management.generated.h"
 
