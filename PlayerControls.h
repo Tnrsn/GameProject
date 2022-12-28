@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Public/CharacterProfiles.h"
-//#include "Public/NPCManagement.h"
-//#include "Public/NPCDialogSystem.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
@@ -34,6 +32,14 @@ public:
 		UCameraComponent* Camera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCapsuleComponent* capsuleComp;
+
+	//Camera System
+	FVector2D mousePosition;
+	FVector2D mouseDelta;
+	FVector2D previousMousePosition;
+
+	float mouseSensitivity = .5f;
+	bool rotationStarted = false;
 
 	//ClickEvent Objects
 	UPROPERTY(BlueprintReadWrite)
@@ -100,6 +106,7 @@ protected:
 public:
 	void StartCameraRotation();
 	void StopCameraRotation();
+	void RotateCamera();
 
 	UFUNCTION(BlueprintCallable)
 		void MoveForward(float value);

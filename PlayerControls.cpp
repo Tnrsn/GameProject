@@ -19,13 +19,11 @@ APlayerControls::APlayerControls()
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->TargetArmLength = 250;
-	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bUsePawnControlRotation = false;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
-
-	/*playerController = UGameplayStatics::GetPlayerController(this, 0);*/
 }
 
 // Called when the game starts or when spawned
@@ -33,14 +31,12 @@ void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), gameMode->groupMembers.Num());
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation().ToString());
 
 	if (groupMembers.Num() == 0)
 	{
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
 	}
-	
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 
@@ -69,9 +65,6 @@ void APlayerControls::BeginPlay()
 	//Calculates Maximum Health
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
-
-
-
 }
 
 // Called every frame
@@ -86,10 +79,7 @@ void APlayerControls::Tick(float DeltaTime)
 
 	if (camRotating)
 	{
-		int x = 0;
-		int y = 0;
-		playerController->GetViewportSize(x, y);
-		playerController->SetMouseLocation(x/2, y/2);
+		RotateCamera();
 	}
 
 	if (itemRef)
@@ -111,7 +101,7 @@ void APlayerControls::Tick(float DeltaTime)
 		characterOnMove = false;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("%s: %f"), *GetName(), SpringArm->TargetArmLength);
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *Camera->GetComponentRotation().ToString());
 }
 
 // Called to bind functionality to input
@@ -156,7 +146,8 @@ void APlayerControls::MoveForward(float value)
 			ToggleInventory();
 		}
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		//const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0, Camera->GetComponentRotation().Yaw, 0);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 		AddMovementInput(Direction, value);
@@ -182,7 +173,8 @@ void APlayerControls::MoveRight(float value)
 		}
 
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		//const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation(0, Camera->GetComponentRotation().Yaw, 0);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, value);
@@ -195,38 +187,61 @@ void APlayerControls::StartCameraRotation()
 	{
 		if (!lootObject->lootUIEnabled && !inventoryEnabled)
 		{
-			playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-			playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+			//playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
+			//playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
 
 			GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
 			GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
 			GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
 			camRotating = true;
+			rotationStarted = true;
 		}
 	}
 	else if (!inventoryEnabled)
 	{
-		playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-		playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
+		//playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
+		//playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
 
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
 		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
 		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
 		camRotating = true;
+		rotationStarted = true;
 	}
 }
 void APlayerControls::StopCameraRotation()
 {
 	if (camRotating)
 	{
-		playerInput->AxisBindings.Pop();
-		playerInput->AxisBindings.Pop();
+		//playerInput->AxisBindings.Pop();
+		//playerInput->AxisBindings.Pop();
 
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
 		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 		camRotating = false;
 	}
+}
+
+void APlayerControls::RotateCamera()
+{
+	playerController->GetMousePosition(mousePosition.X, mousePosition.Y);
+
+	if (rotationStarted)
+	{
+		previousMousePosition = mousePosition;
+		rotationStarted = false;
+	}
+
+	mouseDelta = mousePosition - previousMousePosition;
+
+	FRotator NewRotation = SpringArm->GetComponentRotation();
+	NewRotation.Yaw += mouseDelta.X * mouseSensitivity;
+	NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch - mouseDelta.Y * mouseSensitivity, -70.0f, 30.0f); //Camera rotation limits 
+
+	SpringArm->SetWorldRotation(NewRotation);
+
+	previousMousePosition = mousePosition;
 }
 
 void APlayerControls::CameraZoom(float value)
@@ -791,13 +806,12 @@ void APlayerControls::ControlNPC(int index)
 
 		groupMembers[index]->groupMembers = groupMembers;
 
-		//SpringArm->AddRelativeRotation(FRotator(0, 50, 0));
-
-		playerController->Possess(groupMembers[index]);
-		//playerController->SetPawn(groupMembers[index]);
-
 		groupMembers[index]->newTargetArmLength = newTargetArmLength;
 		groupMembers[index]->SpringArm->TargetArmLength = SpringArm->TargetArmLength;
+
+		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetComponentRotation());
+
+		playerController->Possess(groupMembers[index]);
 	}
 }
 
