@@ -25,12 +25,7 @@ void ANPC_Management::BeginPlay()
 	characterProfile = NewObject<UCharacterProfiles>();
 	mainHUD->characterProfiles = characterProfile;
 
-	characterProfile->characterStats.playerClass = Mage;
-	characterProfile->characterStats.strength = 15;
-	characterProfile->characterStats.dexterity = 10;
-	characterProfile->characterStats.intelligence = 10;
-	characterProfile->characterStats.constitution = 12;
-	characterProfile->characterStats.wisdom = 10;
+	characterProfile->characterStats = characterStats;
 
 	characterProfile->beginningStats = characterProfile->characterStats;
 

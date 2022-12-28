@@ -101,6 +101,8 @@ void APlayerControls::Tick(float DeltaTime)
 		characterOnMove = false;
 	}
 
+	//SpringArm->SetRelativeRotation(SpringArm->GetComponentRotation());
+	 //SpringArm->SetRelativeRotation(FRotator(10, 10, 10));
 	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *Camera->GetComponentRotation().ToString());
 }
 
@@ -804,14 +806,27 @@ void APlayerControls::ControlNPC(int index)
 		camRotating = false;
 		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Camera->GetComponentRotation().ToString());
 
+		mainHUD->RemoveFromParent();
+		groupMembers[index]->mainHUD->AddToViewport();
+
 		groupMembers[index]->groupMembers = groupMembers;
 
 		groupMembers[index]->newTargetArmLength = newTargetArmLength;
 		groupMembers[index]->SpringArm->TargetArmLength = SpringArm->TargetArmLength;
 
-		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetComponentRotation());
+		groupMembers[index]->SpringArm->bEnableCameraRotationLag = false;
+		SpringArm->bEnableCameraRotationLag = false;
+		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetRelativeRotation());
 
 		playerController->Possess(groupMembers[index]);
+
+		FTimerHandle enableLagTimer;
+		GetWorldTimerManager().SetTimer(enableLagTimer, 
+			FTimerDelegate::CreateLambda([=]() 
+			{
+				groupMembers[index]->SpringArm->bEnableCameraRotationLag = true;
+				SpringArm->bEnableCameraRotationLag = true;
+			}), 0.6f, false);
 	}
 }
 

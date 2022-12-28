@@ -38,7 +38,7 @@ public:
 	FVector2D mouseDelta;
 	FVector2D previousMousePosition;
 
-	float mouseSensitivity = .5f;
+	float mouseSensitivity = .3f;
 	bool rotationStarted = false;
 
 	//ClickEvent Objects
