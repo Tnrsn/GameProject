@@ -20,6 +20,8 @@ APlayerControls::APlayerControls()
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->TargetArmLength = 250;
 	SpringArm->bUsePawnControlRotation = false;
+	//capsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
@@ -39,6 +41,7 @@ void APlayerControls::BeginPlay()
 	}
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
+	
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
@@ -101,9 +104,10 @@ void APlayerControls::Tick(float DeltaTime)
 		characterOnMove = false;
 	}
 
-	//SpringArm->SetRelativeRotation(SpringArm->GetComponentRotation());
-	 //SpringArm->SetRelativeRotation(FRotator(10, 10, 10));
-	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *Camera->GetComponentRotation().ToString());
+	//SpringArm->SetWorldLocation(
+	//FVector(FMath::FInterpTo(SpringArm->GetComponentLocation().X, 43, GetWorld()->GetDeltaSeconds(), 0.5f),
+	//		FMath::FInterpTo(SpringArm->GetComponentLocation().Y, 43, GetWorld()->GetDeltaSeconds(), 0.5f),
+	//		FMath::FInterpTo(SpringArm->GetComponentLocation().Z, 43, GetWorld()->GetDeltaSeconds(), 0.5f)));
 }
 
 // Called to bind functionality to input
@@ -801,7 +805,7 @@ void APlayerControls::ControlFourthCharacter()
 
 void APlayerControls::ControlNPC(int index)
 {
-	if (groupMembers.Num() >= index + 1)
+	if (groupMembers.Find(this) != index && !inDialog && groupMembers.Num() >= index + 1)
 	{
 		camRotating = false;
 		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Camera->GetComponentRotation().ToString());
@@ -818,7 +822,27 @@ void APlayerControls::ControlNPC(int index)
 		SpringArm->bEnableCameraRotationLag = false;
 		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetRelativeRotation());
 
+		if (lootObject)
+		{
+			lootObject->moveToLootObject = false;
+			lootObject->DisableLootUI(SelectedActor);
+		}
+
 		playerController->Possess(groupMembers[index]);
+		if (inventoryEnabled)
+		{
+			ToggleInventory();
+			groupMembers[index]->ToggleInventory();
+		}
+
+
+
+		//Smooth camera switch
+		groupMembers[index]->SpringArm->TargetOffset.X = SpringArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X;
+		groupMembers[index]->SpringArm->TargetOffset.Y = SpringArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y;
+		groupMembers[index]->SpringArm->TargetOffset.Z = SpringArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z;
+
+		SmoothCameraSwitch(index, 5.f);
 
 		FTimerHandle enableLagTimer;
 		GetWorldTimerManager().SetTimer(enableLagTimer, 
@@ -829,4 +853,29 @@ void APlayerControls::ControlNPC(int index)
 			}), 0.6f, false);
 	}
 }
+
+void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
+{
+
+	groupMembers[index]->SpringArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	groupMembers[index]->SpringArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	groupMembers[index]->SpringArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+
+	if (FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.X) < 0.2f &&
+		FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.Y) < 0.2f &&
+		FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.Z) < 0.2f)
+	{
+		groupMembers[index]->SpringArm->TargetOffset = FVector(0);
+		return;
+	}
+	else
+	{
+		FTimerHandle repeatTime;
+		GetWorldTimerManager().SetTimer(repeatTime, FTimerDelegate::CreateLambda([=]() {
+			SmoothCameraSwitch(index, moveSpeed); 
+			}), GetWorld()->GetDeltaSeconds(), false);
+	}
+}
+
+
 

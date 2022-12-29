@@ -151,6 +151,8 @@ public:
 	UFUNCTION()
 		void ControlNPC(int index);
 
+	UFUNCTION()
+		void SmoothCameraSwitch(int index, float moveSpeed = 1.f);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
