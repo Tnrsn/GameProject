@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+//#include "Public/CharacterAIController.h"
+#include <Blueprint/AIBlueprintHelperLibrary.h>
+#include <NavigationSystem.h>
+//#include "Public/PathFindingSystem.h"
 #include "Public/CharacterProfiles.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
-#include <Engine/World.h>
+//#include <Engine/World.h>
 #include <Kismet/GameplayStatics.h>
 #include <Camera/CameraComponent.h>
 #include <GameFramework/SpringArmComponent.h>
@@ -85,11 +89,15 @@ public:
 		float newTargetArmLength = 250.f;
 
 	//PathFinding
-	UPROPERTY(BlueprintReadWrite)
-		bool onAIControl = true;
-	UPROPERTY(BlueprintReadOnly)
-		bool characterOnMove = false;
+	UPROPERTY()
+		FVector targetLocation;
+	UPROPERTY()
+		bool onAIControl = false;
+	UPROPERTY()
+		AActor* actorToBeGone;
 
+
+	//Character interactions
 	UPROPERTY(BlueprintReadWrite)
 		bool inDialog = false;
 
@@ -98,6 +106,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<APlayerControls*> groupMembers;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -150,7 +159,12 @@ public:
 		void ControlFourthCharacter();
 	UFUNCTION()
 		void ControlNPC(int index);
-
+	UFUNCTION()
+		void MoveToLocation(const AActor* actor, const FVector& Location);
+	UFUNCTION()
+		bool CheckIfAnyUIEnabled();
+	UFUNCTION()
+		void StopAIControl(bool goalDone);
 	UFUNCTION()
 		void SmoothCameraSwitch(int index, float moveSpeed = 1.f);
 

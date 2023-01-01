@@ -16,7 +16,7 @@ class GAMEPROJECT_API ANPC_Management : public APlayerControls
 	GENERATED_BODY()
 
 public:
-	//ANPC_Management();
+	ANPC_Management();
 
 	//Dialog System
 	UPROPERTY(BlueprintReadOnly)

@@ -3,11 +3,10 @@
 
 #include "NPC_Management.h"
 
-//ANPC_Management::ANPC_Management()
-//{
-//
-//
-//}
+ANPC_Management::ANPC_Management()
+{
+
+}
 
 
 // Called when the game starts or when spawned
@@ -34,13 +33,13 @@ void ANPC_Management::BeginPlay()
 	//Calculates Maximum Health
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+
 }
 
 // Called every frame
 void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ANPC_Management::StartDialog()

@@ -9,6 +9,7 @@ APlayerControls::APlayerControls()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 
@@ -20,12 +21,12 @@ APlayerControls::APlayerControls()
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->TargetArmLength = 250;
 	SpringArm->bUsePawnControlRotation = false;
-	//capsuleComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
+
+	//AIController = CreateDefaultSubobject<AAIController>("CharacterAIController");
 }
 
 // Called when the game starts or when spawned
@@ -33,15 +34,14 @@ void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation().ToString());
-
 	if (groupMembers.Num() == 0)
 	{
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
 	}
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
-	
+	//AIController = NewObject<APathFindingSystem>(this, "AIController");
+	//AIController->Possess(this);
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
@@ -68,6 +68,15 @@ void APlayerControls::BeginPlay()
 	//Calculates Maximum Health
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+
+	//if (AIController)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *AIController->GetName());
+	//	playerController->UnPossess();
+	//	AIController->Possess(this);
+	//	UE_LOG(LogTemp, Warning, TEXT("heyy"));
+	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(playerController, FVector(0));
+	//}
 }
 
 // Called every frame
@@ -94,20 +103,24 @@ void APlayerControls::Tick(float DeltaTime)
 	}
 
 
-	if (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A) 
-		|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D))
+	if (onAIControl)
 	{
-		characterOnMove = true;
-	}
-	else
-	{
-		characterOnMove = false;
+		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
+			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
+		{
+			StopAIControl(true);
+		}
+		if (lootObject)
+		{
+			StopAIControl(lootObject->lootUIEnabled);
+		}
+		else if (itemRef)
+		{
+			StopAIControl(itemTaken);
+		}
 	}
 
-	//SpringArm->SetWorldLocation(
-	//FVector(FMath::FInterpTo(SpringArm->GetComponentLocation().X, 43, GetWorld()->GetDeltaSeconds(), 0.5f),
-	//		FMath::FInterpTo(SpringArm->GetComponentLocation().Y, 43, GetWorld()->GetDeltaSeconds(), 0.5f),
-	//		FMath::FInterpTo(SpringArm->GetComponentLocation().Z, 43, GetWorld()->GetDeltaSeconds(), 0.5f)));
+	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
 
 // Called to bind functionality to input
@@ -301,23 +314,39 @@ void APlayerControls::ClickEvents()
 
 	if (SelectedActor)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
+
+			actorToBeGone = SelectedActor;
+			MoveToLocation(lootObject, FVector(0));
 		}
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))//itemRef
 		{
 			itemRef = Cast<AMasterItem>(SelectedActor);
 			AddItemToInventoryFromGround();
+
+			actorToBeGone = SelectedActor;
+			MoveToLocation(itemRef, FVector(0));
 		}
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPC_Management_C"))
 		{
 			inDialog = true;
+
+			actorToBeGone = SelectedActor;
+			MoveToLocation(actorToBeGone, FVector(0));
+		}
+		else
+		{
+			targetLocation = HitResult.Location;
+			actorToBeGone = nullptr;
+			MoveToLocation(nullptr, targetLocation);
 		}
 	}
 
+	//MoveToLocation(HitResult.Location);
 }
 
 void APlayerControls::ToggleInventory()
@@ -370,7 +399,6 @@ void APlayerControls::ToggleInventory()
 
 void APlayerControls::AddItemToInventoryFromGround()
 {
-	//itemRef = Cast<AMasterItem>(SelectedActor);
 	if (itemRef->canLoot)
 	{
 		bool taken = AddItemToInventory(itemRef->ItemProperties);
@@ -808,7 +836,6 @@ void APlayerControls::ControlNPC(int index)
 	if (groupMembers.Find(this) != index && !inDialog && groupMembers.Num() >= index + 1)
 	{
 		camRotating = false;
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), *Camera->GetComponentRotation().ToString());
 
 		mainHUD->RemoveFromParent();
 		groupMembers[index]->mainHUD->AddToViewport();
@@ -828,20 +855,29 @@ void APlayerControls::ControlNPC(int index)
 			lootObject->DisableLootUI(SelectedActor);
 		}
 
+		groupMembers[index]->GetController()->Possess(this);
 		playerController->Possess(groupMembers[index]);
+
+		if (onAIControl)
+		{
+			MoveToLocation(actorToBeGone, targetLocation);
+		}
+		if (groupMembers[index]->onAIControl)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("hey"));
+			groupMembers[index]->MoveToLocation(groupMembers[index]->actorToBeGone, groupMembers[index]->targetLocation);
+		}
+
 		if (inventoryEnabled)
 		{
 			ToggleInventory();
 			groupMembers[index]->ToggleInventory();
 		}
 
-
-
 		//Smooth camera switch
-		groupMembers[index]->SpringArm->TargetOffset.X = SpringArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X;
-		groupMembers[index]->SpringArm->TargetOffset.Y = SpringArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y;
-		groupMembers[index]->SpringArm->TargetOffset.Z = SpringArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z;
-
+		groupMembers[index]->SpringArm->TargetOffset.X = (SpringArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X) + SpringArm->TargetOffset.X;
+		groupMembers[index]->SpringArm->TargetOffset.Y = (SpringArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y) + SpringArm->TargetOffset.Y;
+		groupMembers[index]->SpringArm->TargetOffset.Z = (SpringArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z) + SpringArm->TargetOffset.Z;
 		SmoothCameraSwitch(index, 5.f);
 
 		FTimerHandle enableLagTimer;
@@ -850,13 +886,13 @@ void APlayerControls::ControlNPC(int index)
 			{
 				groupMembers[index]->SpringArm->bEnableCameraRotationLag = true;
 				SpringArm->bEnableCameraRotationLag = true;
-			}), 0.6f, false);
+			}), GetWorld()->GetDeltaSeconds(), false);
 	}
 }
 
+
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
-
 	groupMembers[index]->SpringArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 	groupMembers[index]->SpringArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 	groupMembers[index]->SpringArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
@@ -877,5 +913,49 @@ void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 	}
 }
 
+void APlayerControls::MoveToLocation(const AActor* actor, const FVector& Location)
+{
+	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(playerController, Location);
 
+	if (!CheckIfAnyUIEnabled() && actor)
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), actor);
+		onAIControl = true;
+	}
+	else if(!CheckIfAnyUIEnabled())
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
+		onAIControl = true;
+	}
+}
 
+bool APlayerControls::CheckIfAnyUIEnabled()
+{
+	if (lootObject)
+	{
+		if (inDialog || inventoryEnabled || lootObject->lootUIEnabled)
+		{
+			return true;
+		}
+	}
+	else if (inDialog || inventoryEnabled)
+	{
+		return false;
+	}
+
+	return false;
+}
+
+void APlayerControls::StopAIControl(bool goalDone)
+{
+	if (goalDone)
+	{
+		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
+		onAIControl = false;
+		itemTaken = false;
+		if (itemRef)
+		{
+			itemRef->moveToObject = false;
+		}
+	}
+}
