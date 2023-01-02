@@ -901,12 +901,19 @@ void APlayerControls::ControlNPC(int index)
 			}), GetWorld()->GetDeltaSeconds(), false);
 	}
 
+	//Change controlledChar variables in all group members
 	controlledChar = groupMembers[index];
 
 	for (int i = 0; i <= groupMembers.Num() - 1; i++)
 	{
 		groupMembers[i]->controlledChar = controlledChar;
 	}
+
+	//Switch characterIndex
+	int temp;
+	temp = groupMembers[index]->charIndex;
+	groupMembers[index]->charIndex = charIndex;
+	charIndex = temp;
 }
 
 
@@ -985,28 +992,19 @@ void APlayerControls::FollowControlledCharacter()
 	{
 		if (600.f < GetDistanceTo(controlledChar))
 		{
-			FVector actorForwardVector;
-			FVector offsetVector;
 			FVector desiredLocation;
 
 			if (charIndex == 1)
 			{
-				actorForwardVector = controlledChar->GetActorForwardVector();
-				//*********************************to behind/*******************************************************to right
-				offsetVector = -actorForwardVector * 155 + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * 290;
-				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+				desiredLocation = GetPlayerBehindLocation(155, 290);
 			}
 			else if (charIndex == 2)
 			{
-				actorForwardVector = controlledChar->GetActorForwardVector();
-				offsetVector = -actorForwardVector * 200;
-				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+				desiredLocation = GetPlayerBehindLocation(200, 0);
 			}
 			else if (charIndex == 3)
 			{
-				actorForwardVector = controlledChar->GetActorForwardVector();
-				offsetVector = -actorForwardVector * 140 + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * -305;
-				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+				desiredLocation = GetPlayerBehindLocation(140, -305);
 			}
 
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), desiredLocation);
@@ -1018,4 +1016,14 @@ void APlayerControls::FollowControlledCharacter()
 			followingChar = false;
 		}
 	}
+}
+
+FVector APlayerControls::GetPlayerBehindLocation(float behind, float right)
+{
+	FVector actorForwardVector;
+	FVector offsetVector;
+
+	actorForwardVector = controlledChar->GetActorForwardVector();
+	offsetVector = -actorForwardVector * behind + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * right;
+	return controlledChar->GetActorLocation() + offsetVector;
 }

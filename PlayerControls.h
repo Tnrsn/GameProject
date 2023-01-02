@@ -170,6 +170,8 @@ public:
 		void SmoothCameraSwitch(int index, float moveSpeed = 1.f);
 	UFUNCTION()
 		void FollowControlledCharacter();
+	UFUNCTION()
+		FVector GetPlayerBehindLocation(float behind, float right);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
