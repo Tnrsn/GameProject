@@ -9,7 +9,6 @@ APlayerControls::APlayerControls()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 
@@ -34,14 +33,20 @@ void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (groupMembers.Num() == 0)
+	playerController = UGameplayStatics::GetPlayerController(this, 0);
+
+	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
+		inGroup = true;
+		onAIControl = false;
+		charIndex = 0;
 	}
 
-	playerController = UGameplayStatics::GetPlayerController(this, 0);
-	//AIController = NewObject<APathFindingSystem>(this, "AIController");
-	//AIController->Possess(this);
+	if (inGroup)
+	{
+		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
@@ -68,15 +73,6 @@ void APlayerControls::BeginPlay()
 	//Calculates Maximum Health
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
-
-	//if (AIController)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *AIController->GetName());
-	//	playerController->UnPossess();
-	//	AIController->Possess(this);
-	//	UE_LOG(LogTemp, Warning, TEXT("heyy"));
-	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(playerController, FVector(0));
-	//}
 }
 
 // Called every frame
@@ -102,23 +98,33 @@ void APlayerControls::Tick(float DeltaTime)
 		}
 	}
 
-
-	if (onAIControl)
+	if (onAIMovement)
 	{
 		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
 			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
 		{
-			StopAIControl(true);
+			StopAIMovement(true);
 		}
 		if (lootObject)
 		{
-			StopAIControl(lootObject->lootUIEnabled);
+			StopAIMovement(lootObject->lootUIEnabled);
 		}
 		else if (itemRef)
 		{
-			StopAIControl(itemTaken);
+			StopAIMovement(itemTaken);
+		}
+		if (FVector::Dist(GetActorLocation(), targetLocation) < 120)
+		{
+			onAIMovement = false;
 		}
 	}
+
+
+	
+
+	FollowControlledCharacter();
+
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), GetVelocity().Size());
 
 	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
@@ -837,6 +843,9 @@ void APlayerControls::ControlNPC(int index)
 	{
 		camRotating = false;
 
+		onAIControl = true;
+		groupMembers[index]->onAIControl = false;
+
 		mainHUD->RemoveFromParent();
 		groupMembers[index]->mainHUD->AddToViewport();
 
@@ -849,25 +858,28 @@ void APlayerControls::ControlNPC(int index)
 		SpringArm->bEnableCameraRotationLag = false;
 		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetRelativeRotation());
 
+		//Close loot ui if It's enabled
 		if (lootObject)
 		{
 			lootObject->moveToLootObject = false;
 			lootObject->DisableLootUI(SelectedActor);
 		}
 
+		//Switch controllers
 		groupMembers[index]->GetController()->Possess(this);
 		playerController->Possess(groupMembers[index]);
-
-		if (onAIControl)
+		
+		//Continue to walk if It's on AI Control before switch
+		if (onAIMovement)
 		{
 			MoveToLocation(actorToBeGone, targetLocation);
 		}
-		if (groupMembers[index]->onAIControl)
+		if (groupMembers[index]->onAIMovement)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("hey"));
 			groupMembers[index]->MoveToLocation(groupMembers[index]->actorToBeGone, groupMembers[index]->targetLocation);
 		}
 
+		//Switch inventory to possessed characters inventory
 		if (inventoryEnabled)
 		{
 			ToggleInventory();
@@ -878,7 +890,7 @@ void APlayerControls::ControlNPC(int index)
 		groupMembers[index]->SpringArm->TargetOffset.X = (SpringArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X) + SpringArm->TargetOffset.X;
 		groupMembers[index]->SpringArm->TargetOffset.Y = (SpringArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y) + SpringArm->TargetOffset.Y;
 		groupMembers[index]->SpringArm->TargetOffset.Z = (SpringArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z) + SpringArm->TargetOffset.Z;
-		SmoothCameraSwitch(index, 5.f);
+		SmoothCameraSwitch(index, 10.f);
 
 		FTimerHandle enableLagTimer;
 		GetWorldTimerManager().SetTimer(enableLagTimer, 
@@ -887,6 +899,13 @@ void APlayerControls::ControlNPC(int index)
 				groupMembers[index]->SpringArm->bEnableCameraRotationLag = true;
 				SpringArm->bEnableCameraRotationLag = true;
 			}), GetWorld()->GetDeltaSeconds(), false);
+	}
+
+	controlledChar = groupMembers[index];
+
+	for (int i = 0; i <= groupMembers.Num() - 1; i++)
+	{
+		groupMembers[i]->controlledChar = controlledChar;
 	}
 }
 
@@ -909,7 +928,7 @@ void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 		FTimerHandle repeatTime;
 		GetWorldTimerManager().SetTimer(repeatTime, FTimerDelegate::CreateLambda([=]() {
 			SmoothCameraSwitch(index, moveSpeed); 
-			}), GetWorld()->GetDeltaSeconds(), false);
+			}), GetWorld()->GetDeltaSeconds() / 2, false);
 	}
 }
 
@@ -920,12 +939,12 @@ void APlayerControls::MoveToLocation(const AActor* actor, const FVector& Locatio
 	if (!CheckIfAnyUIEnabled() && actor)
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), actor);
-		onAIControl = true;
+		onAIMovement = true;
 	}
 	else if(!CheckIfAnyUIEnabled())
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), Location);
-		onAIControl = true;
+		onAIMovement = true;
 	}
 }
 
@@ -946,16 +965,57 @@ bool APlayerControls::CheckIfAnyUIEnabled()
 	return false;
 }
 
-void APlayerControls::StopAIControl(bool goalDone)
+void APlayerControls::StopAIMovement(bool goalDone)
 {
 	if (goalDone)
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
-		onAIControl = false;
+		onAIMovement = false;
 		itemTaken = false;
 		if (itemRef)
 		{
 			itemRef->moveToObject = false;
+		}
+	}
+}
+
+void APlayerControls::FollowControlledCharacter()
+{
+	if (!onAIMovement && onAIControl && inGroup)
+	{
+		if (600.f < GetDistanceTo(controlledChar))
+		{
+			FVector actorForwardVector;
+			FVector offsetVector;
+			FVector desiredLocation;
+
+			if (charIndex == 1)
+			{
+				actorForwardVector = controlledChar->GetActorForwardVector();
+				//*********************************to behind/*******************************************************to right
+				offsetVector = -actorForwardVector * 155 + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * 290;
+				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+			}
+			else if (charIndex == 2)
+			{
+				actorForwardVector = controlledChar->GetActorForwardVector();
+				offsetVector = -actorForwardVector * 200;
+				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+			}
+			else if (charIndex == 3)
+			{
+				actorForwardVector = controlledChar->GetActorForwardVector();
+				offsetVector = -actorForwardVector * 140 + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * -305;
+				desiredLocation = controlledChar->GetActorLocation() + offsetVector;
+			}
+
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), desiredLocation);
+			followingChar = true;
+		}
+		else if(100.f > GetDistanceTo(controlledChar) && followingChar)
+		{
+			StopAIMovement(true);
+			followingChar = false;
 		}
 	}
 }

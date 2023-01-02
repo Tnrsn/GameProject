@@ -50,8 +50,6 @@ public:
 		AActor* SelectedActor;
 	UPROPERTY(BlueprintReadonly)
 		ALootObject* lootObject;
-	//UPROPERTY(BlueprintReadOnly)
-	//	ANPCManagement* NPC;
 
 	//Player controller
 	UPROPERTY()
@@ -76,15 +74,12 @@ public:
 		AMasterItem* itemRef;
 	UPROPERTY(BlueprintReadWrite)
 		bool itemTaken = false;
-
 	UPROPERTY(BlueprintReadOnly)
 		bool inventoryEnabled = false;
 
 	//Camera
 	UPROPERTY()
 		bool camRotating = false;
-	//UPROPERTY()
-	//	float targetArmLength = 250.f;
 	UPROPERTY()
 		float newTargetArmLength = 250.f;
 
@@ -92,20 +87,29 @@ public:
 	UPROPERTY()
 		FVector targetLocation;
 	UPROPERTY()
-		bool onAIControl = false;
-	UPROPERTY()
 		AActor* actorToBeGone;
-
 
 	//Character interactions
 	UPROPERTY(BlueprintReadWrite)
 		bool inDialog = false;
-
 	UPROPERTY(BlueprintReadOnly)
 		UCharacterProfiles* characterProfile;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<APlayerControls*> groupMembers;
+	UPROPERTY()
+		bool inGroup = false;
+
+	//AI Controls
+	UPROPERTY()
+		bool onAIMovement = false;
+	UPROPERTY()
+		bool followingChar;
+	UPROPERTY()
+		bool onAIControl = true;
+	UPROPERTY()
+		APlayerControls* controlledChar;
+	UPROPERTY()
+		int charIndex;
 
 
 protected:
@@ -146,9 +150,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int GetArmorRating();
 
-	//UPROPERTY(EditAnywhere)
-	//TArray<APawn*> groupMembers;
-
 	UFUNCTION()
 		void ControlFirstCharacter();
 	UFUNCTION()
@@ -164,9 +165,11 @@ public:
 	UFUNCTION()
 		bool CheckIfAnyUIEnabled();
 	UFUNCTION()
-		void StopAIControl(bool goalDone);
+		void StopAIMovement(bool goalDone);
 	UFUNCTION()
 		void SmoothCameraSwitch(int index, float moveSpeed = 1.f);
+	UFUNCTION()
+		void FollowControlledCharacter();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -17,7 +17,6 @@ void ANPC_Management::BeginPlay()
 	dialogSystem = NewObject<UNPCDialogSystem>();
 	characterProfile = NewObject<UCharacterProfiles>();
 
-
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
 	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 
@@ -34,12 +33,15 @@ void ANPC_Management::BeginPlay()
 	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
 	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 
+	groupMembers.Reset();
 }
 
 // Called every frame
 void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	
 }
 
 void ANPC_Management::StartDialog()
@@ -72,7 +74,18 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 	{
 		if (!playerControl->groupMembers.Contains(this))
 		{
+			controlledChar = playerControl->controlledChar;
 			playerControl->groupMembers.Add(this);
+			groupMembers = playerControl->groupMembers;
+			inGroup = true;
+
+			for (int i = 0; i <= groupMembers.Num() - 1; i++)
+			{
+				if (groupMembers[i] == this)
+				{
+					charIndex = i;
+				}
+			}
 		}
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 		return true;
