@@ -32,47 +32,53 @@ APlayerControls::APlayerControls()
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
 
-	playerController = UGameplayStatics::GetPlayerController(this, 0);
-
-	if (groupMembers.Num() == 0 && GetController() == playerController)
+	if (*GetWorld()->GetName() != FName("MainMenu"))
 	{
-		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
-		inGroup = true;
-		onAIControl = false;
-		charIndex = 0;
+		InitCharacter();
 	}
 
-	if (inGroup)
-	{
-		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	}
+	//playerController = UGameplayStatics::GetPlayerController(this, 0);
 
-	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
-	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+	//if (groupMembers.Num() == 0 && GetController() == playerController)
+	//{
+	//	groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
+	//	inGroup = true;
+	//	onAIControl = false;
+	//	charIndex = 0;
+	//}
 
-	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
+	//if (inGroup)
+	//{
+	//	controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	//}
 
-	characterProfile = NewObject<UCharacterProfiles>();
-	mainHUD->characterProfiles = characterProfile;
-	mainHUD->AddToViewport();
+	//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+	//GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+	//GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 
-	characterProfile->characterStats.playerClass = Mage;
-	characterProfile->characterStats.strength = 15;
-	characterProfile->characterStats.dexterity = 10;
-	characterProfile->characterStats.intelligence = 10;
-	characterProfile->characterStats.constitution = 12;
-	characterProfile->characterStats.wisdom = 10;
+	//mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	//mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 
-	characterProfile->beginningStats = characterProfile->characterStats;
+	//characterProfile = NewObject<UCharacterProfiles>();
+	//mainHUD->characterProfiles = characterProfile;
+	//mainHUD->AddToViewport();
 
-	//Calculates Maximum Inventory Capacity
-	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-	//Calculates Maximum Health
-	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
-	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+	//characterProfile->characterStats.playerClass = Mage;
+	//characterProfile->characterStats.strength = 15;
+	//characterProfile->characterStats.dexterity = 10;
+	//characterProfile->characterStats.intelligence = 10;
+	//characterProfile->characterStats.constitution = 12;
+	//characterProfile->characterStats.wisdom = 10;
+
+	//characterProfile->beginningStats = characterProfile->characterStats;
+
+	////Calculates Maximum Inventory Capacity
+	//characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
+	////Calculates Maximum Health
+	//characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+	//characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 }
 
 // Called every frame
@@ -128,6 +134,53 @@ void APlayerControls::Tick(float DeltaTime)
 
 	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
+
+void APlayerControls::InitCharacter()
+{
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
+
+	playerController = UGameplayStatics::GetPlayerController(this, 0);
+
+	if (groupMembers.Num() == 0 && GetController() == playerController)
+	{
+		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
+		inGroup = true;
+		onAIControl = false;
+		charIndex = 0;
+	}
+
+	if (inGroup)
+	{
+		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	}
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+
+	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
+
+	characterProfile = NewObject<UCharacterProfiles>();
+	mainHUD->characterProfiles = characterProfile;
+	mainHUD->AddToViewport();
+
+	characterProfile->characterStats.playerClass = Mage;
+	characterProfile->characterStats.strength = 15;
+	characterProfile->characterStats.dexterity = 10;
+	characterProfile->characterStats.intelligence = 10;
+	characterProfile->characterStats.constitution = 12;
+	characterProfile->characterStats.wisdom = 10;
+
+	characterProfile->beginningStats = characterProfile->characterStats;
+
+	//Calculates Maximum Inventory Capacity
+	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
+	//Calculates Maximum Health
+	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+}
+
 
 // Called to bind functionality to input
 void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -205,6 +258,7 @@ void APlayerControls::MoveRight(float value)
 		AddMovementInput(Direction, value);
 	}
 }
+
 
 void APlayerControls::StartCameraRotation()
 {
