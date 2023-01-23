@@ -25,7 +25,31 @@ APlayerControls::APlayerControls()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
-	//AIController = CreateDefaultSubobject<AAIController>("CharacterAIController");
+
+	headMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head Mesh");
+	headMesh->SetupAttachment(RootComponent);
+
+	handsMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hand Mesh");
+	handsMesh->SetupAttachment(RootComponent);
+
+	footsMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Foot Mesh");
+	footsMesh->SetupAttachment(RootComponent);
+
+	torsoMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Torso Mesh");
+	torsoMesh->SetupAttachment(RootComponent);
+
+	//headBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head Body Mesh");
+	//headBodyMesh->SetupAttachment(RootComponent);
+
+	//handsBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hand Body Mesh");
+	//handsBodyMesh->SetupAttachment(RootComponent);
+
+	//footsBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Foot Body Mesh");
+	//footsBodyMesh->SetupAttachment(RootComponent);
+
+	//torsoBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Torso Body Mesh");
+	//torsoBodyMesh->SetupAttachment(RootComponent);
+
 }
 
 // Called when the game starts or when spawned
@@ -38,47 +62,6 @@ void APlayerControls::BeginPlay()
 	{
 		InitCharacter();
 	}
-
-	//playerController = UGameplayStatics::GetPlayerController(this, 0);
-
-	//if (groupMembers.Num() == 0 && GetController() == playerController)
-	//{
-	//	groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
-	//	inGroup = true;
-	//	onAIControl = false;
-	//	charIndex = 0;
-	//}
-
-	//if (inGroup)
-	//{
-	//	controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	//}
-
-	//GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-	//GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
-	//GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
-
-	//mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	//mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
-
-	//characterProfile = NewObject<UCharacterProfiles>();
-	//mainHUD->characterProfiles = characterProfile;
-	//mainHUD->AddToViewport();
-
-	//characterProfile->characterStats.playerClass = Mage;
-	//characterProfile->characterStats.strength = 15;
-	//characterProfile->characterStats.dexterity = 10;
-	//characterProfile->characterStats.intelligence = 10;
-	//characterProfile->characterStats.constitution = 12;
-	//characterProfile->characterStats.wisdom = 10;
-
-	//characterProfile->beginningStats = characterProfile->characterStats;
-
-	////Calculates Maximum Inventory Capacity
-	//characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-	////Calculates Maximum Health
-	//characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
-	//characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 }
 
 // Called every frame
@@ -124,9 +107,6 @@ void APlayerControls::Tick(float DeltaTime)
 			onAIMovement = false;
 		}
 	}
-
-
-	
 
 	FollowControlledCharacter();
 
@@ -600,6 +580,7 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 	else if (WearableSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
 	{
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
+		torsoMesh->SetSkeletalMesh(torsoBodyMesh);
 		AddItemToInventory(itemProperties->characterArmor.top);
 		itemProperties->characterArmor.top = FItemProperties();
 	}
@@ -652,6 +633,7 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 		itemProperties->characterArmor.weapon2 = FItemProperties();
 	}
 	ResetInventoryUI();
+	ResetAnimations();
 }
 
 int APlayerControls::GetArmorRating()
@@ -669,7 +651,7 @@ int APlayerControls::GetArmorRating()
 	return totalArmorRating;
 }
 
-void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called in Item Slot blueprint
+void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called in Item Slot blueprint --- Equips or consumes the items in this function
 {
 	// Weapon *******************************************************************
 	if (itemProperties.Category == Weapon) 
@@ -752,12 +734,12 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
 			characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
 		}
-
+		ResetAnimations();
 	}
 	//Weapons END **************
 	// ******************
 	//Armor *******************************************************************
-	else if (itemProperties.Category == Armor) 
+	else if (itemProperties.Category == Armor)
 	{
 		if (itemProperties.WearableType == Head)
 		{
@@ -776,8 +758,11 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 1);
 			}
+			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
 			characterProfile->characterArmor.top = itemProperties;
 			characterProfile->characterArmor.top.isEquipped = true;
+
 			DecreaseItemFromInventory(characterProfile->characterArmor.top);
 			characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
 		}
@@ -836,7 +821,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			DecreaseItemFromInventory(characterProfile->characterArmor.neck);
 			characterProfile->currentInventoryWeight += characterProfile->characterArmor.neck.weight;
 		}
-
+		ResetAnimations();
 	}
 	//Armor END************
 	//************
@@ -868,6 +853,31 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 		//******************* Consumable Effects end
 	}
 	ResetInventoryUI();
+}
+
+void APlayerControls::ResetAnimations()
+{
+	torsoMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	headMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	handsMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	footsMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+
+	torsoMesh->Play(true);
+	torsoMesh->SetPosition(.0f);
+
+	headMesh->Play(true);
+	headMesh->SetPosition(0.f);
+
+	handsMesh->Play(true);
+	handsMesh->SetPosition(0.f);
+
+	footsMesh->Play(true);
+	footsMesh->SetPosition(0.f);
+
+	torsoMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	headMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	handsMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	footsMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 }
 
 
@@ -1081,3 +1091,4 @@ FVector APlayerControls::GetPlayerBehindLocation(float behind, float right)
 	offsetVector = -actorForwardVector * behind + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * right;
 	return controlledChar->GetActorLocation() + offsetVector;
 }
+

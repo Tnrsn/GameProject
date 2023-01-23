@@ -37,6 +37,24 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCapsuleComponent* capsuleComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMeshComponent* headMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMeshComponent* handsMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMeshComponent* footsMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMeshComponent* torsoMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* headBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* handsBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* footsBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* torsoBodyMesh;
+
 	//Camera System
 	FVector2D mousePosition;
 	FVector2D mouseDelta;
@@ -111,7 +129,6 @@ public:
 	UPROPERTY()
 		int charIndex;
 
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -174,6 +191,8 @@ public:
 		void FollowControlledCharacter();
 	UFUNCTION()
 		FVector GetPlayerBehindLocation(float behind, float right);
+	UFUNCTION()
+		void ResetAnimations();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

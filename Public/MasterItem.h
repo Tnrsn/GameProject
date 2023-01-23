@@ -82,6 +82,8 @@ struct FItemProperties
 		int armorBonus;
 	UPROPERTY(BlueprintReadWrite)
 		bool isEquipped = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		USkeletalMesh* skeletalMesh;
 	UPROPERTY(BlueprintReadOnly)
 		bool weapon2Item = false;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
@@ -115,6 +117,7 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 		bool moveToObject = false;
+
 
 protected:
 	// Called when the game starts or when spawned
