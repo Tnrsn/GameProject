@@ -24,8 +24,11 @@ void ANPC_Management::BeginPlay()
 	mainHUD->characterProfiles = characterProfile;
 
 	characterProfile->characterStats = characterStats;
-
 	characterProfile->beginningStats = characterProfile->characterStats;
+
+	characterProfile->charGender = charGender;
+	characterProfile->charRace = charRace;
+	characterProfile->charClass = charClass;
 
 	//Calculates Maximum Inventory Capacity
 	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
@@ -40,8 +43,6 @@ void ANPC_Management::BeginPlay()
 void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	
 }
 
 void ANPC_Management::StartDialog()

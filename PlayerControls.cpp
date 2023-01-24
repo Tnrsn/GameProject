@@ -38,18 +38,8 @@ APlayerControls::APlayerControls()
 	torsoMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Torso Mesh");
 	torsoMesh->SetupAttachment(RootComponent);
 
-	//headBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head Body Mesh");
-	//headBodyMesh->SetupAttachment(RootComponent);
-
-	//handsBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hand Body Mesh");
-	//handsBodyMesh->SetupAttachment(RootComponent);
-
-	//footsBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Foot Body Mesh");
-	//footsBodyMesh->SetupAttachment(RootComponent);
-
-	//torsoBodyMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Torso Body Mesh");
-	//torsoBodyMesh->SetupAttachment(RootComponent);
-
+	hairMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hair Mesh");
+	hairMesh->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -58,7 +48,13 @@ void APlayerControls::BeginPlay()
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
 
-	if (*GetWorld()->GetName() != FName("MainMenu"))
+	characterProfile = NewObject<UCharacterProfiles>();
+
+	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
+	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
+	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
+
+	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
 	{
 		InitCharacter();
 	}
@@ -109,9 +105,7 @@ void APlayerControls::Tick(float DeltaTime)
 	}
 
 	FollowControlledCharacter();
-
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), GetVelocity().Size());
-
 	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
 
@@ -134,23 +128,19 @@ void APlayerControls::InitCharacter()
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	}
 
-	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
-	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
-
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
 	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 
-	characterProfile = NewObject<UCharacterProfiles>();
+	
 	mainHUD->characterProfiles = characterProfile;
 	mainHUD->AddToViewport();
 
-	characterProfile->characterStats.playerClass = Mage;
-	characterProfile->characterStats.strength = 15;
-	characterProfile->characterStats.dexterity = 10;
-	characterProfile->characterStats.intelligence = 10;
-	characterProfile->characterStats.constitution = 12;
-	characterProfile->characterStats.wisdom = 10;
+	//characterProfile->characterStats.playerClass = Mage;
+	//characterProfile->characterStats.strength = 15;
+	//characterProfile->characterStats.dexterity = 10;
+	//characterProfile->characterStats.intelligence = 10;
+	//characterProfile->characterStats.constitution = 12;
+	//characterProfile->characterStats.wisdom = 10;
 
 	characterProfile->beginningStats = characterProfile->characterStats;
 
@@ -434,7 +424,6 @@ void APlayerControls::ToggleInventory()
 			UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 		}
 	}
-
 }
 
 void APlayerControls::AddItemToInventoryFromGround()
@@ -573,25 +562,61 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 {
 	if (WearableSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddWearableSlots in WP_Inventory Blueprint.)
 	{
+		headMesh->SetVisibility(true);
+		if (hairBodyMesh)
+		{
+			hairMesh->SetSkeletalMesh(hairBodyMesh);
+		}
+		else
+		{
+			hairMesh->SetSkeletalMesh(NULL);
+		}
+
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
 		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Top && itemProperties->characterArmor.top.isEquipped) //Top
 	{
+		if (characterProfile->charGender == Male)
+		{
+			torsoMesh->SetSkeletalMesh(torsoMaleBodyMesh);
+		}
+		else
+		{
+			torsoMesh->SetSkeletalMesh(torsoFemaleBodyMesh);
+		}
+
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.top.weight;
-		torsoMesh->SetSkeletalMesh(torsoBodyMesh);
 		AddItemToInventory(itemProperties->characterArmor.top);
 		itemProperties->characterArmor.top = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Hand && itemProperties->characterArmor.hand.isEquipped) //Hand
 	{
+		if (characterProfile->charGender == Male)
+		{
+			handsMesh->SetSkeletalMesh(handsMaleBodyMesh);
+		}
+		else
+		{
+			handsMesh->SetSkeletalMesh(handsFemaleBodyMesh);
+		}
+
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.hand.weight;
 		AddItemToInventory(itemProperties->characterArmor.hand);
 		itemProperties->characterArmor.hand = FItemProperties();
 	}
 	else if (WearableSlotIndex + 1 == Foot && itemProperties->characterArmor.foot.isEquipped) //Foot
 	{
+		if (characterProfile->charGender == Male)
+		{
+			footsMesh->SetSkeletalMesh(footsMaleBodyMesh);
+		}
+		else
+		{
+			footsMesh->SetSkeletalMesh(footsFemaleBodyMesh);
+		}
+
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.foot.weight;
 		AddItemToInventory(itemProperties->characterArmor.foot);
 		itemProperties->characterArmor.foot = FItemProperties();
@@ -747,6 +772,12 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 0);
 			}
+			hairMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+			if (itemProperties.hideHeadMesh)
+			{
+				headMesh->SetVisibility(false);
+			}
+
 			characterProfile->characterArmor.head = itemProperties;
 			characterProfile->characterArmor.head.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.head);
@@ -772,6 +803,8 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 2);
 			}
+			handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
 			characterProfile->characterArmor.hand = itemProperties;
 			characterProfile->characterArmor.hand.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.hand);
@@ -783,6 +816,8 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 3);
 			}
+			footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
 			characterProfile->characterArmor.foot = itemProperties;
 			characterProfile->characterArmor.foot.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.foot);
@@ -966,18 +1001,21 @@ void APlayerControls::ControlNPC(int index)
 	}
 
 	//Change controlledChar variables in all group members
-	controlledChar = groupMembers[index];
-
-	for (int i = 0; i <= groupMembers.Num() - 1; i++)
+	if (groupMembers.Num() - 1 >= index)
 	{
-		groupMembers[i]->controlledChar = controlledChar;
+		controlledChar = groupMembers[index];
+		for (int i = 0; i <= groupMembers.Num() - 1; i++)
+		{
+			groupMembers[i]->controlledChar = controlledChar;
+		}
+
+		//Switch characterIndex
+		int temp;
+		temp = groupMembers[index]->charIndex;
+		groupMembers[index]->charIndex = charIndex;
+		charIndex = temp;
 	}
 
-	//Switch characterIndex
-	int temp;
-	temp = groupMembers[index]->charIndex;
-	groupMembers[index]->charIndex = charIndex;
-	charIndex = temp;
 }
 
 

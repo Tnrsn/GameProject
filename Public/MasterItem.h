@@ -85,6 +85,8 @@ struct FItemProperties
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		USkeletalMesh* skeletalMesh;
 	UPROPERTY(BlueprintReadOnly)
+		bool hideHeadMesh = false;
+	UPROPERTY(BlueprintReadOnly)
 		bool weapon2Item = false;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		int physicalDamageBonus;

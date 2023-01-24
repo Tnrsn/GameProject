@@ -11,7 +11,28 @@
  * 
  */
 UENUM(BlueprintType, Category = "Character Properties")
-enum FPlayerClasses
+enum FStatTypes
+{
+	Str,
+	Dex,
+	Con,
+	Int,
+	Wis
+};
+UENUM(BlueprintType, Category = "Character Properties")
+enum FCharacterGender
+{
+	Male,
+	Female
+};
+UENUM(BlueprintType, Category = "Character Properties")
+enum FCharacterRace
+{
+	Human,
+	Elf
+};
+UENUM(BlueprintType, Category = "Character Properties")
+enum FCharacterClasses
 {
 	Warrior,
 	Mage,
@@ -22,18 +43,16 @@ struct FCharacterStats
 {
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Properties")
-		TEnumAsByte<FPlayerClasses> playerClass;
 	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
-		int strength = 0;
+		int strength = 8;
 	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
-		int dexterity = 0;
+		int dexterity = 8;
 	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
-		int constitution = 0;
+		int constitution = 8;
 	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
-		int intelligence = 0;
+		int intelligence = 8;
 	UPROPERTY(Blueprintreadonly, EditAnywhere, Category = "Character Properties")
-		int wisdom = 0;
+		int wisdom = 8;
 };
 USTRUCT(BlueprintType, Category = "Character Properties")
 struct FCharacterWearables
@@ -82,10 +101,23 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		int currentInventoryWeight = 0;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadOnly)
+		int statPoints = 12;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FCharacterStats beginningStats;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
 		FCharacterStats characterStats;
 	UPROPERTY(BlueprintReadOnly)
 		FCharacterWearables characterArmor;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
+		TEnumAsByte<FCharacterGender> charGender;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
+		TEnumAsByte<FCharacterRace> charRace;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
+		TEnumAsByte<FCharacterClasses> charClass;
+
+	UFUNCTION(BlueprintCallable)
+		void ChangeStat(int value, TEnumAsByte<FStatTypes> types);
 };

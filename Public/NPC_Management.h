@@ -36,6 +36,12 @@ public:
 	UPROPERTY(EditAnywhere)
 		FCharacterStats characterStats;
 	UPROPERTY(EditAnywhere)
+		TEnumAsByte<FCharacterRace> charRace;
+	UPROPERTY(EditAnywhere)
+		TEnumAsByte<FCharacterGender> charGender;
+	UPROPERTY(EditAnywhere)
+		TEnumAsByte<FCharacterClasses> charClass;
+	UPROPERTY(EditAnywhere)
 		FCharacterWearables characterWearables;
 
 protected:

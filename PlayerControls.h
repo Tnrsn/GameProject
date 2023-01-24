@@ -3,10 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-//#include "Public/CharacterAIController.h"
 #include <Blueprint/AIBlueprintHelperLibrary.h>
 #include <NavigationSystem.h>
-//#include "Public/PathFindingSystem.h"
 #include "Public/CharacterProfiles.h"
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
@@ -38,6 +36,8 @@ public:
 		UCapsuleComponent* capsuleComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMeshComponent* hairMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* headMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* handsMesh;
@@ -46,14 +46,27 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* torsoMesh;
 
+	//Body Parts
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMesh* headBodyMesh;
+		USkeletalMesh* hairBodyMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Male Meshes
+		USkeletalMesh* headMaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMesh* handsBodyMesh;
+		USkeletalMesh* handsMaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMesh* footsBodyMesh;
+		USkeletalMesh* footsMaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMesh* torsoBodyMesh;
+		USkeletalMesh* torsoMaleBodyMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Female Meshes
+		USkeletalMesh* headFemaleBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* handsFemaleBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* footsFemaleBodyMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		USkeletalMesh* torsoFemaleBodyMesh;
 
 	//Camera System
 	FVector2D mousePosition;
