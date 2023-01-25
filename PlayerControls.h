@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/PlayerSpringArmComponent.h"
+#include "Public/PlayerCameraComponent.h"
 #include <Blueprint/AIBlueprintHelperLibrary.h>
 #include <NavigationSystem.h>
 #include "Public/CharacterProfiles.h"
@@ -29,9 +31,9 @@ public:
 
 	//Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		USpringArmComponent* SpringArm;
+		UPlayerSpringArmComponent* springArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
-		UCameraComponent* Camera;
+		UPlayerCameraComponent* Camera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCapsuleComponent* capsuleComp;
 
@@ -67,14 +69,6 @@ public:
 		USkeletalMesh* footsFemaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMesh* torsoFemaleBodyMesh;
-
-	//Camera System
-	FVector2D mousePosition;
-	FVector2D mouseDelta;
-	FVector2D previousMousePosition;
-
-	float mouseSensitivity = .3f;
-	bool rotationStarted = false;
 
 	//ClickEvent Objects
 	UPROPERTY(BlueprintReadWrite)
@@ -113,6 +107,8 @@ public:
 		bool camRotating = false;
 	UPROPERTY()
 		float newTargetArmLength = 250.f;
+	UPROPERTY()
+		bool inMenu = true;
 
 	//PathFinding
 	UPROPERTY()
@@ -151,14 +147,13 @@ protected:
 public:
 	void StartCameraRotation();
 	void StopCameraRotation();
-	void RotateCamera();
+	void CameraZoom(float value);
 
 	UFUNCTION(BlueprintCallable)
 		void MoveForward(float value);
 	UFUNCTION(BlueprintCallable)
 		void MoveRight(float value);
 
-	void CameraZoom(float value);
 	void OnMouseClick();
 	void ClickEvents();
 

@@ -16,13 +16,13 @@ APlayerControls::APlayerControls()
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
-	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = 250;
-	SpringArm->bUsePawnControlRotation = false;
+	springArm = CreateDefaultSubobject<UPlayerSpringArmComponent>("springArm");
+	springArm->SetupAttachment(RootComponent);
+	springArm->TargetArmLength = 250;
+	springArm->bUsePawnControlRotation = false;
 
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
-	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	Camera = CreateDefaultSubobject<UPlayerCameraComponent>("Camera");
+	Camera->SetupAttachment(springArm, UPlayerSpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
 
@@ -48,6 +48,7 @@ void APlayerControls::BeginPlay()
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
 
+	playerController = UGameplayStatics::GetPlayerController(this, 0);
 	characterProfile = NewObject<UCharacterProfiles>();
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
@@ -57,6 +58,14 @@ void APlayerControls::BeginPlay()
 	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
 	{
 		InitCharacter();
+	}
+	else //If It's not in game we dont see the character other than character creation menu
+	{
+		FInputModeUIOnly inputMode;
+		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(inputMode);
+
+		springArm->LookFromFront();
 	}
 }
 
@@ -72,7 +81,7 @@ void APlayerControls::Tick(float DeltaTime)
 
 	if (camRotating)
 	{
-		RotateCamera();
+		springArm->RotateCamera(playerController);
 	}
 
 	if (itemRef)
@@ -111,9 +120,7 @@ void APlayerControls::Tick(float DeltaTime)
 
 void APlayerControls::InitCharacter()
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
-
-	playerController = UGameplayStatics::GetPlayerController(this, 0);
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
 
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
@@ -134,13 +141,6 @@ void APlayerControls::InitCharacter()
 	
 	mainHUD->characterProfiles = characterProfile;
 	mainHUD->AddToViewport();
-
-	//characterProfile->characterStats.playerClass = Mage;
-	//characterProfile->characterStats.strength = 15;
-	//characterProfile->characterStats.dexterity = 10;
-	//characterProfile->characterStats.intelligence = 10;
-	//characterProfile->characterStats.constitution = 12;
-	//characterProfile->characterStats.wisdom = 10;
 
 	characterProfile->beginningStats = characterProfile->characterStats;
 
@@ -194,7 +194,6 @@ void APlayerControls::MoveForward(float value)
 			ToggleInventory();
 		}
 		const FRotator Rotation = Controller->GetControlRotation();
-		//const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FRotator YawRotation(0, Camera->GetComponentRotation().Yaw, 0);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -221,7 +220,6 @@ void APlayerControls::MoveRight(float value)
 		}
 
 		const FRotator Rotation = Controller->GetControlRotation();
-		//const FRotator YawRotation(0, Rotation.Yaw, 0);
 		const FRotator YawRotation(0, Camera->GetComponentRotation().Yaw, 0);
 
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
@@ -236,35 +234,26 @@ void APlayerControls::StartCameraRotation()
 	{
 		if (!lootObject->lootUIEnabled && !inventoryEnabled)
 		{
-			//playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-			//playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
-
 			GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
 			GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
 			GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
 			camRotating = true;
-			rotationStarted = true;
+			springArm->rotationStarted = true;
 		}
 	}
 	else if (!inventoryEnabled)
 	{
-		//playerInput->BindAxis("Look Right / Left", this, &APawn::AddControllerYawInput);
-		//playerInput->BindAxis("Look Up / Down", this, &APawn::AddControllerPitchInput);
-
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = false;
 		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = false;
 		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = false;
 		camRotating = true;
-		rotationStarted = true;
+		springArm->rotationStarted = true;
 	}
 }
 void APlayerControls::StopCameraRotation()
 {
 	if (camRotating)
 	{
-		//playerInput->AxisBindings.Pop();
-		//playerInput->AxisBindings.Pop();
-
 		GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 		GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
 		GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
@@ -272,34 +261,13 @@ void APlayerControls::StopCameraRotation()
 	}
 }
 
-void APlayerControls::RotateCamera()
-{
-	playerController->GetMousePosition(mousePosition.X, mousePosition.Y);
-
-	if (rotationStarted)
-	{
-		previousMousePosition = mousePosition;
-		rotationStarted = false;
-	}
-
-	mouseDelta = mousePosition - previousMousePosition;
-
-	FRotator NewRotation = SpringArm->GetComponentRotation();
-	NewRotation.Yaw += mouseDelta.X * mouseSensitivity;
-	NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch - mouseDelta.Y * mouseSensitivity, -70.0f, 30.0f); //Camera rotation limits 
-
-	SpringArm->SetWorldRotation(NewRotation);
-
-	previousMousePosition = mousePosition;
-}
-
 void APlayerControls::CameraZoom(float value)
 {
-	if (!inventoryEnabled && !inDialog)
+	if (!inMenu && !inventoryEnabled && !inDialog)
 	{
 		newTargetArmLength -= value * 100;
 		newTargetArmLength = FMath::Clamp(newTargetArmLength, 150.f, 1200.f);
-		SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
+		springArm->TargetArmLength = FMath::FInterpTo(springArm->TargetArmLength, newTargetArmLength, GetWorld()->GetDeltaSeconds(), 5.f);
 	}
 }
 
@@ -951,11 +919,11 @@ void APlayerControls::ControlNPC(int index)
 		groupMembers[index]->groupMembers = groupMembers;
 
 		groupMembers[index]->newTargetArmLength = newTargetArmLength;
-		groupMembers[index]->SpringArm->TargetArmLength = SpringArm->TargetArmLength;
+		groupMembers[index]->springArm->TargetArmLength = springArm->TargetArmLength;
 
-		groupMembers[index]->SpringArm->bEnableCameraRotationLag = false;
-		SpringArm->bEnableCameraRotationLag = false;
-		groupMembers[index]->SpringArm->SetRelativeRotation(SpringArm->GetRelativeRotation());
+		groupMembers[index]->springArm->bEnableCameraRotationLag = false;
+		springArm->bEnableCameraRotationLag = false;
+		groupMembers[index]->springArm->SetRelativeRotation(springArm->GetRelativeRotation());
 
 		//Close loot ui if It's enabled
 		if (lootObject)
@@ -986,17 +954,17 @@ void APlayerControls::ControlNPC(int index)
 		}
 
 		//Smooth camera switch
-		groupMembers[index]->SpringArm->TargetOffset.X = (SpringArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X) + SpringArm->TargetOffset.X;
-		groupMembers[index]->SpringArm->TargetOffset.Y = (SpringArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y) + SpringArm->TargetOffset.Y;
-		groupMembers[index]->SpringArm->TargetOffset.Z = (SpringArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z) + SpringArm->TargetOffset.Z;
+		groupMembers[index]->springArm->TargetOffset.X = (springArm->GetComponentLocation().X - groupMembers[index]->GetActorLocation().X) + springArm->TargetOffset.X;
+		groupMembers[index]->springArm->TargetOffset.Y = (springArm->GetComponentLocation().Y - groupMembers[index]->GetActorLocation().Y) + springArm->TargetOffset.Y;
+		groupMembers[index]->springArm->TargetOffset.Z = (springArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z) + springArm->TargetOffset.Z;
 		SmoothCameraSwitch(index, 10.f);
 
 		FTimerHandle enableLagTimer;
 		GetWorldTimerManager().SetTimer(enableLagTimer, 
 			FTimerDelegate::CreateLambda([=]() 
 			{
-				groupMembers[index]->SpringArm->bEnableCameraRotationLag = true;
-				SpringArm->bEnableCameraRotationLag = true;
+				groupMembers[index]->springArm->bEnableCameraRotationLag = true;
+				springArm->bEnableCameraRotationLag = true;
 			}), GetWorld()->GetDeltaSeconds(), false);
 	}
 
@@ -1021,15 +989,15 @@ void APlayerControls::ControlNPC(int index)
 
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
-	groupMembers[index]->SpringArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
-	groupMembers[index]->SpringArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
-	groupMembers[index]->SpringArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->SpringArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	groupMembers[index]->springArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	groupMembers[index]->springArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	groupMembers[index]->springArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 
-	if (FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.X) < 0.2f &&
-		FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.Y) < 0.2f &&
-		FMath::Abs(groupMembers[index]->SpringArm->TargetOffset.Z) < 0.2f)
+	if (FMath::Abs(groupMembers[index]->springArm->TargetOffset.X) < 0.2f &&
+		FMath::Abs(groupMembers[index]->springArm->TargetOffset.Y) < 0.2f &&
+		FMath::Abs(groupMembers[index]->springArm->TargetOffset.Z) < 0.2f)
 	{
-		groupMembers[index]->SpringArm->TargetOffset = FVector(0);
+		groupMembers[index]->springArm->TargetOffset = FVector(0);
 		return;
 	}
 	else
@@ -1129,4 +1097,3 @@ FVector APlayerControls::GetPlayerBehindLocation(float behind, float right)
 	offsetVector = -actorForwardVector * behind + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * right;
 	return controlledChar->GetActorLocation() + offsetVector;
 }
-

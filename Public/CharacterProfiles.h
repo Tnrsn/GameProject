@@ -85,6 +85,9 @@ class GAMEPROJECT_API UCharacterProfiles : public UObject
 	
 
 public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Name")
+		FString charName;
+
 	UPROPERTY() //It'll be between -100 and 100
 		int relationWithPlayer = 0;
 
