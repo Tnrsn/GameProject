@@ -48,6 +48,11 @@ void APlayerControls::BeginPlay()
 	Super::BeginPlay();
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
 
+	if (GetWorld())
+	{
+		saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
+	}
+
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 	characterProfile = NewObject<UCharacterProfiles>();
 
@@ -57,6 +62,7 @@ void APlayerControls::BeginPlay()
 
 	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
 	{
+		inMenu = false;
 		InitCharacter();
 	}
 	else //If It's not in game we dont see the character other than character creation menu
@@ -174,6 +180,9 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("PassToSecondCharacter", IE_Pressed, this, &APlayerControls::ControlSecondCharacter);
 	PlayerInputComponent->BindAction("PassToThirdCharacter", IE_Pressed, this, &APlayerControls::ControlThirdCharacter);
 	PlayerInputComponent->BindAction("PassToFourthCharacter", IE_Pressed, this, &APlayerControls::ControlFourthCharacter);
+
+	PlayerInputComponent->BindAction("QuickSave", IE_Pressed, this, &APlayerControls::SaveGame);
+	PlayerInputComponent->BindAction("QuickLoad", IE_Pressed, this, &APlayerControls::LoadGame);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -883,7 +892,6 @@ void APlayerControls::ResetAnimations()
 	footsMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 }
 
-
 void APlayerControls::ControlFirstCharacter()
 {
 	ControlNPC(0);
@@ -901,6 +909,7 @@ void APlayerControls::ControlThirdCharacter()
 
 void APlayerControls::ControlFourthCharacter()
 {
+	characterProfile->characterCurrentHealth -= 20;
 	ControlNPC(3);
 }
 
@@ -1096,4 +1105,31 @@ FVector APlayerControls::GetPlayerBehindLocation(float behind, float right)
 	actorForwardVector = controlledChar->GetActorForwardVector();
 	offsetVector = -actorForwardVector * behind + actorForwardVector.RotateAngleAxis(90, FVector(0, 0, 1)) * right;
 	return controlledChar->GetActorLocation() + offsetVector;
+}
+
+void APlayerControls::SaveGame()
+{
+	if (saveSystem)
+	{
+		//if (inventory.Num() != 0)
+		//{
+		//	testNum.Add(inventory[0].weight);
+		//}
+
+		saveSystem->Save(this);
+	}
+}
+
+void APlayerControls::LoadGame()
+{
+	if (saveSystem)
+	{
+		saveSystem->Load(this);
+
+
+		//if (testNum.Num() != 0)
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("%d"), testNum[0]);
+		//}
+	}
 }

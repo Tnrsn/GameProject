@@ -39,7 +39,6 @@ enum FItemCategory
 	Consumable
 };
 
-
 USTRUCT(BlueprintType, Category = "Item Properties")
 struct FItemProperties
 {

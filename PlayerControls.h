@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SaveSystem.h"
 #include "Public/PlayerSpringArmComponent.h"
 #include "Public/PlayerCameraComponent.h"
 #include <Blueprint/AIBlueprintHelperLibrary.h>
@@ -37,6 +38,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCapsuleComponent* capsuleComp;
 
+	//Skeletal Mesh Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* hairMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -48,7 +50,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* torsoMesh;
 
-	//Body Parts
+	//Body Parts - Male
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMesh* hairBodyMesh;
 
@@ -61,6 +63,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMesh* torsoMaleBodyMesh;
 
+	//" " - Female
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Female Meshes
 		USkeletalMesh* headFemaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -138,6 +141,13 @@ public:
 	UPROPERTY()
 		int charIndex;
 
+	//SaveSystem
+	UPROPERTY()
+		class USaveSystem* saveSystem;
+	//TArray<int> testNum;
+	//UPROPERTY()
+	//	FItemProperties test;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -201,6 +211,10 @@ public:
 		FVector GetPlayerBehindLocation(float behind, float right);
 	UFUNCTION()
 		void ResetAnimations();
+	UFUNCTION()
+		void SaveGame();
+	UFUNCTION()
+		void LoadGame();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
