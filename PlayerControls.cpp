@@ -1111,12 +1111,14 @@ void APlayerControls::SaveGame()
 {
 	if (saveSystem)
 	{
-		//if (inventory.Num() != 0)
-		//{
-		//	testNum.Add(inventory[0].weight);
-		//}
+		//TArray<AActor*> characters;
+		//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerControls::StaticClass(), characters);
 
+		//for (AActor* actor : characters)
+		//{
+		//	UE_LOG(LogTemp, Warning ,TEXT("%s"), *actor->GetName())
 		saveSystem->Save(this);
+		//}
 	}
 }
 
@@ -1125,11 +1127,5 @@ void APlayerControls::LoadGame()
 	if (saveSystem)
 	{
 		saveSystem->Load(this);
-
-
-		//if (testNum.Num() != 0)
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("%d"), testNum[0]);
-		//}
 	}
 }

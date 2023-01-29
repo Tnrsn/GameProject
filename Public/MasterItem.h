@@ -45,14 +45,14 @@ struct FItemProperties
 	GENERATED_BODY();
 	FItemProperties(): name(""), description(""), weight(0), Category(0), maximumAmount(0), isStackable(0), currentAmount(0)
 	, rarity(0), inInventory(0), ConsumableEffect(0), effectStrength(0), effectTime(0), WearableType(0), armorBonus(0), isEquipped(0), weapon2Item(0)
-	, physicalDamageBonus(0), magicalDamageBonus(0) {}
+	, damageBonus(0), texturePath(""), skeletalMeshPath("") {}
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		FString name;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		FString description;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
-		UTexture* texture;
+		UTexture* texture = nullptr;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		int weight;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
@@ -82,15 +82,19 @@ struct FItemProperties
 	UPROPERTY(BlueprintReadWrite)
 		bool isEquipped = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USkeletalMesh* skeletalMesh;
+		USkeletalMesh* skeletalMesh = nullptr;
 	UPROPERTY(BlueprintReadOnly)
 		bool hideHeadMesh = false;
 	UPROPERTY(BlueprintReadOnly)
 		bool weapon2Item = false;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		int physicalDamageBonus;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-		int magicalDamageBonus;
+		int damageBonus;
+
+	//Pointer paths for saving
+	UPROPERTY()
+		FString texturePath;
+	UPROPERTY()
+		FString skeletalMeshPath;
 };
 
 UCLASS()

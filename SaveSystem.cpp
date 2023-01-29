@@ -25,13 +25,15 @@ void USaveSystem::Save(AActor* Actor)
 	APlayerControls* player = Cast<APlayerControls>(Actor);
 	
 	//Savings
+	for (int i = 0; i < player->inventory.Num(); i++) //Saves inventory
+	{
+		ActorData.items[i] = player->inventory[i];
+	}
+	ActorData.inventoryWeight = player->characterProfile->currentInventoryWeight;
 
-	//ActorData.testt = player->testNum;
-
-	ActorData.inventoryData = player->inventory;
 	ActorData.characterHealth = player->characterProfile->characterCurrentHealth;
 	ActorData.ActorTransform = Actor->GetTransform();
-	ActorData.ptr = Actor->GetClass();
+	//ActorData.ptr = Actor->GetClass();
 
 	//****************************
 	FMemoryWriter ActorWriter = FMemoryWriter(ActorData.ActorSaveData, true);
@@ -66,18 +68,34 @@ void USaveSystem::Load(AActor* Actor)
 	Ar << SpawnInfo;
 	AActor* ActorOut = Actor;
 
+	//Load character location
 	ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
 	ActorOut->Serialize(Ar);
 
 	//Player Datas
 
 	APlayerControls* player = Cast<APlayerControls>(Actor);
+
 	player->characterProfile->characterCurrentHealth = SpawnInfo.characterHealth;
 
-	//player->inventory[0].name = SpawnInfo.inventoryData[0].name;
+	//Load Inventory
+	for (FItemProperties item : SpawnInfo.items)
+	{
+		if (item.name != "")
+		{
+			if (item.texturePath != "")
+			{
+				item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
+			}
+			if (item.skeletalMeshPath != "")
+			{
+				item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
+			}
 
-
-	//player->testNum = SpawnInfo.testt;
+			player->inventory.Add(item);
+		}
+	}
+	player->characterProfile->currentInventoryWeight = SpawnInfo.inventoryWeight;
 
 
 	//***********************
@@ -86,3 +104,30 @@ void USaveSystem::Load(AActor* Actor)
 	FromBinary.Close();
 
 }
+
+//FSaveArchive USaveSystem::SaveCharacters(AActor* Actor)
+//{
+//	FString FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Player.sav";
+//	FActorSpawnInfo ActorData;
+//
+//	APlayerControls* player = Cast<APlayerControls>(Actor);
+//
+//	//Savings
+//	for (int i = 0; i < player->inventory.Num(); i++) //Saves inventory
+//	{
+//		ActorData.items[i] = player->inventory[i];
+//	}
+//	ActorData.inventoryWeight = player->characterProfile->currentInventoryWeight;
+//
+//	ActorData.characterHealth = player->characterProfile->characterCurrentHealth;
+//	ActorData.ActorTransform = Actor->GetTransform();
+//	//ActorData.ptr = Actor->GetClass();
+//
+//	//****************************
+//	FMemoryWriter ActorWriter = FMemoryWriter(ActorData.ActorSaveData, true);
+//	FSaveArchive Ar(ActorWriter, true);
+//	Ar << ActorData;
+//
+//
+//	return Ar;
+//}
