@@ -91,6 +91,7 @@ struct FActorSpawnInfo
 
 		Ar << ActorData.characterHealth;
 		Ar << ActorData.ActorTransform;
+
 		Ar << ActorData.ptr;
 		Ar << ActorData.ActorSaveData;
 		return Ar;
@@ -103,10 +104,18 @@ class GAMEPROJECT_API USaveSystem : public UWorldSubsystem
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 public:
+
+	UPROPERTY()
+		ULevelStreaming* level;
+
 	UFUNCTION()
-		void Save(AActor* Actor);
+		void CreateSaveFile(AActor* Actors, FString path);
 	UFUNCTION()
-		void Load(AActor* Actor);
-	//UFUNCTION()
-	//	FSaveArchive& SaveCharacters(AActor* actor);
+		void LoadSaveFile(AActor* Actor, FString path);
+	UFUNCTION()
+		void OnLevelLoad();
+	UFUNCTION()
+		void SaveGame(AActor* Actors, FString path);
+	UFUNCTION()
+		void LoadGame(AActor* Actor, FString path);
 };

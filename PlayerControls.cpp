@@ -46,7 +46,7 @@ APlayerControls::APlayerControls()
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
 
 	if (GetWorld())
 	{
@@ -54,6 +54,7 @@ void APlayerControls::BeginPlay()
 	}
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
+
 	characterProfile = NewObject<UCharacterProfiles>();
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
@@ -1111,13 +1112,12 @@ void APlayerControls::SaveGame()
 {
 	if (saveSystem)
 	{
-		//TArray<AActor*> characters;
-		//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerControls::StaticClass(), characters);
+		//UGameplayStatics::OpenLevel(GetWorld(), FName("DevLevel2"));
 
+		//************Save System
 		//for (AActor* actor : characters)
 		//{
-		//	UE_LOG(LogTemp, Warning ,TEXT("%s"), *actor->GetName())
-		saveSystem->Save(this);
+			saveSystem->SaveGame(this, this->GetName());
 		//}
 	}
 }
@@ -1126,6 +1126,12 @@ void APlayerControls::LoadGame()
 {
 	if (saveSystem)
 	{
-		saveSystem->Load(this);
+		//TArray<AActor*> characters;
+		//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerControls::StaticClass(), characters);
+
+		//for (AActor* actor : characters)
+		//{
+			saveSystem->LoadGame(this, this->GetName());
+		//}
 	}
 }

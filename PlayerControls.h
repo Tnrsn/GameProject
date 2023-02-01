@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/LevelStreaming.h"
 #include "SaveSystem.h"
 #include "Public/PlayerSpringArmComponent.h"
 #include "Public/PlayerCameraComponent.h"
@@ -143,10 +144,10 @@ public:
 
 	//SaveSystem
 	UPROPERTY()
-		class USaveSystem* saveSystem;
-	//TArray<int> testNum;
+		USaveSystem* saveSystem;
 	//UPROPERTY()
-	//	FItemProperties test;
+	//	ULevelStreaming* level;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -215,6 +216,8 @@ public:
 		void SaveGame();
 	UFUNCTION()
 		void LoadGame();
+	//UFUNCTION()
+	//	void OnLevelLoad();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
