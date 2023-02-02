@@ -35,6 +35,11 @@ struct FActorSpawnInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		FTransform ActorTransform;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		FString currentLevelName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		int controlledCharIndex;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		TSoftClassPtr<class AActor> ptr = nullptr;
 
 	TArray<uint8> ActorSaveData;
@@ -91,6 +96,7 @@ struct FActorSpawnInfo
 
 		Ar << ActorData.characterHealth;
 		Ar << ActorData.ActorTransform;
+		Ar << ActorData.currentLevelName;
 
 		Ar << ActorData.ptr;
 		Ar << ActorData.ActorSaveData;
@@ -111,11 +117,11 @@ public:
 	UFUNCTION()
 		void CreateSaveFile(AActor* Actors, FString path);
 	UFUNCTION()
-		void LoadSaveFile(AActor* Actor, FString path);
+		bool LoadSaveFile(AActor* Actor, FString path);
 	UFUNCTION()
 		void OnLevelLoad();
 	UFUNCTION()
 		void SaveGame(AActor* Actors, FString path);
 	UFUNCTION()
-		void LoadGame(AActor* Actor, FString path);
+		void LoadGame();
 };

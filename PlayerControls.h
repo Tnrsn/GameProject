@@ -141,12 +141,14 @@ public:
 		APlayerControls* controlledChar;
 	UPROPERTY()
 		int charIndex;
+	UPROPERTY()
+		int controlledCharIndex;
 
 	//SaveSystem
 	UPROPERTY()
 		USaveSystem* saveSystem;
-	//UPROPERTY()
-	//	ULevelStreaming* level;
+	UPROPERTY()
+		FString currentLevelName;
 
 
 protected:

@@ -8,33 +8,39 @@ ANPC_Management::ANPC_Management()
 
 }
 
-
 // Called when the game starts or when spawned
 void ANPC_Management::BeginPlay()
 {
 	Super::BeginPlay();
 
 	dialogSystem = NewObject<UNPCDialogSystem>();
+
 	characterProfile = NewObject<UCharacterProfiles>();
 
-	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	//if (!mainHUD)
+	//{
+	//	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	//	UE_LOG(LogTemp, Warning, TEXT("mainHUD created"));
+	//}
+
 	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
-
-	characterProfile = NewObject<UCharacterProfiles>();
 	mainHUD->characterProfiles = characterProfile;
 
-	characterProfile->characterStats = characterStats;
-	characterProfile->beginningStats = characterProfile->characterStats;
+	if (characterProfile)
+	{
+		characterProfile->characterStats = characterStats;
+		characterProfile->beginningStats = characterProfile->characterStats;
 
-	characterProfile->charGender = charGender;
-	characterProfile->charRace = charRace;
-	characterProfile->charClass = charClass;
-
-	//Calculates Maximum Inventory Capacity
-	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-	//Calculates Maximum Health
-	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
-	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+		characterProfile->charGender = charGender;
+		characterProfile->charRace = charRace;
+		characterProfile->charClass = charClass;
+		
+		//Calculates Maximum Inventory Capacity
+		characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
+		////Calculates Maximum Health
+		characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+	}
 
 	groupMembers.Reset();
 }

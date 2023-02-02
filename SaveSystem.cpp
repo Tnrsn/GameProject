@@ -3,6 +3,8 @@
 
 #include "SaveSystem.h"
 
+#include "Public/NPC_Management.h"
+#include <Engine/Level.h>
 #include "PlayerControls.h"
 #include <Serialization/Archive.h>
 #include <Serialization/BufferArchive.h>
@@ -33,6 +35,10 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path)
 
 	ActorData.characterHealth = player->characterProfile->characterCurrentHealth;
 	ActorData.ActorTransform = Actor->GetTransform();
+
+	ActorData.currentLevelName = player->currentLevelName;
+	ActorData.controlledCharIndex = player->controlledCharIndex;
+
 	//ActorData.ptr = Actor->GetClass();
 
 
@@ -51,16 +57,16 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path)
 	if (FFileHelper::SaveArrayToFile(ActorData.ActorSaveData, *FilePath)) {}
 }
 
-void USaveSystem::LoadSaveFile(AActor* Actor, FString path)
+bool USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 {
 	FString FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "save/" + path + ".dat";
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *path);
 	if(FPaths::FileExists(FilePath))
 	{
 		TArray<uint8> BinaryArray;
 
-		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath)) return;
-
-		if (BinaryArray.Num() <= 0) return;
+		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath)) return false;
+		if (BinaryArray.Num() <= 0) return false;
 
 		FMemoryReader FromBinary(BinaryArray, true);
 		FromBinary.Seek(0);
@@ -79,55 +85,77 @@ void USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 
 		APlayerControls* player = Cast<APlayerControls>(Actor);
 
-		if (player->characterProfile)
+		if (SpawnInfo.currentLevelName != GetWorld()->GetName()) return false;
+		if (!player->characterProfile) player->DispatchBeginPlay();
+
+		player->currentLevelName = SpawnInfo.currentLevelName;
+		player->characterProfile->characterCurrentHealth = SpawnInfo.characterHealth;
+
+		//Load Inventory
+		for (FItemProperties item : SpawnInfo.items)
 		{
-			//SpawnInfo.characterHealth
-			player->characterProfile->characterCurrentHealth = 50;
-			UE_LOG(LogTemp, Warning, TEXT("%d"), player->characterProfile->characterCurrentHealth);
+			if (item.name != "")
+			{
+				if (item.texturePath != "")
+				{
+					item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
+				}
+				if (item.skeletalMeshPath != "")
+				{
+					item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
+				}
+
+				//UE_LOG(LogTemp, Warning, TEXT("%s"), *item.name);
+				player->inventory.Add(item);
+			}
 		}
-		UE_LOG(LogTemp, Warning, TEXT("3")); //Burasý çok hýzlý çalýþýyor zamanlayýcý ile yavaþlatmayý dene
+		player->characterProfile->currentInventoryWeight = SpawnInfo.inventoryWeight;
 
-		////Load Inventory
-		//for (FItemProperties item : SpawnInfo.items)
-		//{
-		//	if (item.name != "")
-		//	{
-		//		if (item.texturePath != "")
-		//		{
-		//			item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
-		//		}
-		//		if (item.skeletalMeshPath != "")
-		//		{
-		//			item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
-		//		}
+		//Save group members
 
-		//		player->inventory.Add(item);
-		//	}
-		//}
-		//player->characterProfile->currentInventoryWeight = SpawnInfo.inventoryWeight;
 
 		////---Loading Done---
 		////***********************
 		FromBinary.FlushCache();
 		BinaryArray.Empty();
 		FromBinary.Close();
+		return true;
 	}
+	return false;
 }
 
 void USaveSystem::OnLevelLoad()
 {
+	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
+
 	for (AActor* actor : level->GetLoadedLevel()->Actors)
 	{
 		if (actor->GetClass()->GetSuperClass()->GetName() == "BP_NPC_Management_C")
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *actor->GetName());
-			//APlayerControls* npc = Cast<APlayerControls>(actor);
+			FString actorName = actor->GetName().Left(actor->GetName().Len() - 4);
+			AActor* newActor = GetWorld()->SpawnActor<ANPC_Management>(actor->GetClass(), FVector::ZeroVector, FRotator::ZeroRotator);
 
-			LoadSaveFile(actor, actor->GetName());
+			if (LoadSaveFile(newActor, actorName))
+			{
+				for (AActor* persistentActor : persistentLevelActors)
+				{
+					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Len() - 4) == actorName)
+					{
+						persistentActor->Destroy();
+						break;
+					}
+				}
+			}
+			else
+			{
+				newActor->Destroy();
+			}
 		}
 	}
 
-	//UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
+	APlayerControls* playerSave = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	LoadSaveFile(playerSave->groupMembers[0], playerSave->groupMembers[0]->GetName());
+	UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
 }
 
 void USaveSystem::SaveGame(AActor* Actors, FString path)
@@ -135,10 +163,10 @@ void USaveSystem::SaveGame(AActor* Actors, FString path)
 
 
 
-	CreateSaveFile(Actors, path);
+	CreateSaveFile(Actors, path.Left(path.Len() - 4));
 }
 
-void USaveSystem::LoadGame(AActor* Actor, FString path)
+void USaveSystem::LoadGame()
 {
 	
 
@@ -152,3 +180,38 @@ void USaveSystem::LoadGame(AActor* Actor, FString path)
 	//LoadSaveFile(Actor, path);
 }
 
+
+//void USaveSystem::OnLevelLoad()
+//{
+//	for (AActor* actor : level->GetLoadedLevel()->Actors)
+//	{
+//		if (actor->GetClass()->GetSuperClass()->GetName() == "BP_NPC_Management_C")
+//		{
+//			AActor* newActor = GetWorld()->SpawnActor<ANPC_Management>(actor->GetClass(), FVector::ZeroVector, FRotator::ZeroRotator);
+//
+//			if (LoadSaveFile(newActor, newActor->GetName().Left(newActor->GetName().Len() - 4)))
+//			{
+//				for (AActor* persistentLevelActor : GetWorld()->PersistentLevel->Actors)
+//				{
+//					if (persistentLevelActor)
+//					{
+//						if (persistentLevelActor->GetName().Left(persistentLevelActor->GetName().Len() - 4) == newActor->GetName().Left(newActor->GetName().Len() - 4))
+//						{
+//							UE_LOG(LogTemp, Warning, TEXT("Destroyed"));
+//							persistentLevelActor->Destroy();
+//							break;
+//						}
+//					}
+//				}
+//			}
+//			else
+//			{
+//				newActor->Destroy();
+//			}
+//		}
+//	}
+//
+//	APlayerControls* playerSave = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+//	LoadSaveFile(playerSave->groupMembers[0], playerSave->groupMembers[0]->GetName());
+//	UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
+//}

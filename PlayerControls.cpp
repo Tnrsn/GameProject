@@ -129,33 +129,38 @@ void APlayerControls::InitCharacter()
 {
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
 
+	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
+	currentLevelName = GetWorld()->GetName();
+	UE_LOG(LogTemp, Warning, TEXT("hey"));
+
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
 		inGroup = true;
 		onAIControl = false;
 		charIndex = 0;
+
+		mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
+
+		mainHUD->characterProfiles = characterProfile;
+		mainHUD->AddToViewport();
+
+		characterProfile->beginningStats = characterProfile->characterStats;
+
+		//Calculates Maximum Inventory Capacity
+		characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
+		//Calculates Maximum Health
+		characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 	}
 
 	if (inGroup)
 	{
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		controlledCharIndex = 0;
 	}
-
-	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
-
 	
-	mainHUD->characterProfiles = characterProfile;
-	mainHUD->AddToViewport();
 
-	characterProfile->beginningStats = characterProfile->characterStats;
-
-	//Calculates Maximum Inventory Capacity
-	characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-	//Calculates Maximum Health
-	characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
-	characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 }
 
 
@@ -976,15 +981,18 @@ void APlayerControls::ControlNPC(int index)
 				groupMembers[index]->springArm->bEnableCameraRotationLag = true;
 				springArm->bEnableCameraRotationLag = true;
 			}), GetWorld()->GetDeltaSeconds(), false);
+
 	}
 
 	//Change controlledChar variables in all group members
 	if (groupMembers.Num() - 1 >= index)
 	{
 		controlledChar = groupMembers[index];
+		controlledCharIndex = index;
 		for (int i = 0; i <= groupMembers.Num() - 1; i++)
 		{
 			groupMembers[i]->controlledChar = controlledChar;
+			groupMembers[i]->controlledCharIndex = index;
 		}
 
 		//Switch characterIndex
@@ -1126,12 +1134,6 @@ void APlayerControls::LoadGame()
 {
 	if (saveSystem)
 	{
-		//TArray<AActor*> characters;
-		//UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerControls::StaticClass(), characters);
-
-		//for (AActor* actor : characters)
-		//{
-			saveSystem->LoadGame(this, this->GetName());
-		//}
+		saveSystem->LoadGame();
 	}
 }
