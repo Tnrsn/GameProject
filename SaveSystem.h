@@ -38,6 +38,10 @@ struct FActorSpawnInfo
 		FString currentLevelName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		int controlledCharIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		int charIndex;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		bool inGroup;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		TSoftClassPtr<class AActor> ptr = nullptr;
@@ -98,6 +102,13 @@ struct FActorSpawnInfo
 		Ar << ActorData.ActorTransform;
 		Ar << ActorData.currentLevelName;
 
+		if (ActorData.charIndex)
+		{
+			Ar << ActorData.charIndex;
+		}
+
+		Ar << ActorData.inGroup;
+
 		Ar << ActorData.ptr;
 		Ar << ActorData.ActorSaveData;
 		return Ar;
@@ -121,7 +132,9 @@ public:
 	UFUNCTION()
 		void OnLevelLoad();
 	UFUNCTION()
-		void SaveGame(AActor* Actors, FString path);
+		void SaveGame();
 	UFUNCTION()
 		void LoadGame();
+	UFUNCTION()
+		void LoadGroupMembers(APlayerControls* playerSave, APlayerControls* NPCSave);
 };

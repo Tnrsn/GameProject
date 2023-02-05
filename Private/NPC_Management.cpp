@@ -14,14 +14,7 @@ void ANPC_Management::BeginPlay()
 	Super::BeginPlay();
 
 	dialogSystem = NewObject<UNPCDialogSystem>();
-
 	characterProfile = NewObject<UCharacterProfiles>();
-
-	//if (!mainHUD)
-	//{
-	//	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	//	UE_LOG(LogTemp, Warning, TEXT("mainHUD created"));
-	//}
 
 	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 	mainHUD->characterProfiles = characterProfile;
@@ -43,12 +36,23 @@ void ANPC_Management::BeginPlay()
 	}
 
 	groupMembers.Reset();
+
 }
 
 // Called every frame
 void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	//if (GetController())
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *GetController()->GetName());
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: None"), *GetName());
+	//}
+
 }
 
 void ANPC_Management::StartDialog()

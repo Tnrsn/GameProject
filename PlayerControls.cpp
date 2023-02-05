@@ -46,15 +46,14 @@ APlayerControls::APlayerControls()
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetWorld()->GetName());
-
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *Controller->GetName());
+	
 	if (GetWorld())
 	{
 		saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
 	}
 
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
-
 	characterProfile = NewObject<UCharacterProfiles>();
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
@@ -66,7 +65,7 @@ void APlayerControls::BeginPlay()
 		inMenu = false;
 		InitCharacter();
 	}
-	else //If It's not in game we dont see the character other than character creation menu
+	else
 	{
 		FInputModeUIOnly inputMode;
 		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
@@ -74,6 +73,7 @@ void APlayerControls::BeginPlay()
 
 		springArm->LookFromFront();
 	}
+
 }
 
 // Called every frame
@@ -121,6 +121,7 @@ void APlayerControls::Tick(float DeltaTime)
 	}
 
 	FollowControlledCharacter();
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), GetVelocity().Size());
 	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
@@ -131,7 +132,6 @@ void APlayerControls::InitCharacter()
 
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
 	currentLevelName = GetWorld()->GetName();
-	UE_LOG(LogTemp, Warning, TEXT("hey"));
 
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
@@ -915,7 +915,6 @@ void APlayerControls::ControlThirdCharacter()
 
 void APlayerControls::ControlFourthCharacter()
 {
-	characterProfile->characterCurrentHealth -= 20;
 	ControlNPC(3);
 }
 
@@ -981,7 +980,6 @@ void APlayerControls::ControlNPC(int index)
 				groupMembers[index]->springArm->bEnableCameraRotationLag = true;
 				springArm->bEnableCameraRotationLag = true;
 			}), GetWorld()->GetDeltaSeconds(), false);
-
 	}
 
 	//Change controlledChar variables in all group members
@@ -1078,9 +1076,17 @@ void APlayerControls::FollowControlledCharacter()
 {
 	if (!onAIMovement && onAIControl && inGroup)
 	{
+		
+		if (!GetController())
+		{//AI uses players controller Its an error******************-*-*-*-************************************!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//Controller = GetWorld()->SpawnActor<AAIController>();
+			//UE_LOG(LogTemp, Warning, TEXT("test"));
+		}
+			
 		if (600.f < GetDistanceTo(controlledChar))
 		{
 			FVector desiredLocation;
+
 
 			if (charIndex == 1)
 			{
@@ -1095,6 +1101,8 @@ void APlayerControls::FollowControlledCharacter()
 				desiredLocation = GetPlayerBehindLocation(140, -305);
 			}
 
+
+			//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetController()->GetName());
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), desiredLocation);
 			followingChar = true;
 		}
@@ -1122,11 +1130,7 @@ void APlayerControls::SaveGame()
 	{
 		//UGameplayStatics::OpenLevel(GetWorld(), FName("DevLevel2"));
 
-		//************Save System
-		//for (AActor* actor : characters)
-		//{
-			saveSystem->SaveGame(this, this->GetName());
-		//}
+		saveSystem->SaveGame();
 	}
 }
 
