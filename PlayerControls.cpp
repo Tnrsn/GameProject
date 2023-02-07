@@ -374,14 +374,14 @@ void APlayerControls::ToggleInventory()
 				inventoryHUD->AddToViewport();
 
 				inventoryEnabled = true;
-				UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+				//UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
 			}
 			else if (inventoryEnabled)
 			{
 				inventoryHUD->RemoveFromParent();
 
 				inventoryEnabled = false;
-				UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+				//UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 			}
 		}
 		else
@@ -397,14 +397,14 @@ void APlayerControls::ToggleInventory()
 			inventoryHUD->AddToViewport();
 
 			inventoryEnabled = true;
-			UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
+			//UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
 		}
 		else if (inventoryEnabled)
 		{
 			inventoryHUD->RemoveFromParent();
 
 			inventoryEnabled = false;
-			UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
+			//UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 		}
 	}
 }
@@ -1086,7 +1086,6 @@ void APlayerControls::FollowControlledCharacter()
 		if (600.f < GetDistanceTo(controlledChar))
 		{
 			FVector desiredLocation;
-
 
 			if (charIndex == 1)
 			{

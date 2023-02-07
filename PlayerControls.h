@@ -149,8 +149,8 @@ public:
 		USaveSystem* saveSystem;
 	UPROPERTY()
 		FString currentLevelName;
-	UPROPERTY()
-		int groupIndex;
+	//UPROPERTY()
+	//	int groupIndex;
 
 
 protected:

@@ -102,11 +102,8 @@ struct FActorSpawnInfo
 		Ar << ActorData.ActorTransform;
 		Ar << ActorData.currentLevelName;
 
-		if (ActorData.charIndex)
-		{
-			Ar << ActorData.charIndex;
-		}
 
+		Ar << ActorData.charIndex;
 		Ar << ActorData.inGroup;
 
 		Ar << ActorData.ptr;
@@ -137,4 +134,6 @@ public:
 		void LoadGame();
 	UFUNCTION()
 		void LoadGroupMembers(APlayerControls* playerSave, APlayerControls* NPCSave);
+	UFUNCTION()
+		void SwitchToMainCharacter(APlayerControls* player);
 };

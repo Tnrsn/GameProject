@@ -4,6 +4,7 @@
 #include "SaveSystem.h"
 
 #include <AIController.h>
+//#include <GameFramework/Controller.h>
 #include "Public/NPC_Management.h"
 #include <Engine/Level.h>
 #include "PlayerControls.h"
@@ -71,6 +72,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath)) return false;
 		if (BinaryArray.Num() <= 0) return false;
 
+		//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Actor->GetName(), *path);
 		FMemoryReader FromBinary(BinaryArray, true);
 		FromBinary.Seek(0);
 
@@ -117,7 +119,6 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 		player->charIndex = SpawnInfo.charIndex;
 		player->inGroup = SpawnInfo.inGroup;
 
-
 		//---Loading Done---
 		//***********************
 		FromBinary.FlushCache();
@@ -131,9 +132,11 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 void USaveSystem::OnLevelLoad()
 {
 	APlayerControls* playerSave = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	//playerSave->ControlNPC(0); //Create a new control npc for player switching that wont crash
 	playerSave = playerSave->groupMembers[0];
-	LoadSaveFile(playerSave, playerSave->GetName());
-	playerSave->controlledChar = playerSave->groupMembers[playerSave->controlledCharIndex];
+	SwitchToMainCharacter(playerSave);
+	LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4));
+
 
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
@@ -158,16 +161,10 @@ void USaveSystem::OnLevelLoad()
 
 				if (NPCSave->inGroup)
 				{
-					if (NPCSave->charIndex == 0)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("1"));
-						LoadGroupMembers(playerSave, playerSave);
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("2"));
-						LoadGroupMembers(playerSave, NPCSave);
-					}
+					UE_LOG(LogTemp, Warning, TEXT("%s: charIndex == %d"), *NPCSave->GetName(), NPCSave->charIndex);
+
+					LoadGroupMembers(playerSave, NPCSave);
+
 
 					//NPCSave->controlledChar = NPCSave->groupMembers[NPCSave->controlledCharIndex];
 					//UE_LOG(LogTemp, Warning, TEXT("%d"), NPCSave->groupMembers.Num());
@@ -220,17 +217,55 @@ void USaveSystem::LoadGame()
 
 void USaveSystem::LoadGroupMembers(APlayerControls* playerSave, APlayerControls* NPCSave)
 {
-	if (playerSave->groupMembers.Num() < playerSave->charIndex + 1)
+	if (NPCSave->charIndex != 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("3"));
-		playerSave->groupMembers.SetNum(playerSave->charIndex + 1);
-		playerSave->groupMembers[playerSave->charIndex] = NPCSave;
-		NPCSave->groupMembers = playerSave->groupMembers;
+		if (playerSave->groupMembers.Num() < NPCSave->charIndex + 1)
+		{
+			playerSave->groupMembers.SetNum(NPCSave->charIndex + 1);
+			playerSave->groupMembers[NPCSave->charIndex] = NPCSave;
+			NPCSave->groupMembers = playerSave->groupMembers;
+		}
+		else
+		{
+			playerSave->groupMembers[NPCSave->charIndex] = NPCSave;
+			NPCSave->groupMembers = playerSave->groupMembers;
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("4"));
-		playerSave->groupMembers[playerSave->charIndex] = NPCSave;
-		NPCSave->groupMembers = playerSave->groupMembers;
+		if (playerSave->groupMembers.Num() < playerSave->charIndex + 1)
+		{
+			playerSave->groupMembers.SetNum(playerSave->charIndex + 1);
+			playerSave->groupMembers[playerSave->charIndex] = NPCSave;
+			NPCSave->groupMembers = playerSave->groupMembers;
+		}
+		else
+		{
+			playerSave->groupMembers[playerSave->charIndex] = NPCSave;
+			NPCSave->groupMembers = playerSave->groupMembers;
+		}
+
+		NPCSave->charIndex = playerSave->charIndex;
+		playerSave->charIndex = 0;
 	}
+
+	NPCSave->controlledChar = playerSave;
+}
+
+void USaveSystem::SwitchToMainCharacter(APlayerControls* player)
+{
+	if (player->charIndex != 0)
+	{
+		player->groupMembers[player->charIndex]->GetController()->Possess(player);
+	}
+
+	int groupSize = player->groupMembers.Num();
+
+	player->groupMembers.SetNum(1);
+	player->groupMembers.SetNum(groupSize);
+
+	player->mainHUD->RemoveFromParent();
+	player->mainHUD->AddToViewport();
+
+	player->controlledChar = player;
 }
