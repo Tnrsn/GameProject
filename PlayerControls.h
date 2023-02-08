@@ -31,6 +31,8 @@ public:
 	// Sets default values for this character's properties
 	APlayerControls();
 
+	
+
 	//Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		UPlayerSpringArmComponent* springArm;
@@ -148,10 +150,8 @@ public:
 	UPROPERTY()
 		USaveSystem* saveSystem;
 	UPROPERTY()
-		FString currentLevelName;
-	//UPROPERTY()
-	//	int groupIndex;
-
+		FString currentWorldName;
+	static bool newLevelLoaded;
 
 protected:
 	// Called when the game starts or when spawned
@@ -231,3 +231,4 @@ public:
 
 };
 
+bool APlayerControls::newLevelLoaded = false;

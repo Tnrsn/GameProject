@@ -35,7 +35,7 @@ struct FActorSpawnInfo
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		FTransform ActorTransform;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-		FString currentLevelName;
+		FString currentWorldName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		int controlledCharIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
@@ -100,8 +100,7 @@ struct FActorSpawnInfo
 
 		Ar << ActorData.characterHealth;
 		Ar << ActorData.ActorTransform;
-		Ar << ActorData.currentLevelName;
-
+		Ar << ActorData.currentWorldName;
 
 		Ar << ActorData.charIndex;
 		Ar << ActorData.inGroup;

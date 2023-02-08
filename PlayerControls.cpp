@@ -52,7 +52,7 @@ void APlayerControls::BeginPlay()
 	{
 		saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
 	}
-
+	
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 	characterProfile = NewObject<UCharacterProfiles>();
 
@@ -122,6 +122,8 @@ void APlayerControls::Tick(float DeltaTime)
 
 	FollowControlledCharacter();
 
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), ADefaultGameMode::test);
+
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), GetVelocity().Size());
 	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
@@ -131,7 +133,7 @@ void APlayerControls::InitCharacter()
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
 
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	currentLevelName = GetWorld()->GetName();
+	currentWorldName = GetWorld()->GetName();
 
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
@@ -161,6 +163,11 @@ void APlayerControls::InitCharacter()
 	}
 	
 
+	if (APlayerControls::newLevelLoaded && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	{
+		LoadGame();
+		APlayerControls::newLevelLoaded = false;
+	}
 }
 
 

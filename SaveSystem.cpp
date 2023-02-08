@@ -38,7 +38,7 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path)
 	ActorData.characterHealth = player->characterProfile->characterCurrentHealth;
 	ActorData.ActorTransform = Actor->GetTransform();
 
-	ActorData.currentLevelName = player->currentLevelName;
+	ActorData.currentWorldName = player->currentWorldName;
 	ActorData.controlledCharIndex = player->controlledCharIndex;
 
 	ActorData.charIndex = player->charIndex;
@@ -83,17 +83,24 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path)
 		AActor* ActorOut = Actor;
 
 		//Load character location
-		ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
-		ActorOut->Serialize(Ar);
 
 		//---Loading---
 
 		APlayerControls* player = Cast<APlayerControls>(Actor);
 
-		if (SpawnInfo.currentLevelName != GetWorld()->GetName()) return false;
+		if (SpawnInfo.currentWorldName != GetWorld()->GetName() && player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+		{
+			UGameplayStatics::OpenLevel(GetWorld(), *SpawnInfo.currentWorldName);
+			player->newLevelLoaded = true;
+			return false;
+		}
+
+		ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
+		ActorOut->Serialize(Ar);
+
 		if (!player->characterProfile) player->DispatchBeginPlay();
 
-		player->currentLevelName = SpawnInfo.currentLevelName;
+		player->currentWorldName = SpawnInfo.currentWorldName;
 		player->characterProfile->characterCurrentHealth = SpawnInfo.characterHealth;
 
 		//Load Inventory
@@ -135,8 +142,11 @@ void USaveSystem::OnLevelLoad()
 	//playerSave->ControlNPC(0); //Create a new control npc for player switching that wont crash
 	playerSave = playerSave->groupMembers[0];
 	SwitchToMainCharacter(playerSave);
-	LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4));
-
+	if (!LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4)))
+	{
+		return;
+	}
+	
 
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
@@ -161,23 +171,13 @@ void USaveSystem::OnLevelLoad()
 
 				if (NPCSave->inGroup)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("%s: charIndex == %d"), *NPCSave->GetName(), NPCSave->charIndex);
-
 					LoadGroupMembers(playerSave, NPCSave);
-
-
-					//NPCSave->controlledChar = NPCSave->groupMembers[NPCSave->controlledCharIndex];
-					//UE_LOG(LogTemp, Warning, TEXT("%d"), NPCSave->groupMembers.Num());
-					//NPCSave->controlledChar = NPCSave->groupMembers[0];
 				}
 
 				for (AActor* persistentActor : persistentLevelActors)
 				{
 					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Len() - 4) == actorName)
 					{
-						//ANPC_Management* originalActor = Cast<ANPC_Management>(persistentActor);
-						//NPCSave->Controller = originalActor->Controller;
-						//UE_LOG(LogTemp, Warning, TEXT("%s"), *NPCSave->GetName());
 						persistentActor->Destroy();
 						break;
 					}
