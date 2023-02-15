@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Components/StaticMeshComponent.h>
 #include "GameFramework/Actor.h"
 #include "LevelTransport.generated.h"
 
@@ -15,6 +16,11 @@ public:
 	// Sets default values for this actor's properties
 	ALevelTransport();
 
+	UPROPERTY(EditAnywhere)
+		FName worldName;
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* staticMesh;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -23,4 +29,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+		void TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed);
 };

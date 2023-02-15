@@ -152,6 +152,7 @@ public:
 	UPROPERTY()
 		FString currentWorldName;
 	static bool newLevelLoaded;
+	static bool toNewWorld;
 
 protected:
 	// Called when the game starts or when spawned
@@ -231,4 +232,5 @@ public:
 
 };
 
-bool APlayerControls::newLevelLoaded = false;
+bool APlayerControls::newLevelLoaded = false; //It's for when player loads save
+bool APlayerControls::toNewWorld = false; //It's for when character transports between worlds

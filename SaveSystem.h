@@ -117,20 +117,27 @@ class GAMEPROJECT_API USaveSystem : public UWorldSubsystem
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 public:
-
 	UPROPERTY()
 		ULevelStreaming* level;
+	UPROPERTY()
+		FString SName = "";
+	UPROPERTY()
+		bool TSave = false;
+	UPROPERTY()
+		bool saveLevelSet = false;
+	UPROPERTY()
+		int timesLoaded = 10;
 
 	UFUNCTION()
-		void CreateSaveFile(AActor* Actors, FString path);
+		void CreateSaveFile(AActor* Actors, FString path, FString saveName = "", bool transportSave = false);
 	UFUNCTION()
-		bool LoadSaveFile(AActor* Actor, FString path);
+		bool LoadSaveFile(AActor* Actor, FString path, FString saveName = "", bool transportSave = false);
 	UFUNCTION()
 		void OnLevelLoad();
 	UFUNCTION()
-		void SaveGame();
+		void SaveGame(FString saveName = "", bool transportSave = false);
 	UFUNCTION()
-		void LoadGame();
+		void LoadGame(FString saveName = "", bool transportSave = false);
 	UFUNCTION()
 		void LoadGroupMembers(APlayerControls* playerSave, APlayerControls* NPCSave);
 	UFUNCTION()

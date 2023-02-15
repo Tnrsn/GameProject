@@ -46,8 +46,7 @@ APlayerControls::APlayerControls()
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *Controller->GetName());
-	
+
 	if (GetWorld())
 	{
 		saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
@@ -121,20 +120,13 @@ void APlayerControls::Tick(float DeltaTime)
 	}
 
 	FollowControlledCharacter();
-
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), ADefaultGameMode::test);
-
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), GetVelocity().Size());
-	//UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), FVector(0));
 }
 
 void APlayerControls::InitCharacter()
 {
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
-
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
 	currentWorldName = GetWorld()->GetName();
-
+	
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
@@ -159,14 +151,17 @@ void APlayerControls::InitCharacter()
 	if (inGroup)
 	{
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-		controlledCharIndex = 0;
 	}
 	
-
 	if (APlayerControls::newLevelLoaded && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 	{
 		LoadGame();
 		APlayerControls::newLevelLoaded = false;
+	}
+
+	if (APlayerControls::toNewWorld && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	{
+		saveSystem->LoadGame("TransportSave", true);
 	}
 }
 
@@ -334,7 +329,6 @@ void APlayerControls::ClickEvents()
 
 	if (SelectedActor)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), *SelectedActor->GetClass()->GetSuperClass()->GetName());
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
@@ -381,14 +375,12 @@ void APlayerControls::ToggleInventory()
 				inventoryHUD->AddToViewport();
 
 				inventoryEnabled = true;
-				//UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
 			}
 			else if (inventoryEnabled)
 			{
 				inventoryHUD->RemoveFromParent();
 
 				inventoryEnabled = false;
-				//UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 			}
 		}
 		else
@@ -404,14 +396,12 @@ void APlayerControls::ToggleInventory()
 			inventoryHUD->AddToViewport();
 
 			inventoryEnabled = true;
-			//UE_LOG(LogTemp, Warning, TEXT("Inventory Opened"));
 		}
 		else if (inventoryEnabled)
 		{
 			inventoryHUD->RemoveFromParent();
 
 			inventoryEnabled = false;
-			//UE_LOG(LogTemp, Warning, TEXT("Inventory Closed"));
 		}
 	}
 }
@@ -702,7 +692,6 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 				}
 				else
 				{
-					//UE_LOG(LogTemp, Warning, TEXT("Weapon2 One handed weapon equipped"));
 					characterProfile->characterArmor.weapon2 = itemProperties;
 					characterProfile->characterArmor.weapon2.isEquipped = true;
 					characterProfile->characterArmor.weapon2.weapon2Item = true;
@@ -712,7 +701,6 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			}
 			else
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("Weapon1 One handed weapon equipped"));
 				characterProfile->characterArmor.weapon1 = itemProperties;
 				characterProfile->characterArmor.weapon1.isEquipped = true;
 				DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
@@ -993,18 +981,26 @@ void APlayerControls::ControlNPC(int index)
 	if (groupMembers.Num() - 1 >= index)
 	{
 		controlledChar = groupMembers[index];
-		controlledCharIndex = index;
+		//controlledCharIndex = index;
 		for (int i = 0; i <= groupMembers.Num() - 1; i++)
 		{
 			groupMembers[i]->controlledChar = controlledChar;
-			groupMembers[i]->controlledCharIndex = index;
+			//groupMembers[i]->controlledCharIndex = index;
 		}
 
-		//Switch characterIndex
-		int temp;
-		temp = groupMembers[index]->charIndex;
-		groupMembers[index]->charIndex = charIndex;
-		charIndex = temp;
+		//Set main players charIndex, so main player can follow possessed npc
+		if (index != 0)
+		{
+			groupMembers[0]->charIndex = groupMembers[index]->charIndex;
+		}
+		else
+		{
+			groupMembers[0]->charIndex = 0;
+		}
+		//int temp;
+		//temp = groupMembers[index]->controlledCharIndex;
+		//groupMembers[index]->controlledCharIndex = controlledCharIndex;
+		//controlledCharIndex = temp;
 	}
 
 }
@@ -1012,23 +1008,26 @@ void APlayerControls::ControlNPC(int index)
 
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
-	groupMembers[index]->springArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
-	groupMembers[index]->springArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
-	groupMembers[index]->springArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+	if (!toNewWorld) //Game crashes if this function works while moving to new world
+	{
+		groupMembers[index]->springArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+		groupMembers[index]->springArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
+		groupMembers[index]->springArm->TargetOffset.Z = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Z, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 
-	if (FMath::Abs(groupMembers[index]->springArm->TargetOffset.X) < 0.2f &&
-		FMath::Abs(groupMembers[index]->springArm->TargetOffset.Y) < 0.2f &&
-		FMath::Abs(groupMembers[index]->springArm->TargetOffset.Z) < 0.2f)
-	{
-		groupMembers[index]->springArm->TargetOffset = FVector(0);
-		return;
-	}
-	else
-	{
-		FTimerHandle repeatTime;
-		GetWorldTimerManager().SetTimer(repeatTime, FTimerDelegate::CreateLambda([=]() {
-			SmoothCameraSwitch(index, moveSpeed); 
-			}), GetWorld()->GetDeltaSeconds() / 2, false);
+		if (FMath::Abs(groupMembers[index]->springArm->TargetOffset.X) < 0.2f &&
+			FMath::Abs(groupMembers[index]->springArm->TargetOffset.Y) < 0.2f &&
+			FMath::Abs(groupMembers[index]->springArm->TargetOffset.Z) < 0.2f)
+		{
+			groupMembers[index]->springArm->TargetOffset = FVector(0);
+			return;
+		}
+		else
+		{
+			FTimerHandle repeatTime;
+			GetWorldTimerManager().SetTimer(repeatTime, FTimerDelegate::CreateLambda([=]() {
+				SmoothCameraSwitch(index, moveSpeed); 
+				}), GetWorld()->GetDeltaSeconds() / 2, false);
+		}
 	}
 }
 
@@ -1082,14 +1081,7 @@ void APlayerControls::StopAIMovement(bool goalDone)
 void APlayerControls::FollowControlledCharacter()
 {
 	if (!onAIMovement && onAIControl && inGroup)
-	{
-		
-		if (!GetController())
-		{//AI uses players controller Its an error******************-*-*-*-************************************!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			//Controller = GetWorld()->SpawnActor<AAIController>();
-			//UE_LOG(LogTemp, Warning, TEXT("test"));
-		}
-			
+	{	
 		if (600.f < GetDistanceTo(controlledChar))
 		{
 			FVector desiredLocation;
@@ -1107,8 +1099,6 @@ void APlayerControls::FollowControlledCharacter()
 				desiredLocation = GetPlayerBehindLocation(140, -305);
 			}
 
-
-			//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetController()->GetName());
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), desiredLocation);
 			followingChar = true;
 		}
@@ -1118,6 +1108,7 @@ void APlayerControls::FollowControlledCharacter()
 			followingChar = false;
 		}
 	}
+	
 }
 
 FVector APlayerControls::GetPlayerBehindLocation(float behind, float right)
@@ -1134,9 +1125,10 @@ void APlayerControls::SaveGame()
 {
 	if (saveSystem)
 	{
-		//UGameplayStatics::OpenLevel(GetWorld(), FName("DevLevel2"));
-
+		int temp = groupMembers[0]->charIndex;
+		groupMembers[0]->charIndex = 0;
 		saveSystem->SaveGame();
+		groupMembers[0]->charIndex = temp;
 	}
 }
 
