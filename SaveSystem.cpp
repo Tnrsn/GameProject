@@ -36,18 +36,17 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 
 	APlayerControls* player = Cast<APlayerControls>(Actor);
 	
-	//---Savings---
+	//---------------------------------------------------------------------------------------------Savings-------------------------------------------------
 	for (int i = 0; i < player->inventory.Num(); i++) //Saves inventory
 	{
 		ActorData.items[i] = player->inventory[i];
 	}
-	ActorData.inventoryWeight = player->characterProfile->currentInventoryWeight;
+	ActorData.currentInventoryWeight = player->characterProfile->currentInventoryWeight;
 
-	ActorData.characterHealth = player->characterProfile->characterCurrentHealth;
+	ActorData.characterCurrentHealth = player->characterProfile->characterCurrentHealth;
 	ActorData.ActorTransform = Actor->GetTransform();
 
 	ActorData.currentWorldName = player->currentWorldName;
-	//UE_LOG(LogTemp, Warning, TEXT("Saving... %s: %s"), *player->GetName(), *player->currentWorldName);
 	ActorData.controlledCharIndex = player->controlledCharIndex;
 
 	ActorData.charIndex = player->charIndex;
@@ -55,8 +54,19 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 
 	//ActorData.ptr = Actor->GetClass();
 
+	//Character Stats
+	ActorData.charName = player->characterProfile->charName;
 
-	//---Savings End---
+	ActorData.charGender = player->characterProfile->charGender.GetValue();
+	ActorData.charRace = player->characterProfile->charRace.GetValue();
+	ActorData.charClass = player->characterProfile->charClass.GetValue();
+
+	ActorData.beginningStats = player->characterProfile->beginningStats;
+
+
+
+
+	//----------------------------------------------------------------------------------------Savings End---------------------------------------------
 	//****************************
 	FMemoryWriter ActorWriter = FMemoryWriter(ActorData.ActorSaveData, true);
 	FSaveArchive Ar(ActorWriter, true);
@@ -91,7 +101,6 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		if (!FFileHelper::LoadFileToArray(BinaryArray, *FilePath)) return false;
 		if (BinaryArray.Num() <= 0) return false;
 
-		//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Actor->GetName(), *path);
 		FMemoryReader FromBinary(BinaryArray, true);
 		FromBinary.Seek(0);
 
@@ -103,7 +112,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		//Load character location
 
-		//---Loading---
+		//----------------------------------------------------------------------------------------------------------------Loading--------------------------------------------------
 
 		APlayerControls* player = Cast<APlayerControls>(Actor);
 		
@@ -112,7 +121,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		if (!player->newLevelLoaded && !APlayerControls::toNewWorld && SpawnInfo.currentWorldName != GetWorld()->GetName() 
 			&& player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 		{
-			//These lines loads world when player loads a save and if player is on a different world
+			//loads world when player loads a save and if player is on a different world
 			UGameplayStatics::OpenLevel(GetWorld(), *SpawnInfo.currentWorldName);
 			player->newLevelLoaded = true;
 			return false;
@@ -127,7 +136,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		if (!player->characterProfile) player->DispatchBeginPlay();
 
-		player->characterProfile->characterCurrentHealth = SpawnInfo.characterHealth;
+		player->characterProfile->characterCurrentHealth = SpawnInfo.characterCurrentHealth;
 
 		//Load Inventory
 		for (FItemProperties item : SpawnInfo.items)
@@ -142,17 +151,25 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 				{
 					item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
 				}
-
-				//UE_LOG(LogTemp, Warning, TEXT("%s"), *item.name);
 				player->inventory.Add(item);
 			}
 		}
-		player->characterProfile->currentInventoryWeight = SpawnInfo.inventoryWeight;
+		player->characterProfile->currentInventoryWeight = SpawnInfo.currentInventoryWeight;
 
 		player->charIndex = SpawnInfo.charIndex;
 		player->inGroup = SpawnInfo.inGroup;
 
-		//---Loading Done---
+		//Character Stats
+		player->characterProfile->charName = SpawnInfo.charName;
+
+		player->characterProfile->charGender = static_cast<FCharacterGender>(SpawnInfo.charGender);
+		player->characterProfile->charRace = static_cast<FCharacterRace>(SpawnInfo.charRace);
+		player->characterProfile->charClass = static_cast<FCharacterClasses>(SpawnInfo.charClass);
+
+		player->characterProfile->beginningStats = SpawnInfo.beginningStats;
+
+
+		//------------------------------------------------------------------------------Loading Done------------------------------------------------
 		//***********************
 		FromBinary.FlushCache();
 		BinaryArray.Empty();
@@ -176,8 +193,7 @@ void USaveSystem::OnLevelLoad()
 	{
 		if (actor->GetClass()->GetSuperClass()->GetName() == "BP_NPC_Management_C")
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *actor->GetName());
-			FString actorName = actor->GetName().Left(actor->GetName().Len() - 4);
+			FString actorName = actor->GetName().Left(actor->GetName().Find("_C_"));
 			AActor* newActor = GetWorld()->SpawnActor<ANPC_Management>(actor->GetClass(), FVector::ZeroVector, FRotator::ZeroRotator);
 			
 			if (LoadSaveFile(newActor, actorName, SName, TSave))
@@ -213,15 +229,15 @@ void USaveSystem::OnLevelLoad()
 				}
 				for (AActor* persistentActor : persistentLevelActors)
 				{
-					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Len() - 4 - (timesLoaded / 10)) == actorName)
+					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Find("_C_")) == actorName)
 					{
 						persistentActor->Rename(*FString::Printf(TEXT("DestroyedObject_%d"), FMath::Rand()));
 						persistentActor->Destroy();
 						break;
-					} //Game crashes (gives error) after 10th loading because of actor names. testcompanion1 -> testcompanion10
+					}
 				}
 
-				FString newName = *NPCSave->GetName().Left(NPCSave->GetName().Len() - timesLoaded / 10) + FString("1");
+				FString newName = *NPCSave->GetName().Left(NPCSave->GetName().Find("_C_")) + FString("_C_1");
 				NPCSave->Rename(*newName);
 			}
 			else

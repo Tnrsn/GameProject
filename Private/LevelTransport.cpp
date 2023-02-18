@@ -39,9 +39,17 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 	saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
 
 	APlayerControls* player = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	player = player->groupMembers[0];
+	if (player->groupMembers.Num() != 0)
+	{
+		player = player->groupMembers[0];
+		saveSystem->SwitchToMainCharacter(player);
+	}
+	else
+	{
+		player->InitCharacter();
+		player->inMenu = false;
+	}
 
-	saveSystem->SwitchToMainCharacter(player);
 
 	APlayerControls::toNewWorld = true;
 	saveSystem->SaveGame("", true);

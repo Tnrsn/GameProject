@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/CharacterProfiles.h"
 #include "Public/MasterItem.h"
 #include "Subsystems/WorldSubsystem.h"
 #include <Serialization/ObjectAndNameAsStringProxyArchive.h>
@@ -25,23 +26,65 @@ struct FActorSpawnInfo
 {
 	GENERATED_BODY();
 
+	//---------------------------------------------------------------------------------------------
+	//Character stats
+	UPROPERTY(EditAnywhere, SaveGame)
+		FString charName;
+
+	UPROPERTY(EditAnywhere, SaveGame)
+		int charGender;
+	UPROPERTY(EditAnywhere, SaveGame)
+		int charRace;
+	UPROPERTY(EditAnywhere, SaveGame)
+		int charClass;
+
+	UPROPERTY(EditAnywhere, SaveGame)
+		FCharacterStats beginningStats;
+	UPROPERTY(EditAnywhere, SaveGame)
+		FCharacterStats characterStats;
+
+	UPROPERTY(EditAnywhere, SaveGame)
+		int statPoints;
+	UPROPERTY(EditAnywhere, SaveGame)
+		int relationWithPlayer;
+
+	//Character inventory
 	UPROPERTY(EditAnywhere, SaveGame)
 		FItemProperties items[1000];
 	UPROPERTY(EditAnywhere, SaveGame)
-		int inventoryWeight;
+		int maxInventoryCapacity;
+	UPROPERTY(EditAnywhere, SaveGame)
+		int currentInventoryWeight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-		int characterHealth;
+	//Character status
+	UPROPERTY(EditAnywhere, SaveGame)
+		float characterMaximumHealth;
+	UPROPERTY(EditAnywhere, SaveGame)
+		float characterCurrentHealth;
+
+	//Armor
+	UPROPERTY(EditAnywhere, SaveGame)
+		FCharacterWearables characterArmor;
+	UPROPERTY(EditAnywhere, SaveGame)
+		int armorRating;
+
+
+
+
+	//Character Location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		FTransform ActorTransform;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		FString currentWorldName;
+
+	//Character group info
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		int controlledCharIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		int charIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		bool inGroup;
+//---------------------------------------------------------------------------------------^^^^ Datas to save ^^^^----------------------------
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		TSoftClassPtr<class AActor> ptr = nullptr;
@@ -50,6 +93,9 @@ struct FActorSpawnInfo
 
 	friend FSaveArchive& operator << (FSaveArchive& Ar, FActorSpawnInfo& ActorData)
 	{
+		Ar << ActorData.ptr;
+		Ar << ActorData.ActorSaveData;
+
 		for (int i = 0; i < 1000; i++) //Saves inventory
 		{
 			Ar << ActorData.items[i].armorBonus;
@@ -96,17 +142,28 @@ struct FActorSpawnInfo
 			Ar << ActorData.items[i].WearableType;
 			Ar << ActorData.items[i].weight;
 		}
-		Ar << ActorData.inventoryWeight;
+		Ar << ActorData.currentInventoryWeight;
 
-		Ar << ActorData.characterHealth;
+		Ar << ActorData.characterCurrentHealth;
 		Ar << ActorData.ActorTransform;
 		Ar << ActorData.currentWorldName;
 
 		Ar << ActorData.charIndex;
 		Ar << ActorData.inGroup;
 
-		Ar << ActorData.ptr;
-		Ar << ActorData.ActorSaveData;
+		Ar << ActorData.charName;
+
+		Ar << ActorData.charGender;
+		Ar << ActorData.charRace;
+		Ar << ActorData.charClass;
+
+		Ar << ActorData.beginningStats.strength;
+		Ar << ActorData.beginningStats.dexterity;
+		Ar << ActorData.beginningStats.constitution;
+		Ar << ActorData.beginningStats.wisdom;
+		Ar << ActorData.beginningStats.intelligence;
+
+
 		return Ar;
 	}
 };

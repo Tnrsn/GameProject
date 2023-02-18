@@ -158,9 +158,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+public:
 	UFUNCTION()
 		void InitCharacter();
-public:
+
 	void StartCameraRotation();
 	void StopCameraRotation();
 	void CameraZoom(float value);

@@ -16,7 +16,7 @@ public:
 	// Sets default values for this actor's properties
 	ALevelTransport();
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FName worldName;
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* staticMesh;
@@ -29,6 +29,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed);
 };

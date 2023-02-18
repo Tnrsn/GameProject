@@ -61,6 +61,10 @@ void APlayerControls::BeginPlay()
 
 	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
 	{
+		FInputModeGameAndUI inputMode;
+		inputMode.SetHideCursorDuringCapture(false);
+		playerController->SetInputMode(inputMode);
+
 		inMenu = false;
 		InitCharacter();
 	}
@@ -911,6 +915,9 @@ void APlayerControls::ControlThirdCharacter()
 void APlayerControls::ControlFourthCharacter()
 {
 	ControlNPC(3);
+
+	//characterProfile->charGender = static_cast<FCharacterGender>(1);
+	UE_LOG(LogTemp, Warning, TEXT("%d"), characterProfile->beginningStats.strength); //Complete every saving data
 }
 
 void APlayerControls::ControlNPC(int index)
@@ -1127,7 +1134,7 @@ void APlayerControls::SaveGame()
 	{
 		int temp = groupMembers[0]->charIndex;
 		groupMembers[0]->charIndex = 0;
-		saveSystem->SaveGame();
+		saveSystem->SaveGame("Save1");
 		groupMembers[0]->charIndex = temp;
 	}
 }
@@ -1136,6 +1143,6 @@ void APlayerControls::LoadGame()
 {
 	if (saveSystem)
 	{
-		saveSystem->LoadGame();
+		saveSystem->LoadGame("Save1");
 	}
 }
