@@ -43,14 +43,9 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	}
 	ActorData.currentInventoryWeight = player->characterProfile->currentInventoryWeight;
 
-	ActorData.characterCurrentHealth = player->characterProfile->characterCurrentHealth;
+	//Character Location
 	ActorData.ActorTransform = Actor->GetTransform();
-
 	ActorData.currentWorldName = player->currentWorldName;
-	ActorData.controlledCharIndex = player->controlledCharIndex;
-
-	ActorData.charIndex = player->charIndex;
-	ActorData.inGroup = player->inGroup;
 
 	//ActorData.ptr = Actor->GetClass();
 
@@ -62,9 +57,22 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	ActorData.charClass = player->characterProfile->charClass.GetValue();
 
 	ActorData.beginningStats = player->characterProfile->beginningStats;
+	ActorData.characterStats = player->characterProfile->characterStats;
 
+	ActorData.statPoints = player->characterProfile->statPoints;
+	ActorData.relationWithPlayer = player->characterProfile->relationWithPlayer;
 
+	//Character Status
+	ActorData.characterCurrentHealth = player->characterProfile->characterCurrentHealth;
 
+	//Group info
+	//ActorData.controlledCharIndex = player->controlledCharIndex;
+
+	ActorData.charIndex = player->charIndex;
+	ActorData.inGroup = player->inGroup;
+
+	//Characte Armor
+	ActorData.characterArmor.top = player->characterProfile->characterArmor.top;
 
 	//----------------------------------------------------------------------------------------Savings End---------------------------------------------
 	//****************************
@@ -118,6 +126,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		
 		if (transportSave && !SpawnInfo.inGroup) return false;
 
+		//Character Location
 		if (!player->newLevelLoaded && !APlayerControls::toNewWorld && SpawnInfo.currentWorldName != GetWorld()->GetName() 
 			&& player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 		{
@@ -135,8 +144,6 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		}
 
 		if (!player->characterProfile) player->DispatchBeginPlay();
-
-		player->characterProfile->characterCurrentHealth = SpawnInfo.characterCurrentHealth;
 
 		//Load Inventory
 		for (FItemProperties item : SpawnInfo.items)
@@ -156,8 +163,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		}
 		player->characterProfile->currentInventoryWeight = SpawnInfo.currentInventoryWeight;
 
-		player->charIndex = SpawnInfo.charIndex;
-		player->inGroup = SpawnInfo.inGroup;
+
 
 		//Character Stats
 		player->characterProfile->charName = SpawnInfo.charName;
@@ -167,7 +173,34 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		player->characterProfile->charClass = static_cast<FCharacterClasses>(SpawnInfo.charClass);
 
 		player->characterProfile->beginningStats = SpawnInfo.beginningStats;
+		player->characterProfile->characterStats = SpawnInfo.characterStats;
+		player->characterProfile->RefreshStats(); //Does stat calculations again, It saved my time by not saving max health and inventory value
 
+		player->characterProfile->statPoints = SpawnInfo.statPoints;
+		player->characterProfile->relationWithPlayer = SpawnInfo.relationWithPlayer;
+
+		//Character Status
+		player->characterProfile->characterCurrentHealth = SpawnInfo.characterCurrentHealth;
+
+		//Group Info
+		player->charIndex = SpawnInfo.charIndex;
+		player->inGroup = SpawnInfo.inGroup;
+
+		//Character Armor
+
+		if (SpawnInfo.characterArmor.top.name != "")
+		{
+			SpawnInfo.characterArmor.top.texture = LoadObject<UTexture>(nullptr, *SpawnInfo.characterArmor.top.texturePath);
+			SpawnInfo.characterArmor.top.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *SpawnInfo.characterArmor.top.skeletalMeshPath);
+
+			player->characterProfile->characterArmor.top = SpawnInfo.characterArmor.top;
+			player->torsoMesh->SetSkeletalMesh(player->characterProfile->characterArmor.top.skeletalMesh);
+		}
+
+
+
+		//After wearing everything, resetting animations stabilizes character animation
+		player->ResetAnimations();
 
 		//------------------------------------------------------------------------------Loading Done------------------------------------------------
 		//***********************

@@ -65,7 +65,7 @@ void ALootObject::DisableLootUI(AActor* SelectedActor)
 	{
 		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C") && lootUIEnabled)
 		{
-			HUD->RemoveFromViewport();
+			HUD->RemoveFromParent();
 
 			lootUIEnabled = false;
 		}

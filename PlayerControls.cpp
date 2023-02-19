@@ -143,12 +143,7 @@ void APlayerControls::InitCharacter()
 		mainHUD->characterProfiles = characterProfile;
 		mainHUD->AddToViewport();
 
-		characterProfile->beginningStats = characterProfile->characterStats;
-
-		//Calculates Maximum Inventory Capacity
-		characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-		//Calculates Maximum Health
-		characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 	}
 
@@ -917,7 +912,7 @@ void APlayerControls::ControlFourthCharacter()
 	ControlNPC(3);
 
 	//characterProfile->charGender = static_cast<FCharacterGender>(1);
-	UE_LOG(LogTemp, Warning, TEXT("%d"), characterProfile->beginningStats.strength); //Complete every saving data
+	//UE_LOG(LogTemp, Warning, TEXT("%d"), characterProfile->beginningStats.strength);
 }
 
 void APlayerControls::ControlNPC(int index)

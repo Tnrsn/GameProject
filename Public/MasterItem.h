@@ -91,11 +91,12 @@ struct FItemProperties
 		int damageBonus;
 
 	//Pointer paths for saving
-	UPROPERTY()
+	UPROPERTY() //texturePath and SkeletalMeshPath are assigning while saving game in SaveSystem.h
 		FString texturePath;
 	UPROPERTY()
 		FString skeletalMeshPath;
 };
+//Everytime I add a new variable to FItemProperties dont forget to add it to SaveSystem.h SaveItem function too.
 
 UCLASS()
 class GAMEPROJECT_API AMasterItem : public AActor

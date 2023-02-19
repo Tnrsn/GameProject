@@ -123,4 +123,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void ChangeStat(int value, TEnumAsByte<FStatTypes> types);
+	UFUNCTION()
+		void RefreshStats();
 };

@@ -26,6 +26,54 @@ struct FActorSpawnInfo
 {
 	GENERATED_BODY();
 
+	void SaveItem(FSaveArchive& Ar, FItemProperties& item)
+	{
+		Ar << item.name;
+		Ar << item.description;
+		Ar << item.weight;
+		Ar << item.Category;
+		Ar << item.maximumAmount;
+		Ar << item.isStackable;
+		Ar << item.currentAmount;
+		Ar << item.rarity;
+		Ar << item.inInventory;
+
+		Ar << item.ConsumableEffect;
+		Ar << item.effectStrength;
+		Ar << item.effectTime;
+
+		Ar << item.WearableType;
+		Ar << item.armorBonus;
+		Ar << item.isEquipped;
+
+		Ar << item.hideHeadMesh;
+		Ar << item.damageBonus;
+		Ar << item.weapon2Item;
+
+		if (item.skeletalMesh != nullptr)
+		{
+			item.skeletalMeshPath = item.skeletalMesh->GetPathName();
+			Ar << item.skeletalMeshPath;
+		}
+		else
+		{
+			item.skeletalMeshPath = "";
+			Ar << item.skeletalMeshPath;
+		}
+
+		//Save Texture
+		if (item.texture != nullptr)
+		{
+			item.texturePath =item.texture->GetPathName();
+			Ar << item.texturePath;
+		}
+		else
+		{
+			item.texturePath = "";
+			Ar << item.texturePath;
+		}
+	}
+
 	//---------------------------------------------------------------------------------------------
 	//Character stats
 	UPROPERTY(EditAnywhere, SaveGame)
@@ -52,24 +100,17 @@ struct FActorSpawnInfo
 	UPROPERTY(EditAnywhere, SaveGame)
 		FItemProperties items[1000];
 	UPROPERTY(EditAnywhere, SaveGame)
-		int maxInventoryCapacity;
-	UPROPERTY(EditAnywhere, SaveGame)
 		int currentInventoryWeight;
 
 	//Character status
-	UPROPERTY(EditAnywhere, SaveGame)
-		float characterMaximumHealth;
 	UPROPERTY(EditAnywhere, SaveGame)
 		float characterCurrentHealth;
 
 	//Armor
 	UPROPERTY(EditAnywhere, SaveGame)
 		FCharacterWearables characterArmor;
-	UPROPERTY(EditAnywhere, SaveGame)
-		int armorRating;
-
-
-
+	//UPROPERTY(EditAnywhere, SaveGame)
+	//	int armorRating;
 
 	//Character Location
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
@@ -78,79 +119,33 @@ struct FActorSpawnInfo
 		FString currentWorldName;
 
 	//Character group info
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-		int controlledCharIndex;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+	//	int controlledCharIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		int charIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		bool inGroup;
 //---------------------------------------------------------------------------------------^^^^ Datas to save ^^^^----------------------------
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
-		TSoftClassPtr<class AActor> ptr = nullptr;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+	//	TSoftClassPtr<class AActor> ptr = nullptr;
 
 	TArray<uint8> ActorSaveData;
 
 	friend FSaveArchive& operator << (FSaveArchive& Ar, FActorSpawnInfo& ActorData)
 	{
-		Ar << ActorData.ptr;
+		//Ar << ActorData.ptr;
 		Ar << ActorData.ActorSaveData;
 
-		for (int i = 0; i < 1000; i++) //Saves inventory
+		//----Inventory-----
+		for (int i = 0; i < 1000; i++) 
 		{
-			Ar << ActorData.items[i].armorBonus;
-			Ar << ActorData.items[i].Category;
-			Ar << ActorData.items[i].ConsumableEffect;
-			Ar << ActorData.items[i].currentAmount;
-			Ar << ActorData.items[i].description;
-			Ar << ActorData.items[i].effectStrength;
-			Ar << ActorData.items[i].effectTime;
-			Ar << ActorData.items[i].hideHeadMesh;
-			Ar << ActorData.items[i].inInventory;
-			Ar << ActorData.items[i].isEquipped;
-			Ar << ActorData.items[i].isStackable;
-			Ar << ActorData.items[i].damageBonus;
-			Ar << ActorData.items[i].maximumAmount;
-			Ar << ActorData.items[i].name;
-			Ar << ActorData.items[i].rarity;
-
-			//Save skeletal mesh
-			if (ActorData.items[i].skeletalMesh != nullptr)
-			{
-				ActorData.items[i].skeletalMeshPath = ActorData.items->skeletalMesh->GetPathName();
-				Ar << ActorData.items[i].skeletalMeshPath;
-			}
-			else
-			{
-				ActorData.items[i].skeletalMeshPath = "";
-				Ar << ActorData.items[i].skeletalMeshPath;
-			}
-
-			//Save Texture
-			if (ActorData.items[i].skeletalMesh != nullptr)
-			{
-				ActorData.items[i].texturePath = ActorData.items->texture->GetPathName();
-				Ar << ActorData.items[i].texturePath;
-			}
-			else
-			{
-				ActorData.items[i].texturePath = "";
-				Ar << ActorData.items[i].texturePath;
-			}
-
-			Ar << ActorData.items[i].weapon2Item;
-			Ar << ActorData.items[i].WearableType;
-			Ar << ActorData.items[i].weight;
+			ActorData.SaveItem(Ar, ActorData.items[i]);
 		}
+		
 		Ar << ActorData.currentInventoryWeight;
 
-		Ar << ActorData.characterCurrentHealth;
-		Ar << ActorData.ActorTransform;
-		Ar << ActorData.currentWorldName;
-
-		Ar << ActorData.charIndex;
-		Ar << ActorData.inGroup;
-
+		//-----Character Stats-----
 		Ar << ActorData.charName;
 
 		Ar << ActorData.charGender;
@@ -163,7 +158,37 @@ struct FActorSpawnInfo
 		Ar << ActorData.beginningStats.wisdom;
 		Ar << ActorData.beginningStats.intelligence;
 
+		Ar << ActorData.characterStats.strength;
+		Ar << ActorData.characterStats.dexterity;
+		Ar << ActorData.characterStats.constitution;
+		Ar << ActorData.characterStats.wisdom;
+		Ar << ActorData.characterStats.intelligence;
 
+		Ar << ActorData.statPoints;
+		Ar << ActorData.relationWithPlayer;
+
+		//-----Character Status-----
+		Ar << ActorData.characterCurrentHealth;
+
+		Ar << ActorData.ActorTransform;
+		Ar << ActorData.currentWorldName;
+
+		//-----Group values------
+		Ar << ActorData.charIndex;
+		Ar << ActorData.inGroup;
+		
+		//----Character Armors-----
+		ActorData.SaveItem(Ar, ActorData.characterArmor.head);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.top);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.hand);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.foot);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.firstRing);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.secondRing);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.neck);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.weapon1);
+		ActorData.SaveItem(Ar, ActorData.characterArmor.weapon2);
+
+		
 		return Ar;
 	}
 };

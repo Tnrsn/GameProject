@@ -34,3 +34,14 @@ void UCharacterProfiles::ChangeStat(int value, TEnumAsByte<FStatTypes> types)
 		}
 	}
 }
+
+void UCharacterProfiles::RefreshStats()
+{
+	beginningStats = characterStats;
+
+	//Calculates Maximum Inventory Capacity
+	maxInventoryCapacity = (beginningStats.strength * 10) + ((characterStats.strength - beginningStats.strength) * 2);
+	//Calculates Maximum Health
+	characterMaximumHealth = (beginningStats.constitution * 10) + ((characterStats.constitution - beginningStats.constitution) * 2);
+}
+
