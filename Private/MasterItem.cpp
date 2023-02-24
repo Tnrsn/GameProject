@@ -50,9 +50,7 @@ void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
 		canLoot = true;
-
 	}
 }
 
@@ -60,7 +58,6 @@ void AMasterItem::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
 		canLoot = false;
 	}
 }

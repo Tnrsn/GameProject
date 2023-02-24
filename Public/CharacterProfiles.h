@@ -97,6 +97,11 @@ public:
 		float characterCurrentHealth;
 
 	UPROPERTY(BlueprintReadOnly)
+		float characterMaximumEnergy;
+	UPROPERTY(BlueprintReadOnly)
+		float characterCurrentEnergy;
+
+	UPROPERTY(BlueprintReadOnly)
 		int armorRating = 0;
 
 	UPROPERTY(BlueprintReadOnly)

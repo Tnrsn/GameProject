@@ -187,15 +187,17 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		player->inGroup = SpawnInfo.inGroup;
 
 		//Character Armor
+		LoadItem(player, SpawnInfo.characterArmor.head, player->characterProfile->characterArmor.head, player->headMesh);
+		LoadItem(player, SpawnInfo.characterArmor.top, player->characterProfile->characterArmor.top, player->torsoMesh);
+		LoadItem(player, SpawnInfo.characterArmor.hand, player->characterProfile->characterArmor.hand, player->handsMesh);
+		LoadItem(player, SpawnInfo.characterArmor.foot, player->characterProfile->characterArmor.foot, player->footsMesh);
+		LoadItem(player, SpawnInfo.characterArmor.firstRing, player->characterProfile->characterArmor.firstRing, nullptr);
+		LoadItem(player, SpawnInfo.characterArmor.secondRing, player->characterProfile->characterArmor.secondRing, nullptr);
+		LoadItem(player, SpawnInfo.characterArmor.neck, player->characterProfile->characterArmor.neck, nullptr);
+		//Weapons will have a skeletalMesh soon for now Its nullptr
+		LoadItem(player, SpawnInfo.characterArmor.weapon1, player->characterProfile->characterArmor.weapon1, nullptr);
+		LoadItem(player, SpawnInfo.characterArmor.weapon2, player->characterProfile->characterArmor.weapon2, nullptr);
 
-		if (SpawnInfo.characterArmor.top.name != "")
-		{
-			SpawnInfo.characterArmor.top.texture = LoadObject<UTexture>(nullptr, *SpawnInfo.characterArmor.top.texturePath);
-			SpawnInfo.characterArmor.top.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *SpawnInfo.characterArmor.top.skeletalMeshPath);
-
-			player->characterProfile->characterArmor.top = SpawnInfo.characterArmor.top;
-			player->torsoMesh->SetSkeletalMesh(player->characterProfile->characterArmor.top.skeletalMesh);
-		}
 
 
 
@@ -376,4 +378,20 @@ void USaveSystem::SwitchToMainCharacter(APlayerControls* player)
 	player->mainHUD->AddToViewport();
 
 	player->controlledChar = player;
+}
+
+void USaveSystem::LoadItem(APlayerControls* player, FItemProperties& item, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh)
+{
+	if (item.name != "")
+	{
+		item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
+		item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
+
+		playerItem = item;
+		if (skeletalMesh != nullptr)
+		{
+			//Player mesh required here (headMesh, topMesh etc.)
+			skeletalMesh->SetSkeletalMesh(playerItem.skeletalMesh);
+		}
+	}
 }

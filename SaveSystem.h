@@ -224,4 +224,6 @@ public:
 		void LoadGroupMembers(APlayerControls* playerSave, APlayerControls* NPCSave);
 	UFUNCTION()
 		void SwitchToMainCharacter(APlayerControls* player);
+	UFUNCTION()
+		void LoadItem(APlayerControls* player, FItemProperties& item, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh = nullptr);
 };

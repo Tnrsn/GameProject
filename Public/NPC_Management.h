@@ -10,6 +10,13 @@
 /**
  * 
  */
+UENUM(BlueprintType, Category = "NPC Style")
+enum FNPCStyle
+{
+	NonTalkable,
+	Talkable,
+	Hostile
+};
 UCLASS()
 class GAMEPROJECT_API ANPC_Management : public APlayerControls
 {
@@ -17,6 +24,9 @@ class GAMEPROJECT_API ANPC_Management : public APlayerControls
 
 public:
 	ANPC_Management();
+
+	UPROPERTY(EditAnywhere, Blueprintreadwrite)
+		TEnumAsByte<FNPCStyle> NPCStyle;
 
 	//Dialog System
 	UPROPERTY(BlueprintReadOnly)

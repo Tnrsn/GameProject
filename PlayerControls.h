@@ -13,10 +13,9 @@
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
-//#include <Engine/World.h>
 #include <Kismet/GameplayStatics.h>
-#include <Camera/CameraComponent.h>
-#include <GameFramework/SpringArmComponent.h>
+//#include <Camera/CameraComponent.h>
+//#include <GameFramework/SpringArmComponent.h>
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/PlayerController.h>
 #include "GameFramework/Character.h"
@@ -30,8 +29,6 @@ class GAMEPROJECT_API APlayerControls : public ACharacter
 public:
 	// Sets default values for this character's properties
 	APlayerControls();
-
-	
 
 	//Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -123,6 +120,8 @@ public:
 		AActor* actorToBeGone;
 
 	//Character interactions
+	UPROPERTY()
+		bool inCombat = false;
 	UPROPERTY(BlueprintReadWrite)
 		bool inDialog = false;
 	UPROPERTY(BlueprintReadOnly)
@@ -153,6 +152,10 @@ public:
 		FString currentWorldName;
 	static bool newLevelLoaded;
 	static bool toNewWorld;
+
+	//Combat
+	float combatCounter = 0;
+	float attackSpeed = .5f;
 
 protected:
 	// Called when the game starts or when spawned
@@ -222,9 +225,12 @@ public:
 		void SaveGame();
 	UFUNCTION()
 		void LoadGame();
-	//UFUNCTION()
-	//	void OnLevelLoad();
-
+	UFUNCTION()
+		void Attack(float DeltaTime, AActor* enemyActor);
+	UFUNCTION()
+		int CalculateDamage(AActor* enemyActor);
+	UFUNCTION()
+		bool isDamagedEnemy(AActor* enemyActor);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

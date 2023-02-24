@@ -2,6 +2,7 @@
 
 
 #include "PlayerControls.h"
+#include "NPC_Management.h"
 
 // Sets default values
 APlayerControls::APlayerControls()
@@ -84,17 +85,12 @@ void APlayerControls::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//if (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::F) && GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::F)&&)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("test"));
-	//}
-
 	if (camRotating)
 	{
 		springArm->RotateCamera(playerController);
 	}
 
-	if (itemRef)
+	if (itemRef) //Interacts with items around world
 	{
 		if (itemRef->canLoot && itemRef->moveToObject)
 		{
@@ -102,7 +98,32 @@ void APlayerControls::Tick(float DeltaTime)
 		}
 	}
 
-	if (onAIMovement)
+	//Interacts with npcs
+	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C")) 
+	{
+		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
+
+		if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
+		{ 
+			npc->StartDialog();
+
+			actorToBeGone = nullptr;
+			inDialog = true;
+			StopAIMovement(true);
+			//Turns to npc
+			SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
+		} //Combat with npcs
+		else if (npc->NPCStyle == Hostile && inCombat)
+		{
+			Attack(DeltaTime, npc);
+		}
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %d"), *GetName(), onAIControl);
+
+
+
+	if (onAIMovement) //Stops aimovement If Its necessary
 	{
 		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
 			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
@@ -121,6 +142,12 @@ void APlayerControls::Tick(float DeltaTime)
 		{
 			onAIMovement = false;
 		}
+	}
+
+	//Character dies if their health is under of 0
+	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
+	{
+		Destroy();
 	}
 
 	FollowControlledCharacter();
@@ -145,6 +172,7 @@ void APlayerControls::InitCharacter()
 
 		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
 	}
 
 	if (inGroup)
@@ -335,6 +363,7 @@ void APlayerControls::ClickEvents()
 
 			actorToBeGone = SelectedActor;
 			MoveToLocation(lootObject, FVector(0));
+			inCombat = false;
 		}
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_MasterItem_C"))//itemRef
 		{
@@ -343,16 +372,41 @@ void APlayerControls::ClickEvents()
 
 			actorToBeGone = SelectedActor;
 			MoveToLocation(itemRef, FVector(0));
+			inCombat = false;
 		}
-		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPC_Management_C"))
+		//Interactions with npcs
+		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_NPC_Management_C") && SelectedActor != this) 
 		{
-			inDialog = true;
+			ANPC_Management* npc = Cast<ANPC_Management>(SelectedActor);
+			if (npc->NPCStyle == NonTalkable)
+			{
+				return;
+			}
+			else if (npc->NPCStyle == Talkable)
+			{
+				inCombat = false;
+				if (GetDistanceTo(npc) < 250)
+				{
+					inDialog = true;
+					npc->StartDialog();
 
-			actorToBeGone = SelectedActor;
-			MoveToLocation(actorToBeGone, FVector(0));
+					SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
+				}
+				else //If npc is far then character moves to npc
+				{
+					actorToBeGone = SelectedActor;
+					MoveToLocation(actorToBeGone, FVector(0));
+				}
+			}
+			else if (npc->NPCStyle == Hostile)
+			{
+				actorToBeGone = SelectedActor;
+				inCombat = true;
+			}
 		}
 		else
 		{
+			inCombat = false;
 			targetLocation = HitResult.Location;
 			actorToBeGone = nullptr;
 			MoveToLocation(nullptr, targetLocation);
@@ -983,11 +1037,9 @@ void APlayerControls::ControlNPC(int index)
 	if (groupMembers.Num() - 1 >= index)
 	{
 		controlledChar = groupMembers[index];
-		//controlledCharIndex = index;
 		for (int i = 0; i <= groupMembers.Num() - 1; i++)
 		{
 			groupMembers[i]->controlledChar = controlledChar;
-			//groupMembers[i]->controlledCharIndex = index;
 		}
 
 		//Set main players charIndex, so main player can follow possessed npc
@@ -999,10 +1051,6 @@ void APlayerControls::ControlNPC(int index)
 		{
 			groupMembers[0]->charIndex = 0;
 		}
-		//int temp;
-		//temp = groupMembers[index]->controlledCharIndex;
-		//groupMembers[index]->controlledCharIndex = controlledCharIndex;
-		//controlledCharIndex = temp;
 	}
 
 }
@@ -1077,6 +1125,10 @@ void APlayerControls::StopAIMovement(bool goalDone)
 		{
 			itemRef->moveToObject = false;
 		}
+		if (actorToBeGone)
+		{
+			actorToBeGone = nullptr;
+		}
 	}
 }
 
@@ -1139,5 +1191,150 @@ void APlayerControls::LoadGame()
 	if (saveSystem)
 	{
 		saveSystem->LoadGame("Save1");
+	}
+}
+
+void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
+{
+	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage) ||
+		(characterProfile->characterArmor.weapon1.isEquipped && characterProfile->characterArmor.weapon1.weaponType == Melee))
+	{
+		if (GetDistanceTo(enemy) <= 120)
+		{
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
+			combatCounter += attackSpeed * DeltaTime;
+			if (combatCounter >= 2)
+			{
+				if (!isDamagedEnemy(enemy))
+				{
+					combatCounter = 0;
+					return;
+				}
+
+				enemy->characterProfile->characterCurrentHealth -= CalculateDamage(enemy);
+				
+				UE_LOG(LogTemp, Warning, TEXT("Hit with Melee"));
+				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
+				combatCounter = 0;
+
+				if (enemy->characterProfile->characterCurrentHealth <= 0)
+				{
+					actorToBeGone = nullptr;
+				}
+			}
+		}
+		else
+		{
+			MoveToLocation(enemy, FVector(0));
+		}
+	}
+	else //Ranged attacks
+	{
+		FHitResult OutHit;
+		FCollisionQueryParams CollisionParams;
+
+		//Ignore Npcs
+		TArray<AActor*> ActorsToIgnore;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerControls::StaticClass(), ActorsToIgnore);
+
+		for (AActor* Actor : ActorsToIgnore)
+		{
+			CollisionParams.AddIgnoredActor(Actor);
+		}
+
+		// If there is a barrier between character and target, or if character is too far away from the target then character changes Its position
+		if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), enemy->GetActorLocation(), ECC_Visibility, CollisionParams) || GetDistanceTo(enemy) > 1000)
+		{
+			MoveToLocation(enemy, FVector(0));
+		}
+		else
+		{
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
+			combatCounter += attackSpeed * DeltaTime;
+			if (combatCounter >= 2)
+			{
+				if (!isDamagedEnemy(enemy))
+				{
+					combatCounter = 0;
+					return;
+				}
+
+				enemy->characterProfile->characterCurrentHealth -= CalculateDamage(enemy);
+
+				UE_LOG(LogTemp, Warning, TEXT("Hit with Ranged"));
+				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
+				combatCounter = 0;
+
+				if (enemy->characterProfile->characterCurrentHealth <= 0)
+				{
+					actorToBeGone = nullptr;
+				}
+			}
+		}
+	}
+}
+
+int APlayerControls::CalculateDamage(AActor* enemyActor)
+{
+	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+
+	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage)
+		|| characterProfile->characterArmor.weapon1.weaponType == Melee)
+	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
+		if (characterProfile->characterArmor.weapon2.isEquipped)
+		{
+			//Play two handed sword animation
+			return (characterProfile->characterStats.strength *
+				(characterProfile->characterArmor.weapon1.damageBonus + enemy->characterProfile->characterArmor.weapon2.damageBonus)) / FMath::RandRange(1, 20);
+		}
+		else if(characterProfile->characterArmor.weapon1.isEquipped)
+		{
+			//Play one handed sword animation
+			return (characterProfile->characterStats.strength * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
+		}
+		else
+		{
+			//Play punch animation
+			return characterProfile->characterStats.strength * FMath::RandRange(1, 5);
+		}
+	}
+	else
+	{
+		if (characterProfile->characterArmor.weapon1.damageType == StrDamage)
+		{
+			//Bow animation
+			return (characterProfile->characterStats.strength * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
+		}
+		else if(characterProfile->characterArmor.weapon1.isEquipped)
+		{
+			//Staff animation
+			return (characterProfile->characterStats.intelligence * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
+		}
+		else
+		{
+			//Unequiped magic animation
+			return characterProfile->characterStats.intelligence * FMath::RandRange(1, 5);
+		}
+	}
+	
+	return 0;
+}
+
+bool APlayerControls::isDamagedEnemy(AActor* enemyActor)
+{
+	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+	float hitChance = (float)characterProfile->characterStats.dexterity / ((float)characterProfile->characterStats.dexterity + (float)enemy->characterProfile->characterStats.dexterity);
+
+	// Check if the hit is successful
+	if (FMath::RandRange(0.0f, 1.0f) <= hitChance)
+	{
+		//Successful hit
+		return true;
+	}
+	else
+	{
+		//Unuccessful hit
+		return false;
 	}
 }

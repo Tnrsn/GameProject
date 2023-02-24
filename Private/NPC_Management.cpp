@@ -44,15 +44,6 @@ void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//if (GetController())
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *GetController()->GetName());
-	//}
-	//else
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: None"), *GetName());
-	//}
-
 }
 
 void ANPC_Management::StartDialog()
@@ -62,6 +53,8 @@ void ANPC_Management::StartDialog()
 	playerControl->inDialog = true;
 	dialogSystem->conversation = Conversations;
 	dialogSystem->EnableDialogUI(dialogBoxUI, this);
+
+	SetActorRotation((UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation() - GetActorLocation()).Rotation());
 }
 
 bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect)

@@ -39,6 +39,20 @@ enum FItemCategory
 	Consumable
 };
 
+UENUM(BlueprintType, Category = "Item Properties")
+enum FWeaponType
+{
+	Melee,
+	Ranged
+};
+
+UENUM(BlueprintType, Category = "Item Properties")
+enum FDamageType
+{
+	StrDamage,
+	IntDamage
+};
+
 USTRUCT(BlueprintType, Category = "Item Properties")
 struct FItemProperties
 {
@@ -89,6 +103,10 @@ struct FItemProperties
 		bool weapon2Item = false;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		int damageBonus;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		TEnumAsByte<FWeaponType> weaponType;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+		TEnumAsByte<FDamageType> damageType;
 
 	//Pointer paths for saving
 	UPROPERTY() //texturePath and SkeletalMeshPath are assigning while saving game in SaveSystem.h

@@ -43,5 +43,8 @@ void UCharacterProfiles::RefreshStats()
 	maxInventoryCapacity = (beginningStats.strength * 10) + ((characterStats.strength - beginningStats.strength) * 2);
 	//Calculates Maximum Health
 	characterMaximumHealth = (beginningStats.constitution * 10) + ((characterStats.constitution - beginningStats.constitution) * 2);
+
+	//Calculates Maximum Energy
+	characterMaximumEnergy = (beginningStats.wisdom * 10) + ((characterStats.wisdom - beginningStats.wisdom) * 2);
 }
 
