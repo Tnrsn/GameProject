@@ -75,7 +75,7 @@ void ALootObject::DisableLootUI(AActor* SelectedActor)
 void ALootObject::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && (OtherActor != this) && OtherComp)
+	if (OtherActor && (OtherActor != this) && OtherComp && OtherComp->GetName() == "CollisionCylinder")
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Overlap Begin"));
 		canOpenLoot = true;
@@ -89,7 +89,7 @@ void ALootObject::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 
 void ALootObject::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && (OtherActor != this) && OtherComp)
+	if (OtherActor && (OtherActor != this) && OtherComp && OtherComp->GetName() == "CollisionCylinder")
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Overlap End"));
 		canOpenLoot = false;
@@ -102,7 +102,6 @@ void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
 	{
 		for (UClass* el : itemsRef)
 		{
-			
 			childActorRef->SetChildActorClass(el);
 			item = Cast<AMasterItem>(childActorRef->GetChildActor());
 			if (item->ItemProperties.rarity > FMath::RandRange(0, 100))

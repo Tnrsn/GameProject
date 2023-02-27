@@ -28,11 +28,9 @@ void ANPC_Management::BeginPlay()
 		characterProfile->charRace = charRace;
 		characterProfile->charClass = charClass;
 		
-		//Calculates Maximum Inventory Capacity
-		characterProfile->maxInventoryCapacity = (characterProfile->beginningStats.strength * 10) + ((characterProfile->characterStats.strength - characterProfile->beginningStats.strength) * 2);
-		////Calculates Maximum Health
-		characterProfile->characterMaximumHealth = (characterProfile->beginningStats.constitution * 10) + ((characterProfile->characterStats.constitution - characterProfile->beginningStats.constitution) * 2);
+		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
+		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
 	}
 
 	groupMembers.Reset();

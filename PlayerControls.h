@@ -16,6 +16,7 @@
 #include <Kismet/GameplayStatics.h>
 //#include <Camera/CameraComponent.h>
 //#include <GameFramework/SpringArmComponent.h>
+#include "Public/EnemyFinderComp.h"
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/PlayerController.h>
 #include "GameFramework/Character.h"
@@ -37,6 +38,8 @@ public:
 		UPlayerCameraComponent* Camera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCapsuleComponent* capsuleComp;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+		UEnemyFinderComp* findEnemyComponent;
 
 	//Skeletal Mesh Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -225,12 +228,19 @@ public:
 		void SaveGame();
 	UFUNCTION()
 		void LoadGame();
+	//Combat
 	UFUNCTION()
 		void Attack(float DeltaTime, AActor* enemyActor);
 	UFUNCTION()
 		int CalculateDamage(AActor* enemyActor);
 	UFUNCTION()
 		bool isDamagedEnemy(AActor* enemyActor);
+
+	//AI Behaviour
+	UFUNCTION()
+		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

@@ -46,5 +46,6 @@ void UCharacterProfiles::RefreshStats()
 
 	//Calculates Maximum Energy
 	characterMaximumEnergy = (beginningStats.wisdom * 10) + ((characterStats.wisdom - beginningStats.wisdom) * 2);
+
 }
 

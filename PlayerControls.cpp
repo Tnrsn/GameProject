@@ -26,6 +26,9 @@ APlayerControls::APlayerControls()
 	Camera->SetupAttachment(springArm, UPlayerSpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 
+	findEnemyComponent = CreateDefaultSubobject<UEnemyFinderComp>(TEXT("Find Enemy Component"));
+	findEnemyComponent->SetupAttachment(RootComponent);
+	
 
 	headMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head Mesh");
 	headMesh->SetupAttachment(RootComponent);
@@ -115,6 +118,11 @@ void APlayerControls::Tick(float DeltaTime)
 		} //Combat with npcs
 		else if (npc->NPCStyle == Hostile && inCombat)
 		{
+			if (npc->characterProfile->characterCurrentHealth <= 0)
+			{
+				actorToBeGone = nullptr;
+				inCombat = false;
+			}
 			Attack(DeltaTime, npc);
 		}
 	}
@@ -173,6 +181,8 @@ void APlayerControls::InitCharacter()
 		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
+
+		findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
 	}
 
 	if (inGroup)
@@ -190,6 +200,8 @@ void APlayerControls::InitCharacter()
 	{
 		saveSystem->LoadGame("TransportSave", true);
 	}
+
+	
 }
 
 
@@ -1217,11 +1229,6 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 				UE_LOG(LogTemp, Warning, TEXT("Hit with Melee"));
 				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
 				combatCounter = 0;
-
-				if (enemy->characterProfile->characterCurrentHealth <= 0)
-				{
-					actorToBeGone = nullptr;
-				}
 			}
 		}
 		else
@@ -1266,10 +1273,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
 				combatCounter = 0;
 
-				if (enemy->characterProfile->characterCurrentHealth <= 0)
-				{
-					actorToBeGone = nullptr;
-				}
+
 			}
 		}
 	}
@@ -1336,5 +1340,25 @@ bool APlayerControls::isDamagedEnemy(AActor* enemyActor)
 	{
 		//Unuccessful hit
 		return false;
+	}
+}
+
+void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
+	{
+		if (!inGroup) return;
+
+
+		findEnemyComponent->nearbyActors.Add(OtherActor);
+		if (Cast<ANPC_Management>(OtherActor))
+		{
+			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
+			if (onAIControl && enemy->NPCStyle == Hostile)
+			{
+				inCombat = true;
+				actorToBeGone = enemy;
+			}
+		}
 	}
 }

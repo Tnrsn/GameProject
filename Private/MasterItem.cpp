@@ -48,7 +48,7 @@ void AMasterItem::OnSelected(UPrimitiveComponent* PrimComp, FKey InKey)
 void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && (OtherActor != this) && OtherComp)
+	if (OtherActor && (OtherActor != this) && OtherComp && OtherComp->GetName() == "CollisionCylinder")
 	{
 		canLoot = true;
 	}
@@ -56,7 +56,7 @@ void AMasterItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 
 void AMasterItem::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && (OtherActor != this) && OtherComp)
+	if (OtherActor && (OtherActor != this) && OtherComp && OtherComp->GetName() == "CollisionCylinder")
 	{
 		canLoot = false;
 	}
