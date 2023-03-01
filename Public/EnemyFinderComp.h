@@ -20,4 +20,6 @@ public:
 	UEnemyFinderComp();
 
 	TArray<AActor*> nearbyActors;
+
+	AActor* PickEnemy();
 };

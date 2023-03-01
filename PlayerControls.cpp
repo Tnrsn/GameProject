@@ -101,37 +101,12 @@ void APlayerControls::Tick(float DeltaTime)
 		}
 	}
 
-	//Interacts with npcs
-	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C")) 
-	{
-		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
+	//Interactions with npcs (talking or combat)
+	NPCInteractions(DeltaTime);
+	findEnemyComponent->PickEnemy();
 
-		if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
-		{ 
-			npc->StartDialog();
-
-			actorToBeGone = nullptr;
-			inDialog = true;
-			StopAIMovement(true);
-			//Turns to npc
-			SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
-		} //Combat with npcs
-		else if (npc->NPCStyle == Hostile && inCombat)
-		{
-			if (npc->characterProfile->characterCurrentHealth <= 0)
-			{
-				actorToBeGone = nullptr;
-				inCombat = false;
-			}
-			Attack(DeltaTime, npc);
-		}
-	}
-
-	//UE_LOG(LogTemp, Warning, TEXT("%s: %d"), *GetName(), onAIControl);
-
-
-
-	if (onAIMovement) //Stops aimovement If Its necessary
+	//Stops ai movement If Its necessary
+	if (onAIMovement) 
 	{
 		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
 			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
@@ -182,8 +157,13 @@ void APlayerControls::InitCharacter()
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
 
-		findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
 	}
+
+	findEnemyComponent->OnComponentBeginOverlap.Clear();
+	findEnemyComponent->OnComponentEndOverlap.Clear();
+	findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
+	findEnemyComponent->OnComponentEndOverlap.AddDynamic(this, &APlayerControls::OnOverlapEnd);
+
 
 	if (inGroup)
 	{
@@ -1146,10 +1126,11 @@ void APlayerControls::StopAIMovement(bool goalDone)
 
 void APlayerControls::FollowControlledCharacter()
 {
-	if (!onAIMovement && onAIControl && inGroup)
+	if (!onAIMovement && onAIControl && inGroup && !inCombat)
 	{	
 		if (600.f < GetDistanceTo(controlledChar))
 		{
+			
 			FVector desiredLocation;
 
 			if (charIndex == 1)
@@ -1208,13 +1189,15 @@ void APlayerControls::LoadGame()
 
 void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 {
-	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage) ||
 		(characterProfile->characterArmor.weapon1.isEquipped && characterProfile->characterArmor.weapon1.weaponType == Melee))
 	{
 		if (GetDistanceTo(enemy) <= 120)
 		{
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
+			//Moves to enemy
+			TurnToEnemy(enemy->GetActorLocation());
+
 			combatCounter += attackSpeed * DeltaTime;
 			if (combatCounter >= 2)
 			{
@@ -1257,7 +1240,8 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 		}
 		else
 		{
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
+			TurnToEnemy(enemy->GetActorLocation());
+
 			combatCounter += attackSpeed * DeltaTime;
 			if (combatCounter >= 2)
 			{
@@ -1281,7 +1265,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 
 int APlayerControls::CalculateDamage(AActor* enemyActor)
 {
-	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 
 	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage)
 		|| characterProfile->characterArmor.weapon1.weaponType == Melee)
@@ -1327,7 +1311,7 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 
 bool APlayerControls::isDamagedEnemy(AActor* enemyActor)
 {
-	ANPC_Management* enemy = Cast<ANPC_Management>(enemyActor);
+	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 	float hitChance = (float)characterProfile->characterStats.dexterity / ((float)characterProfile->characterStats.dexterity + (float)enemy->characterProfile->characterStats.dexterity);
 
 	// Check if the hit is successful
@@ -1343,22 +1327,132 @@ bool APlayerControls::isDamagedEnemy(AActor* enemyActor)
 	}
 }
 
+void APlayerControls::NPCInteractions(float DeltaTime)
+{
+	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C"))
+	{
+		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
+		
+		if ((npc->NPCStyle == Hostile || npc->inGroup) && inCombat)
+		{//Npcs combat with other npcs
+			if (npc->characterProfile->characterCurrentHealth <= 0)
+			{
+				actorToBeGone = nullptr;
+				inCombat = false;
+				onAIMovement = false;
+			}
+			Attack(DeltaTime, npc);
+		}
+		else if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
+		{
+			npc->StartDialog();
+
+			actorToBeGone = nullptr;
+			inDialog = true;
+			StopAIMovement(true);
+			//Turns to npc
+			SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
+		} 
+	}//Main characters combat with npcs
+	else if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	{
+		if (Cast<ANPC_Management>(this))
+		{
+			ANPC_Management* npc = Cast<ANPC_Management>(this);
+			if (npc->NPCStyle == Hostile)
+			{
+				APlayerControls* player = Cast<APlayerControls>(actorToBeGone);
+				if (player->characterProfile->characterCurrentHealth <= 0)
+				{
+					//Resets variables when enemy dies 
+					actorToBeGone = nullptr;
+					inCombat = false;
+					onAIMovement = false;
+				}
+				Attack(DeltaTime, actorToBeGone);
+			}
+		}
+	}
+}
+
+void APlayerControls::TurnToEnemy(FVector enemyLocation)
+{
+	// Get the direction to the enemy
+	FVector direction = enemyLocation - GetActorLocation();
+	direction.Normalize();
+
+	// Calculate the rotation in the Z axis
+	float angle = FMath::RadiansToDegrees(FMath::Atan2(direction.Y, direction.X));
+	FRotator newRotation = FRotator::MakeFromEuler(FVector(0.0f, 0.0f, angle));
+
+	// Set the actor rotation
+	SetActorRotation(newRotation);
+}
+
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
 	{
-		if (!inGroup) return;
-
-
 		findEnemyComponent->nearbyActors.Add(OtherActor);
 		if (Cast<ANPC_Management>(OtherActor))
 		{
 			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
-			if (onAIControl && enemy->NPCStyle == Hostile)
+			if (Cast<ANPC_Management>(this))
 			{
-				inCombat = true;
-				actorToBeGone = enemy;
+				ANPC_Management* ally = Cast<ANPC_Management>(this);
+
+				//If npc is not in group or if npc is not a Hostile then npc wont attack anyone
+				//To attack anyone npc has to be in group or has to be a hostile
+				if (ally->NPCStyle != Hostile && !ally->inGroup) return;
+
+				if (ally->NPCStyle == Hostile)
+				{
+					//Hostile Npc only attacks to npcs in group
+					if (onAIControl && enemy->inGroup) 
+					{
+						inCombat = true;
+						actorToBeGone = enemy;
+					}
+				}
+				else
+				{
+					if (onAIControl && enemy->NPCStyle == Hostile)
+					{
+						inCombat = true;
+						actorToBeGone = enemy;
+					}
+				}
+			}
+			else
+			{
+				//If main character is on AI control then attacks to enemy
+				if (onAIControl && enemy->NPCStyle == Hostile)
+				{
+					inCombat = true;
+					actorToBeGone = enemy;
+				}
 			}
 		}
+		else
+		{
+			//If npc overlaps with main character
+			if (Cast<APlayerControls>(OtherActor) && Cast<ANPC_Management>(this))
+			{
+				ANPC_Management* npc = Cast<ANPC_Management>(this);
+				if (onAIControl && npc->NPCStyle == Hostile)
+				{
+					inCombat = true;
+					actorToBeGone = OtherActor;
+				}
+			}
+		}
+	}
+}
+
+void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
+	{
+		findEnemyComponent->nearbyActors.Remove(OtherActor);
 	}
 }

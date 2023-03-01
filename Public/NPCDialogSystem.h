@@ -16,8 +16,7 @@ enum FAnswerType
 	Neutral,
 	EndDialog,
 	Fight,
-	JoinToPlayer,
-	ChangeRelation
+	JoinToPlayer
 };
 USTRUCT(BlueprintType)
 struct FDialogAnswer

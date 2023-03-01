@@ -72,7 +72,16 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	ActorData.inGroup = player->inGroup;
 
 	//Characte Armor
+	ActorData.characterArmor.head = player->characterProfile->characterArmor.head;
 	ActorData.characterArmor.top = player->characterProfile->characterArmor.top;
+	ActorData.characterArmor.hand = player->characterProfile->characterArmor.hand;
+	ActorData.characterArmor.foot = player->characterProfile->characterArmor.foot;
+	ActorData.characterArmor.firstRing = player->characterProfile->characterArmor.firstRing;
+	ActorData.characterArmor.secondRing = player->characterProfile->characterArmor.secondRing;
+	ActorData.characterArmor.neck = player->characterProfile->characterArmor.neck;
+	ActorData.characterArmor.weapon1 = player->characterProfile->characterArmor.weapon1;
+	ActorData.characterArmor.weapon2 = player->characterProfile->characterArmor.weapon2;
+
 
 	//----------------------------------------------------------------------------------------Savings End---------------------------------------------
 	//****************************
@@ -197,8 +206,6 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		//Weapons will have a skeletalMesh soon for now Its nullptr
 		LoadItem(player, SpawnInfo.characterArmor.weapon1, player->characterProfile->characterArmor.weapon1, nullptr);
 		LoadItem(player, SpawnInfo.characterArmor.weapon2, player->characterProfile->characterArmor.weapon2, nullptr);
-
-
 
 
 		//After wearing everything, resetting animations stabilizes character animation

@@ -9,3 +9,13 @@ UEnemyFinderComp::UEnemyFinderComp()
 {
 
 }
+
+AActor* UEnemyFinderComp::PickEnemy()
+{
+	if (nearbyActors.Num() > 0)
+	{
+		//...
+	}
+
+	return nullptr;
+}

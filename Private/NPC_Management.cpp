@@ -69,6 +69,7 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 	}
 	else if (type == Fight)
 	{
+		NPCStyle = Hostile;
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 		return true;
 	}
@@ -92,11 +93,8 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 		return true;
 	}
-	else if (type == ChangeRelation)
-	{
-		characterProfile->relationWithPlayer = FMath::Clamp(characterProfile->relationWithPlayer + relationEffect, -100, 100);
-		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
-		return true;
-	}
+
+	//Changes players relation with npcs
+	characterProfile->relationWithPlayer = FMath::Clamp(characterProfile->relationWithPlayer + relationEffect, -100, 100);
 	return false;
 }
