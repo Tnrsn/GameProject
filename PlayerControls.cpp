@@ -103,7 +103,6 @@ void APlayerControls::Tick(float DeltaTime)
 
 	//Interactions with npcs (talking or combat)
 	NPCInteractions(DeltaTime);
-	findEnemyComponent->PickEnemy();
 
 	//Stops ai movement If Its necessary
 	if (onAIMovement) 
@@ -1016,6 +1015,7 @@ void APlayerControls::ControlNPC(int index)
 		groupMembers[index]->springArm->TargetOffset.Z = (springArm->GetComponentLocation().Z - groupMembers[index]->GetActorLocation().Z) + springArm->TargetOffset.Z;
 		SmoothCameraSwitch(index, 10.f);
 
+		//Enables rotation lag after a second, so camera switch wont look weird
 		FTimerHandle enableLagTimer;
 		GetWorldTimerManager().SetTimer(enableLagTimer, 
 			FTimerDelegate::CreateLambda([=]() 
@@ -1023,6 +1023,21 @@ void APlayerControls::ControlNPC(int index)
 				groupMembers[index]->springArm->bEnableCameraRotationLag = true;
 				springArm->bEnableCameraRotationLag = true;
 			}), GetWorld()->GetDeltaSeconds(), false);
+
+
+		if (findEnemyComponent->nearbyEnemies.Num() > 0)
+		{
+			StartCombat(nullptr);
+
+			if (groupMembers[index]->actorToBeGone)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("hey"));
+				AActor* enemy = groupMembers[index]->actorToBeGone;
+				groupMembers[index]->GetWorldTimerManager().ClearTimer(groupMembers[index]->pickEnemyTimer);
+				groupMembers[index]->StopAIMovement(true);
+				groupMembers[index]->actorToBeGone = enemy;
+			}
+		}
 	}
 
 	//Change controlledChar variables in all group members
@@ -1256,8 +1271,6 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 				UE_LOG(LogTemp, Warning, TEXT("Hit with Ranged"));
 				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
 				combatCounter = 0;
-
-
 			}
 		}
 	}
@@ -1345,6 +1358,9 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 		}
 		else if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
 		{
+			//if there are enemies nearby, player wont able to talk with npcs
+			if (findEnemyComponent->nearbyEnemies.Num() > 0) return;
+
 			npc->StartDialog();
 
 			actorToBeGone = nullptr;
@@ -1389,11 +1405,41 @@ void APlayerControls::TurnToEnemy(FVector enemyLocation)
 	SetActorRotation(newRotation);
 }
 
+void APlayerControls::StartCombat(AActor* enemy)
+{
+	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+	
+	inCombat = true;
+
+	if (enemy && !findEnemyComponent->nearbyEnemies.Contains(enemy))
+	{
+		findEnemyComponent->nearbyEnemies.Add(enemy);
+	}
+
+	//Checks everysecond if there are better target to attack
+	GetWorldTimerManager().SetTimer(pickEnemyTimer,
+		FTimerDelegate::CreateLambda([=]()
+			{
+			if (inCombat)
+			{
+				actorToBeGone = findEnemyComponent->PickEnemy();
+				//If there are no enemy stops combat
+				if (!actorToBeGone)
+				{
+					StopAIMovement(true);
+					inCombat = false;
+
+					//Stops loop
+					GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+				}
+			}
+		}), 1.0f, true);
+}
+
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
 	{
-		findEnemyComponent->nearbyActors.Add(OtherActor);
 		if (Cast<ANPC_Management>(OtherActor))
 		{
 			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
@@ -1410,26 +1456,27 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 					//Hostile Npc only attacks to npcs in group
 					if (onAIControl && enemy->inGroup) 
 					{
-						inCombat = true;
-						actorToBeGone = enemy;
+						StartCombat(enemy);
 					}
 				}
 				else
 				{
 					if (onAIControl && enemy->NPCStyle == Hostile)
 					{
-						inCombat = true;
-						actorToBeGone = enemy;
+						StartCombat(enemy);
 					}
 				}
 			}
 			else
 			{
+				if (!findEnemyComponent->nearbyEnemies.Contains(enemy))
+				{
+					findEnemyComponent->nearbyEnemies.Add(enemy);
+				}
 				//If main character is on AI control then attacks to enemy
 				if (onAIControl && enemy->NPCStyle == Hostile)
 				{
-					inCombat = true;
-					actorToBeGone = enemy;
+					StartCombat(enemy);
 				}
 			}
 		}
@@ -1441,8 +1488,7 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 				ANPC_Management* npc = Cast<ANPC_Management>(this);
 				if (onAIControl && npc->NPCStyle == Hostile)
 				{
-					inCombat = true;
-					actorToBeGone = OtherActor;
+					StartCombat(OtherActor);
 				}
 			}
 		}
@@ -1451,8 +1497,8 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 
 void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
+	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor) && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
 	{
-		findEnemyComponent->nearbyActors.Remove(OtherActor);
+		findEnemyComponent->nearbyEnemies.Remove(OtherActor);
 	}
 }

@@ -157,6 +157,8 @@ public:
 	static bool toNewWorld;
 
 	//Combat
+	FTimerHandle pickEnemyTimer;
+
 	float combatCounter = 0;
 	float attackSpeed = .5f;
 
@@ -239,6 +241,8 @@ public:
 		void NPCInteractions(float DeltaTime);
 	UFUNCTION()
 		void TurnToEnemy(FVector enemyLocation);
+	UFUNCTION()
+		void StartCombat(AActor* enemy);
 
 	//AI Behaviour
 	UFUNCTION()

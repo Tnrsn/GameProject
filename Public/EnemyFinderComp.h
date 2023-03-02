@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Engine/World.h>
 #include "Components/SphereComponent.h"
 #include "EnemyFinderComp.generated.h"
 
@@ -19,7 +20,10 @@ class GAMEPROJECT_API UEnemyFinderComp : public USphereComponent
 public:
 	UEnemyFinderComp();
 
-	TArray<AActor*> nearbyActors;
-
+	TArray<AActor*> nearbyEnemies;
 	AActor* PickEnemy();
+
+private:
+	AActor* pickedActor;
+
 };

@@ -12,10 +12,27 @@ UEnemyFinderComp::UEnemyFinderComp()
 
 AActor* UEnemyFinderComp::PickEnemy()
 {
-	if (nearbyActors.Num() > 0)
+	if (nearbyEnemies.Num() > 0)
 	{
-		//...
-	}
+		for (AActor* actor : nearbyEnemies)
+		{
+			APlayerControls* enemy = Cast<APlayerControls>(actor);
+			APlayerControls* pickedChar = Cast<APlayerControls>(pickedActor);
 
-	return nullptr;
+			if (!pickedActor)
+			{
+				pickedActor = actor;
+			}
+			else if (enemy->characterProfile->characterCurrentHealth < pickedChar->characterProfile->characterCurrentHealth)
+			{
+				pickedActor = enemy;
+			}
+		}
+
+		return pickedActor;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
