@@ -14,8 +14,7 @@
 #include "LootObject.h"
 #include "Public/MasterItem.h"
 #include <Kismet/GameplayStatics.h>
-//#include <Camera/CameraComponent.h>
-//#include <GameFramework/SpringArmComponent.h>
+#include "Public/ClassSkills.h"
 #include "Public/EnemyFinderComp.h"
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/PlayerController.h>
@@ -162,6 +161,10 @@ public:
 	float combatCounter = 0;
 	float attackSpeed = .5f;
 
+	//Combat Skills
+	UPROPERTY()
+		UClassSkills* skills;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -216,8 +219,12 @@ public:
 		void MoveToLocation(const AActor* actor, const FVector& Location);
 	UFUNCTION()
 		bool CheckIfAnyUIEnabled();
+	//AI movement
 	UFUNCTION()
-		void StopAIMovement(bool goalDone);
+		void StopAIOnInput(); //Checks if player interrupted to ai movement
+	UFUNCTION()
+		void StopAIMovement(bool goalDone); //Stops every ai movement
+	//Group functions
 	UFUNCTION()
 		void SmoothCameraSwitch(int index, float moveSpeed = 1.f);
 	UFUNCTION()
@@ -226,6 +233,7 @@ public:
 		FVector GetPlayerBehindLocation(float behind, float right);
 	UFUNCTION()
 		void ResetAnimations();
+	//Save load
 	UFUNCTION()
 		void SaveGame();
 	UFUNCTION()
@@ -244,12 +252,23 @@ public:
 	UFUNCTION()
 		void StartCombat(AActor* enemy);
 
-	//AI Behaviour
+	//Combat AI Behaviour
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	//Combat Skills
+	UFUNCTION()
+		void SkillOne();
+	UFUNCTION()
+		void SkillTwo();
+	UFUNCTION()
+		void SkillThree();
+	UFUNCTION()
+		void SkillFour();
+	UFUNCTION()
+		void SkillFive();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -29,7 +29,7 @@ APlayerControls::APlayerControls()
 	findEnemyComponent = CreateDefaultSubobject<UEnemyFinderComp>(TEXT("Find Enemy Component"));
 	findEnemyComponent->SetupAttachment(RootComponent);
 	
-
+	//Meshes
 	headMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Head Mesh");
 	headMesh->SetupAttachment(RootComponent);
 
@@ -44,6 +44,7 @@ APlayerControls::APlayerControls()
 
 	hairMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hair Mesh");
 	hairMesh->SetupAttachment(RootComponent);
+	//****
 }
 
 // Called when the game starts or when spawned
@@ -58,13 +59,14 @@ void APlayerControls::BeginPlay()
 	
 	playerController = UGameplayStatics::GetPlayerController(this, 0);
 	characterProfile = NewObject<UCharacterProfiles>();
+	skills = NewObject<UClassSkills>();
 
 	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
 	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
 	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
 
 	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
-	{
+	{//If player is in game then enables game inputs and initializes game character
 		FInputModeGameAndUI inputMode;
 		inputMode.SetHideCursorDuringCapture(false);
 		playerController->SetInputMode(inputMode);
@@ -73,7 +75,7 @@ void APlayerControls::BeginPlay()
 		InitCharacter();
 	}
 	else
-	{
+	{//If player is in menu or character creation menu then disables every input except ui inputs
 		FInputModeUIOnly inputMode;
 		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 		playerController->SetInputMode(inputMode);
@@ -105,26 +107,7 @@ void APlayerControls::Tick(float DeltaTime)
 	NPCInteractions(DeltaTime);
 
 	//Stops ai movement If Its necessary
-	if (onAIMovement) 
-	{
-		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
-			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
-		{
-			StopAIMovement(true);
-		}
-		if (lootObject)
-		{
-			StopAIMovement(lootObject->lootUIEnabled);
-		}
-		else if (itemRef)
-		{
-			StopAIMovement(itemTaken);
-		}
-		if (FVector::Dist(GetActorLocation(), targetLocation) < 120)
-		{
-			onAIMovement = false;
-		}
-	}
+	StopAIOnInput();
 
 	//Character dies if their health is under of 0
 	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
@@ -132,6 +115,7 @@ void APlayerControls::Tick(float DeltaTime)
 		Destroy();
 	}
 
+	//Npcs in group follows controlled character
 	FollowControlledCharacter();
 }
 
@@ -183,7 +167,6 @@ void APlayerControls::InitCharacter()
 	
 }
 
-
 // Called to bind functionality to input
 void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -194,21 +177,30 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("MoveForward / Backward", this, &APlayerControls::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &APlayerControls::MoveRight);
 
+	//Camera inputs
 	PlayerInputComponent->BindAction("RightClick", IE_Pressed, this, &APlayerControls::StartCameraRotation);
 	PlayerInputComponent->BindAction("RightClick", IE_Released, this, &APlayerControls::StopCameraRotation);
-	PlayerInputComponent->BindAction("LeftClick", IE_Pressed, this, &APlayerControls::OnMouseClick);
-
-	PlayerInputComponent->BindAction("ToggleInventory", IE_Pressed, this, &APlayerControls::ToggleInventory);
-
 	PlayerInputComponent->BindAxis("CameraZoom", this, &APlayerControls::CameraZoom);
 
+	PlayerInputComponent->BindAction("LeftClick", IE_Pressed, this, &APlayerControls::OnMouseClick);
+	PlayerInputComponent->BindAction("ToggleInventory", IE_Pressed, this, &APlayerControls::ToggleInventory);
+
+	//Character switch inputs
 	PlayerInputComponent->BindAction("PassToFirstCharacter", IE_Pressed, this, &APlayerControls::ControlFirstCharacter);
 	PlayerInputComponent->BindAction("PassToSecondCharacter", IE_Pressed, this, &APlayerControls::ControlSecondCharacter);
 	PlayerInputComponent->BindAction("PassToThirdCharacter", IE_Pressed, this, &APlayerControls::ControlThirdCharacter);
 	PlayerInputComponent->BindAction("PassToFourthCharacter", IE_Pressed, this, &APlayerControls::ControlFourthCharacter);
 
+	//Save/Load inputs
 	PlayerInputComponent->BindAction("QuickSave", IE_Pressed, this, &APlayerControls::SaveGame);
 	PlayerInputComponent->BindAction("QuickLoad", IE_Pressed, this, &APlayerControls::LoadGame);
+
+	//Skill inputs
+	PlayerInputComponent->BindAction("SkillOne", IE_Pressed, this, &APlayerControls::SkillOne);
+	PlayerInputComponent->BindAction("SkillTwo", IE_Pressed, this, &APlayerControls::SkillTwo);
+	PlayerInputComponent->BindAction("SkillThree", IE_Pressed, this, &APlayerControls::SkillThree);
+	PlayerInputComponent->BindAction("SkillFour", IE_Pressed, this, &APlayerControls::SkillFour);
+	PlayerInputComponent->BindAction("SkillFive", IE_Pressed, this, &APlayerControls::SkillFive);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -262,7 +254,6 @@ void APlayerControls::MoveRight(float value)
 	}
 }
 
-
 void APlayerControls::StartCameraRotation()
 {
 	if (lootObject)
@@ -285,6 +276,7 @@ void APlayerControls::StartCameraRotation()
 		springArm->rotationStarted = true;
 	}
 }
+
 void APlayerControls::StopCameraRotation()
 {
 	if (camRotating)
@@ -373,14 +365,18 @@ void APlayerControls::ClickEvents()
 			{
 				return;
 			}
-			else if (npc->NPCStyle == Talkable)
-			{
+			else if (npc->NPCStyle == Talkable) //Starting a dialog with npcs
+			{ 
 				inCombat = false;
 				if (GetDistanceTo(npc) < 250)
 				{
+					//if there are enemies nearby, player wont able to talk with npcs
+					if (findEnemyComponent->nearbyEnemies.Num() > 0) return;
+
 					inDialog = true;
 					npc->StartDialog();
 
+					StopAIMovement(true);
 					SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
 				}
 				else //If npc is far then character moves to npc
@@ -580,7 +576,6 @@ void APlayerControls::DecreaseItemFromInventory(FItemProperties itemProperties)
 
 	characterProfile->currentInventoryWeight -= itemProperties.weight;
 }
-
 
 void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int WearableSlotIndex)
 {
@@ -957,7 +952,6 @@ void APlayerControls::ControlFourthCharacter()
 	ControlNPC(3);
 
 	//characterProfile->charGender = static_cast<FCharacterGender>(1);
-	//UE_LOG(LogTemp, Warning, TEXT("%d"), characterProfile->beginningStats.strength);
 }
 
 void APlayerControls::ControlNPC(int index)
@@ -1031,7 +1025,7 @@ void APlayerControls::ControlNPC(int index)
 
 			if (groupMembers[index]->actorToBeGone)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("hey"));
+				
 				AActor* enemy = groupMembers[index]->actorToBeGone;
 				groupMembers[index]->GetWorldTimerManager().ClearTimer(groupMembers[index]->pickEnemyTimer);
 				groupMembers[index]->StopAIMovement(true);
@@ -1061,7 +1055,6 @@ void APlayerControls::ControlNPC(int index)
 	}
 
 }
-
 
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
@@ -1119,6 +1112,30 @@ bool APlayerControls::CheckIfAnyUIEnabled()
 	}
 
 	return false;
+}
+
+void APlayerControls::StopAIOnInput()
+{
+	if (onAIMovement)
+	{
+		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
+			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
+		{
+			StopAIMovement(true);
+		}
+		if (lootObject)
+		{
+			StopAIMovement(lootObject->lootUIEnabled);
+		}
+		else if (itemRef)
+		{
+			StopAIMovement(itemTaken);
+		}
+		if (FVector::Dist(GetActorLocation(), targetLocation) < 120)
+		{
+			onAIMovement = false;
+		}
+	}
 }
 
 void APlayerControls::StopAIMovement(bool goalDone)
@@ -1358,9 +1375,6 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 		}
 		else if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
 		{
-			//if there are enemies nearby, player wont able to talk with npcs
-			if (findEnemyComponent->nearbyEnemies.Num() > 0) return;
-
 			npc->StartDialog();
 
 			actorToBeGone = nullptr;
@@ -1408,13 +1422,13 @@ void APlayerControls::TurnToEnemy(FVector enemyLocation)
 void APlayerControls::StartCombat(AActor* enemy)
 {
 	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
-	
 	inCombat = true;
 
 	if (enemy && !findEnemyComponent->nearbyEnemies.Contains(enemy))
 	{
 		findEnemyComponent->nearbyEnemies.Add(enemy);
 	}
+	if (!onAIControl) return; //If character is not on ai control, character wont choose an enemy automaticly
 
 	//Checks everysecond if there are better target to attack
 	GetWorldTimerManager().SetTimer(pickEnemyTimer,
@@ -1443,7 +1457,7 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 		if (Cast<ANPC_Management>(OtherActor))
 		{
 			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
-			if (Cast<ANPC_Management>(this))
+			if (Cast<ANPC_Management>(this)) //If this is not main character...
 			{
 				ANPC_Management* ally = Cast<ANPC_Management>(this);
 
@@ -1469,15 +1483,13 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 			}
 			else
 			{
-				if (!findEnemyComponent->nearbyEnemies.Contains(enemy))
-				{
-					findEnemyComponent->nearbyEnemies.Add(enemy);
-				}
+				//Main characters interaction with npcs
 				//If main character is on AI control then attacks to enemy
-				if (onAIControl && enemy->NPCStyle == Hostile)
+				if (enemy->NPCStyle == Hostile)
 				{
 					StartCombat(enemy);
 				}
+
 			}
 		}
 		else
@@ -1497,8 +1509,53 @@ void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor
 
 void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor) && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
+	if (OtherActor && OtherActor != this && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
 	{
 		findEnemyComponent->nearbyEnemies.Remove(OtherActor);
+	}
+}
+
+void APlayerControls::SkillOne()
+{
+	UE_LOG(LogTemp, Warning, TEXT("1"));
+	if (skills)
+	{
+		skills->SkillOne(characterProfile->charClass);
+	}
+}
+
+void APlayerControls::SkillTwo()
+{
+	UE_LOG(LogTemp, Warning, TEXT("2"));
+	if (skills)
+	{
+		skills->SkillOne(characterProfile->charClass);
+	}
+}
+
+void APlayerControls::SkillThree()
+{
+	UE_LOG(LogTemp, Warning, TEXT("3"));
+	if (skills)
+	{
+		skills->SkillOne(characterProfile->charClass);
+	}
+}
+
+void APlayerControls::SkillFour()
+{
+	UE_LOG(LogTemp, Warning, TEXT("4"));
+	if (skills)
+	{
+		skills->SkillOne(characterProfile->charClass);
+	}
+}
+
+void APlayerControls::SkillFive()
+{
+	UE_LOG(LogTemp, Warning, TEXT("5"));
+	if (skills)
+	{
+		skills->SkillOne(characterProfile->charClass);
 	}
 }
