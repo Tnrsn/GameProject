@@ -117,6 +117,9 @@ void APlayerControls::Tick(float DeltaTime)
 
 	//Npcs in group follows controlled character
 	FollowControlledCharacter();
+
+	////GetCharacterMovement()->SetMovementMode(MOVE_);
+	//GetCharacterMovement()->AddForce(FVector(1000000, 0, 0));
 }
 
 void APlayerControls::InitCharacter()
@@ -390,6 +393,11 @@ void APlayerControls::ClickEvents()
 				actorToBeGone = SelectedActor;
 				inCombat = true;
 			}
+		}
+		else if (skills->skillOneTargeting)
+		{
+			StopAIMovement(true);
+			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
 		}
 		else
 		{
@@ -1517,45 +1525,40 @@ void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* 
 
 void APlayerControls::SkillOne()
 {
-	UE_LOG(LogTemp, Warning, TEXT("1"));
 	if (skills)
 	{
-		skills->SkillOne(characterProfile->charClass);
+		skills->skillOneTargeting = true;
 	}
 }
 
 void APlayerControls::SkillTwo()
 {
-	UE_LOG(LogTemp, Warning, TEXT("2"));
 	if (skills)
 	{
-		skills->SkillOne(characterProfile->charClass);
+		//skills->SkillOne(characterProfile->charClass);
 	}
 }
 
 void APlayerControls::SkillThree()
 {
-	UE_LOG(LogTemp, Warning, TEXT("3"));
 	if (skills)
 	{
-		skills->SkillOne(characterProfile->charClass);
+		//skills->SkillOne(characterProfile->charClass);
 	}
 }
 
 void APlayerControls::SkillFour()
 {
-	UE_LOG(LogTemp, Warning, TEXT("4"));
 	if (skills)
 	{
-		skills->SkillOne(characterProfile->charClass);
+		//skills->SkillOne(characterProfile->charClass);
 	}
 }
 
 void APlayerControls::SkillFive()
 {
-	UE_LOG(LogTemp, Warning, TEXT("5"));
 	if (skills)
 	{
-		skills->SkillOne(characterProfile->charClass);
+		//skills->SkillOne(characterProfile->charClass);
 	}
 }

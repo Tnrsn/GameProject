@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Engine/World.h>
 #include "CharacterProfiles.h"
 #include "UObject/NoExportTypes.h"
+#include <GameFramework/Character.h>
 #include "ClassSkills.generated.h"
 
 /**
@@ -16,9 +18,18 @@ class GAMEPROJECT_API UClassSkills : public UObject
 	GENERATED_BODY()
 	
 
+
+
 public:
+	UPROPERTY(BlueprintReadOnly)
+		bool skillOneTargeting = false;
+
+	//Charge skill variables
+	FTimerHandle chargeTimer;
+	FVector startLocation;
+
 	UFUNCTION()
-		void SkillOne(TEnumAsByte<FCharacterClasses> charClass);
+		void SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
 	UFUNCTION()
 		void SkillTwo(TEnumAsByte<FCharacterClasses> charClass);
 	UFUNCTION()
@@ -31,5 +42,5 @@ public:
 
 	//Warrior Skills
 	UFUNCTION()
-		void Charge();
+		void Charge(ACharacter* player, FVector target);
 };

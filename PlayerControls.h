@@ -14,11 +14,11 @@
 #include "LootObject.h"
 #include "Public/MasterItem.h"
 #include <Kismet/GameplayStatics.h>
-#include "Public/ClassSkills.h"
 #include "Public/EnemyFinderComp.h"
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/PlayerController.h>
 #include "GameFramework/Character.h"
+#include "Public/ClassSkills.h"
 #include "PlayerControls.generated.h"
 
 UCLASS()
