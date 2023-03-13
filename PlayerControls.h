@@ -35,8 +35,8 @@ public:
 		UPlayerSpringArmComponent* springArm;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		UPlayerCameraComponent* Camera;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UCapsuleComponent* capsuleComp;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//	UCapsuleComponent* capsuleComp;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UEnemyFinderComp* findEnemyComponent;
 
@@ -162,7 +162,7 @@ public:
 	float attackSpeed = .5f;
 
 	//Combat Skills
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		UClassSkills* skills;
 
 protected:
@@ -265,10 +265,6 @@ public:
 		void SkillTwo();
 	UFUNCTION()
 		void SkillThree();
-	UFUNCTION()
-		void SkillFour();
-	UFUNCTION()
-		void SkillFive();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

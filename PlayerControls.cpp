@@ -117,9 +117,6 @@ void APlayerControls::Tick(float DeltaTime)
 
 	//Npcs in group follows controlled character
 	FollowControlledCharacter();
-
-	////GetCharacterMovement()->SetMovementMode(MOVE_);
-	//GetCharacterMovement()->AddForce(FVector(1000000, 0, 0));
 }
 
 void APlayerControls::InitCharacter()
@@ -202,8 +199,6 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("SkillOne", IE_Pressed, this, &APlayerControls::SkillOne);
 	PlayerInputComponent->BindAction("SkillTwo", IE_Pressed, this, &APlayerControls::SkillTwo);
 	PlayerInputComponent->BindAction("SkillThree", IE_Pressed, this, &APlayerControls::SkillThree);
-	PlayerInputComponent->BindAction("SkillFour", IE_Pressed, this, &APlayerControls::SkillFour);
-	PlayerInputComponent->BindAction("SkillFive", IE_Pressed, this, &APlayerControls::SkillFive);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -342,7 +337,12 @@ void APlayerControls::ClickEvents()
 
 	if (SelectedActor)
 	{
-		if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
+		if (skills->skillOneTargeting)
+		{
+			StopAIMovement(true);
+			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+		}
+		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
@@ -393,11 +393,6 @@ void APlayerControls::ClickEvents()
 				actorToBeGone = SelectedActor;
 				inCombat = true;
 			}
-		}
-		else if (skills->skillOneTargeting)
-		{
-			StopAIMovement(true);
-			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
 		}
 		else
 		{
@@ -1535,27 +1530,11 @@ void APlayerControls::SkillTwo()
 {
 	if (skills)
 	{
-		//skills->SkillOne(characterProfile->charClass);
+		skills->SkillTwo(characterProfile->charClass, this, FVector::ZeroVector);
 	}
 }
 
 void APlayerControls::SkillThree()
-{
-	if (skills)
-	{
-		//skills->SkillOne(characterProfile->charClass);
-	}
-}
-
-void APlayerControls::SkillFour()
-{
-	if (skills)
-	{
-		//skills->SkillOne(characterProfile->charClass);
-	}
-}
-
-void APlayerControls::SkillFive()
 {
 	if (skills)
 	{
