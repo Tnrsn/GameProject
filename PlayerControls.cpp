@@ -337,11 +337,22 @@ void APlayerControls::ClickEvents()
 
 	if (SelectedActor)
 	{
-		if (skills->skillOneTargeting)
+		if (skills->skillOneTargeting) //Activating Skills
 		{
 			StopAIMovement(true);
 			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
 		}
+		else if (skills->skillTwoTargeting)
+		{
+			StopAIMovement(true);
+			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+		}
+		else if (skills->skillThreeTargeting)
+		{
+			StopAIMovement(true);
+			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+		}
+		//Moving to objects
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
@@ -1242,7 +1253,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 					return;
 				}
 
-				enemy->characterProfile->characterCurrentHealth -= CalculateDamage(enemy);
+				enemy->ApplyDamage(CalculateDamage(enemy));
 				
 				UE_LOG(LogTemp, Warning, TEXT("Hit with Melee"));
 				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
@@ -1286,7 +1297,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
 					return;
 				}
 
-				enemy->characterProfile->characterCurrentHealth -= CalculateDamage(enemy);
+				enemy->ApplyDamage(CalculateDamage(enemy));
 
 				UE_LOG(LogTemp, Warning, TEXT("Hit with Ranged"));
 				UE_LOG(LogTemp, Warning, TEXT("Enemy health: %f"), enemy->characterProfile->characterCurrentHealth);
@@ -1453,6 +1464,12 @@ void APlayerControls::StartCombat(AActor* enemy)
 		}), 1.0f, true);
 }
 
+void APlayerControls::ApplyDamage(int Damage)
+{
+	characterProfile->characterCurrentHealth -= Damage - int(GetArmorRating() / 5);
+
+}
+
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
@@ -1522,7 +1539,7 @@ void APlayerControls::SkillOne()
 {
 	if (skills)
 	{
-		skills->skillOneTargeting = true;
+		skills->SkillOne(characterProfile->charClass, this, FVector::ZeroVector);
 	}
 }
 
@@ -1538,6 +1555,6 @@ void APlayerControls::SkillThree()
 {
 	if (skills)
 	{
-		//skills->SkillOne(characterProfile->charClass);
+		skills->SkillThree(characterProfile->charClass, this, FVector::ZeroVector);
 	}
 }

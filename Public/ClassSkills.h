@@ -23,6 +23,10 @@ class GAMEPROJECT_API UClassSkills : public UObject
 public:
 	UPROPERTY(BlueprintReadOnly)
 		bool skillOneTargeting = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool skillTwoTargeting = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool skillThreeTargeting = false;
 
 	//Charge skill variables
 	FTimerHandle chargeTimer;
@@ -36,11 +40,13 @@ public:
 	UFUNCTION()
 		void SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
 	UFUNCTION()
-		void SkillThree(TEnumAsByte<FCharacterClasses> charClass);
+		void SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
 
 	//Warrior Skills
 	UFUNCTION()
 		void Charge(ACharacter* player, FVector target);
 	UFUNCTION()
 		void WhirlWind(ACharacter* player);
+	UFUNCTION()
+		void PowerStrike(ACharacter* player);
 };

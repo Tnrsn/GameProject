@@ -40,17 +40,17 @@ void ADamageZone::Tick(float DeltaTime)
 				ANPC_Management* enemy = Cast<ANPC_Management>(actor);
 				if (enemy->NPCStyle == Hostile && damageToHostile) //Damages to hostile npcs
 				{
-					enemy->characterProfile->characterCurrentHealth -= damage;
+					enemy->ApplyDamage(damage);
 				}
 				else if (enemy->inGroup && !damageToHostile) //Damages to players group
 				{
-					enemy->characterProfile->characterCurrentHealth -= damage;
+					enemy->ApplyDamage(damage);
 				}
 			}
 			else if(Cast<APlayerControls>(actor) && !damageToHostile) //Damages to player
 			{
 				APlayerControls* mainCharacter = Cast<APlayerControls>(actor);
-				mainCharacter->characterProfile->characterCurrentHealth -= damage;
+				mainCharacter->ApplyDamage(damage);
 			}
 		}
 
@@ -69,17 +69,17 @@ void ADamageZone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
 			if (enemy->NPCStyle == Hostile && damageToHostile) //Damages to hostile npcs
 			{
-				enemy->characterProfile->characterCurrentHealth -= damage;
+				enemy->ApplyDamage(damage);
 			}
 			else if (enemy->inGroup && !damageToHostile) //Damages to players group
 			{
-				enemy->characterProfile->characterCurrentHealth -= damage;
+				enemy->ApplyDamage(damage);
 			}
 		}
 		else if(!damageToHostile) //Damages to player
 		{
 			APlayerControls* mainCharacter = Cast<APlayerControls>(OtherActor);
-			mainCharacter->characterProfile->characterCurrentHealth -= damage;
+			mainCharacter->ApplyDamage(damage);
 		}
 	}
 }

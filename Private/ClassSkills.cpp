@@ -31,6 +31,12 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	if (charClass == Warrior)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Warrior: Charge"));
+		if (!skillOneTargeting)
+		{
+			skillOneTargeting = true;
+			return;
+		}
+
 		Charge(player, target);
 	}
 	else if (charClass == Rogue)
@@ -60,13 +66,16 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Mage"));
 	}
+
+	skillOneTargeting = false;
 }
 
-void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass)
+void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
 {
 	if (charClass == Warrior)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Warrior"));
+		UE_LOG(LogTemp, Warning, TEXT("Warrior: Power Strike"));
+		PowerStrike(player);
 	}
 	else if (charClass == Rogue)
 	{
@@ -78,6 +87,8 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass)
 	}
 }
 
+
+//Warrior Skills
 void UClassSkills::Charge(ACharacter* player, FVector target)
 {
 	//Disables Friction so character can slide on ground
@@ -90,7 +101,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), player->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
 	if (damageZone)
 	{
 		damageZone->damageArea->SetSphereRadius(100);
@@ -113,13 +124,16 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	// Set the movement input to move the character in the desired direction
 	player->GetCharacterMovement()->Launch(direction * 10000);
 
+	//Play Animation********
+
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
-				damageZone->SetActorLocation(player->GetActorLocation());
+				FVector currentLocation = player->GetActorLocation();
+				damageZone->SetActorLocation(currentLocation);
 
 				//Sets Friction to default value if character speed is normal or less than normal
-				if (player->GetVelocity().Size() <= 8500 || FVector::Distance(player->GetActorLocation(), startLocation) > 1000.f)
+				if (player->GetVelocity().Size() <= 8500 || FVector::Distance(currentLocation, startLocation) > 1000.f)
 				{
 					player->GetCharacterMovement()->GroundFriction = 8.0f;
 
@@ -127,6 +141,8 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 					hitter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
 					//Stops loop
 					player->GetWorldTimerManager().ClearTimer(chargeTimer);
+
+					//Stop Animation*******
 				}
 			}), player->GetWorld()->GetDeltaSeconds(), true);
 }
@@ -138,7 +154,7 @@ void UClassSkills::WhirlWind(ACharacter* player)
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), player->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
 	if (damageZone)
 	{
 		damageZone->damageArea->SetSphereRadius(250);
@@ -150,7 +166,48 @@ void UClassSkills::WhirlWind(ACharacter* player)
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
-				damageZone->SetActorLocation(player->GetActorLocation());
+				damageZone->SetActorLocation(currentLocation);
 				damageZone->Destroy();
+
+				//Play Animation
 			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
+}
+
+void UClassSkills::PowerStrike(ACharacter* player)
+{
+	FVector currentLocation = player->GetActorLocation();
+
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+	
+	if (Cast<APlayerControls>(hitter->actorToBeGone))
+	{
+		bool damageToHostile = isDamageToHostile(player);
+		bool hit = false;
+
+		if (Cast<ANPC_Management>(hitter->actorToBeGone))
+		{
+			ANPC_Management* enemy = Cast<ANPC_Management>(hitter->actorToBeGone);
+			if (enemy->NPCStyle == Hostile && damageToHostile)
+			{
+				enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+				hit = true;
+			}
+			else if (enemy->inGroup && !damageToHostile)
+			{
+				enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+				hit = true;
+			}
+		}
+		else if(!damageToHostile) //Hits to main character
+		{
+			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
+			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			hit = true;
+		}
+
+		if (hit)
+		{
+			//Play Animation
+		}
+	}
 }

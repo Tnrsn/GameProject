@@ -251,6 +251,8 @@ public:
 		void TurnToEnemy(FVector enemyLocation);
 	UFUNCTION()
 		void StartCombat(AActor* enemy);
+	UFUNCTION()
+		void ApplyDamage(int damage);
 
 	//Combat AI Behaviour
 	UFUNCTION()

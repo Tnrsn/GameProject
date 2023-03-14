@@ -102,9 +102,6 @@ public:
 		float characterCurrentEnergy;
 
 	UPROPERTY(BlueprintReadOnly)
-		int armorRating = 0;
-
-	UPROPERTY(BlueprintReadOnly)
 		int maxInventoryCapacity = 0;
 	UPROPERTY(BlueprintReadOnly)
 		int currentInventoryWeight = 0;
