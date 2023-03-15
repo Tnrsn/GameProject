@@ -82,7 +82,6 @@ void APlayerControls::BeginPlay()
 
 		springArm->LookFromFront();
 	}
-
 }
 
 // Called every frame
@@ -164,7 +163,7 @@ void APlayerControls::InitCharacter()
 		saveSystem->LoadGame("TransportSave", true);
 	}
 
-	
+	characterProfile->charClass = Rogue; //It's for debugging skills. Delete later!
 }
 
 // Called to bind functionality to input
@@ -1233,7 +1232,7 @@ void APlayerControls::LoadGame()
 	}
 }
 
-void APlayerControls::Attack(float DeltaTime, AActor* enemyActor)
+void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack range <= 120, ranged attack range <= 1000
 {
 	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage) ||
@@ -1467,7 +1466,6 @@ void APlayerControls::StartCombat(AActor* enemy)
 void APlayerControls::ApplyDamage(int Damage)
 {
 	characterProfile->characterCurrentHealth -= Damage - int(GetArmorRating() / 5);
-
 }
 
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -1537,24 +1535,42 @@ void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* 
 
 void APlayerControls::SkillOne()
 {
-	if (skills)
+	if (skills && !skills->skillOneTargeting)
 	{
 		skills->SkillOne(characterProfile->charClass, this, FVector::ZeroVector);
+		skills->skillTwoTargeting = false;
+		skills->skillThreeTargeting = false;
+	}
+	else
+	{
+		skills->skillOneTargeting = false;
 	}
 }
 
 void APlayerControls::SkillTwo()
 {
-	if (skills)
+	if (skills && !skills->skillTwoTargeting)
 	{
 		skills->SkillTwo(characterProfile->charClass, this, FVector::ZeroVector);
+		skills->skillOneTargeting = false;
+		skills->skillThreeTargeting = false;
+	}
+	else
+	{
+		skills->skillTwoTargeting = false;
 	}
 }
 
 void APlayerControls::SkillThree()
 {
-	if (skills)
+	if (skills && !skills->skillThreeTargeting)
 	{
 		skills->SkillThree(characterProfile->charClass, this, FVector::ZeroVector);
+		skills->skillOneTargeting = false;
+		skills->skillTwoTargeting = false;
+	}
+	else
+	{
+		skills->skillThreeTargeting = false;
 	}
 }

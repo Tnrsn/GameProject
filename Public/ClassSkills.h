@@ -28,12 +28,19 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool skillThreeTargeting = false;
 
+	//Evasion skill properties
+	UPROPERTY(BlueprintReadOnly)
+		bool evasionActivated = false;
+	int charDex = 0;
+
 	//Charge skill variables
 	FTimerHandle chargeTimer;
 	FVector startLocation;
 
 	UFUNCTION()
-		bool isDamageToHostile(ACharacter* player);
+		bool isDamageToHostile(ACharacter* player); //Checks for area damages
+	UFUNCTION()
+		bool CanHit(ACharacter* player); //Checks for single damages
 
 	UFUNCTION()
 		void SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
@@ -49,4 +56,12 @@ public:
 		void WhirlWind(ACharacter* player);
 	UFUNCTION()
 		void PowerStrike(ACharacter* player);
+
+	//Rogue Skills
+	UFUNCTION()
+		void DualWield(ACharacter* player);
+	UFUNCTION()
+		void Evasion(ACharacter* player);
+	UFUNCTION()
+		void BacksStab(ACharacter* player);
 };

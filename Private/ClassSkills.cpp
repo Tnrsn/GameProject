@@ -26,6 +26,34 @@ bool UClassSkills::isDamageToHostile(ACharacter* player)
 	}
 }
 
+bool UClassSkills::CanHit(ACharacter* player)
+{
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+	bool damageToHostile = isDamageToHostile(player);
+
+	if (Cast<ANPC_Management>(hitter->actorToBeGone))
+	{
+		ANPC_Management* enemy = Cast<ANPC_Management>(hitter->actorToBeGone);
+		if (enemy->NPCStyle == Hostile && damageToHostile)
+		{
+			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			return true;
+		}
+		else if (enemy->inGroup && !damageToHostile)
+		{
+			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			return true;
+		}
+	}
+	else if (!damageToHostile) //Hits to main character
+	{
+		APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
+		enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+		return true;
+	}
+	return false;
+}
+
 void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
 {
 	if (charClass == Warrior)
@@ -41,7 +69,8 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	}
 	else if (charClass == Rogue)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Rogue"));
+		UE_LOG(LogTemp, Warning, TEXT("Rogue: DualWield"));
+		DualWield(player);
 	}
 	else if (charClass == Mage)
 	{
@@ -60,7 +89,8 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	}
 	else if (charClass == Rogue)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Rogue"));
+		UE_LOG(LogTemp, Warning, TEXT("Rogue: Evasion"));
+		Evasion(player);
 	}
 	else if (charClass == Mage)
 	{
@@ -79,7 +109,8 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 	}
 	else if (charClass == Rogue)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Rogue"));
+		UE_LOG(LogTemp, Warning, TEXT("Rogue: Backstab"));
+		BacksStab(player);
 	}
 	else if (charClass == Mage)
 	{
@@ -179,35 +210,79 @@ void UClassSkills::PowerStrike(ACharacter* player)
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	
-	if (Cast<APlayerControls>(hitter->actorToBeGone))
+	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 120)
 	{
-		bool damageToHostile = isDamageToHostile(player);
-		bool hit = false;
-
-		if (Cast<ANPC_Management>(hitter->actorToBeGone))
-		{
-			ANPC_Management* enemy = Cast<ANPC_Management>(hitter->actorToBeGone);
-			if (enemy->NPCStyle == Hostile && damageToHostile)
-			{
-				enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
-				hit = true;
-			}
-			else if (enemy->inGroup && !damageToHostile)
-			{
-				enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
-				hit = true;
-			}
-		}
-		else if(!damageToHostile) //Hits to main character
-		{
-			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
-			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
-			hit = true;
-		}
-
-		if (hit)
+		if (CanHit(hitter))
 		{
 			//Play Animation
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerStrike: Too Far!"));
+	}
+}
+
+//Rogue Skills
+void UClassSkills::DualWield(ACharacter* player)
+{
+	FVector currentLocation = player->GetActorLocation();
+
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+
+	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 120)
+	{
+		if (CanHit(hitter))
+		{
+			//Play Animation
+		}
+	}
+	else //It falls in else if character is too far away from the enemy or there are no enemy
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DualWield: Too Far!"));
+	}
+}
+
+void UClassSkills::Evasion(ACharacter* player)
+{
+	APlayerControls* Defender = Cast<APlayerControls>(player);
+	
+	if (evasionActivated) //Prevents to increase dexterity more than 15
+	{
+		Defender->characterProfile->characterStats.dexterity = charDex;
+	}
+
+	charDex = Defender->characterProfile->characterStats.dexterity;
+	Defender->characterProfile->characterStats.dexterity += 15;
+	evasionActivated = true;
+	//Play Animation
+
+	player->GetWorldTimerManager().SetTimer(chargeTimer,
+		FTimerDelegate::CreateLambda([=]()
+			{
+				Defender->characterProfile->characterStats.dexterity = charDex; //Return dexterity to default value
+				evasionActivated = false;
+			}), player->GetWorld()->GetDeltaSeconds() * 10, false);
+}
+
+void UClassSkills::BacksStab(ACharacter* player)
+{
+	FVector currentLocation = player->GetActorLocation();
+
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+
+	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 1000)
+	{
+		if (CanHit(hitter))
+		{
+			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
+			hitter->SetActorLocation(enemy->GetActorLocation() + (enemy->GetActorForwardVector() * -25));
+			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			//Play Animation
+		}
+	}
+	else //It falls in else if character is too far away from the enemy or there are no enemy
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BackStab: Too Far!"));
 	}
 }
