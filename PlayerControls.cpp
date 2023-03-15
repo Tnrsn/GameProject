@@ -163,7 +163,7 @@ void APlayerControls::InitCharacter()
 		saveSystem->LoadGame("TransportSave", true);
 	}
 
-	characterProfile->charClass = Rogue; //It's for debugging skills. Delete later!
+	characterProfile->charClass = Mage; //It's for debugging skills. Delete later!
 }
 
 // Called to bind functionality to input
@@ -344,12 +344,12 @@ void APlayerControls::ClickEvents()
 		else if (skills->skillTwoTargeting)
 		{
 			StopAIMovement(true);
-			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+			skills->SkillTwo(characterProfile->charClass, this, HitResult.Location);
 		}
 		else if (skills->skillThreeTargeting)
 		{
 			StopAIMovement(true);
-			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+			skills->SkillThree(characterProfile->charClass, this, HitResult.Location);
 		}
 		//Moving to objects
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
@@ -1380,9 +1380,8 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 		{//Npcs combat with other npcs
 			if (npc->characterProfile->characterCurrentHealth <= 0)
 			{
-				actorToBeGone = nullptr;
 				inCombat = false;
-				onAIMovement = false;
+				StopAIMovement(true);
 			}
 			Attack(DeltaTime, npc);
 		}

@@ -64,4 +64,12 @@ public:
 		void Evasion(ACharacter* player);
 	UFUNCTION()
 		void BacksStab(ACharacter* player);
+
+	//Mage Skills
+	UFUNCTION()
+		void Blitz(ACharacter* player);
+	UFUNCTION()
+		void SuperNova(ACharacter* player, FVector target);
+	UFUNCTION()
+		void Blink(ACharacter* player, FVector target);
 };

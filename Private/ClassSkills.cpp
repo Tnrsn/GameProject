@@ -74,7 +74,8 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	}
 	else if (charClass == Mage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Mage"));
+		UE_LOG(LogTemp, Warning, TEXT("Mage: Blitz"));
+		Blitz(player);
 	}
 
 	skillOneTargeting = false;
@@ -94,10 +95,17 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	}
 	else if (charClass == Mage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Mage"));
+		UE_LOG(LogTemp, Warning, TEXT("Mage: Supernova"));
+		if (!skillTwoTargeting)
+		{
+			skillTwoTargeting = true;
+			return;
+		}
+
+		SuperNova(player, target);
 	}
 
-	skillOneTargeting = false;
+	skillTwoTargeting = false;
 }
 
 void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
@@ -114,8 +122,17 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 	}
 	else if (charClass == Mage)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Mage"));
+		UE_LOG(LogTemp, Warning, TEXT("Mage: Blink"));
+		if (!skillThreeTargeting)
+		{
+			skillThreeTargeting = true;
+			return;
+		}
+
+		Blink(player, target);
 	}
+
+	skillThreeTargeting = false;
 }
 
 
@@ -285,4 +302,83 @@ void UClassSkills::BacksStab(ACharacter* player)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("BackStab: Too Far!"));
 	}
+}
+
+void UClassSkills::Blitz(ACharacter* player)
+{
+	FVector currentLocation = player->GetActorLocation();
+
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+
+	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 1100)
+	{
+		if (CanHit(hitter))
+		{
+			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
+			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 3);
+			//Play Animation
+		}
+	}
+	else //It falls in else if character is too far away from the enemy or there are no enemy
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Blitz: Too Far!"));
+	}
+
+}
+
+void UClassSkills::SuperNova(ACharacter* player, FVector target)
+{
+	//Set DamageZone
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	if (FVector::Distance(player->GetActorLocation(), target) > 1100)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Too far!: SuperNova"));
+		return;
+	}
+
+	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), target, FRotator::ZeroRotator, SpawnParams);
+	if (damageZone)
+	{
+		damageZone->damageArea->SetSphereRadius(600);
+		damageZone->damage = 25;
+
+		damageZone->damageToHostile = isDamageToHostile(player);
+	}
+	
+	player->GetWorldTimerManager().SetTimer(chargeTimer,
+		FTimerDelegate::CreateLambda([=]()
+			{
+				damageZone->Destroy();
+			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
+}
+
+void UClassSkills::Blink(ACharacter* player, FVector target)
+{
+	//Set DamageZone
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	if (FVector::Distance(player->GetActorLocation(), target) > 1100)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Too far!: SuperNova"));
+		return;
+	}
+
+	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), player->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+	if (damageZone)
+	{
+		damageZone->damageArea->SetSphereRadius(150);
+		damageZone->damage = 25;
+
+		damageZone->damageToHostile = isDamageToHostile(player);
+	}
+
+	player->GetWorldTimerManager().SetTimer(chargeTimer,
+		FTimerDelegate::CreateLambda([=]()
+			{
+				damageZone->Destroy();
+				player->SetActorLocation(target);
+			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
 }
