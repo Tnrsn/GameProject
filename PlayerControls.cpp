@@ -162,8 +162,6 @@ void APlayerControls::InitCharacter()
 	{
 		saveSystem->LoadGame("TransportSave", true);
 	}
-
-	characterProfile->charClass = Mage; //It's for debugging skills. Delete later!
 }
 
 // Called to bind functionality to input
@@ -198,6 +196,12 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("SkillOne", IE_Pressed, this, &APlayerControls::SkillOne);
 	PlayerInputComponent->BindAction("SkillTwo", IE_Pressed, this, &APlayerControls::SkillTwo);
 	PlayerInputComponent->BindAction("SkillThree", IE_Pressed, this, &APlayerControls::SkillThree);
+
+	//Time inputs
+	PlayerInputComponent->BindAction("SlowTime", IE_Pressed, this, &APlayerControls::SlowTime);
+	PlayerInputComponent->BindAction("SlowTime", IE_Released, this, &APlayerControls::BackToNormalTime);
+
+	PlayerInputComponent->BindAction("FastHit", IE_Pressed, this, &APlayerControls::HitFast);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -1304,6 +1308,23 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 			}
 		}
 	}
+
+	//if (findEnemyComponent->nearbyEnemies.Contains(enemy) && enemy->characterProfile->characterCurrentHealth <= 0)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("hello"));
+	//	//actorToBeGone = nullptr;
+	//	findEnemyComponent->nearbyEnemies.Remove(enemy);
+	//	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+	//}
+}
+
+void APlayerControls::HitFast()
+{
+	if (characterProfile->characterCurrentEnergy >= 8)
+	{
+		combatCounter = 2;
+		characterProfile->characterCurrentEnergy -= 8;
+	}
 }
 
 int APlayerControls::CalculateDamage(AActor* enemyActor)
@@ -1378,11 +1399,11 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 		
 		if ((npc->NPCStyle == Hostile || npc->inGroup) && inCombat)
 		{//Npcs combat with other npcs
-			if (npc->characterProfile->characterCurrentHealth <= 0)
-			{
-				inCombat = false;
-				StopAIMovement(true);
-			}
+			//if (npc->characterProfile->characterCurrentHealth <= 0)
+			//{
+			//	inCombat = false;
+			//	StopAIMovement(true);
+			//}
 			Attack(DeltaTime, npc);
 		}
 		else if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
@@ -1404,13 +1425,6 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 			if (npc->NPCStyle == Hostile)
 			{
 				APlayerControls* player = Cast<APlayerControls>(actorToBeGone);
-				if (player->characterProfile->characterCurrentHealth <= 0)
-				{
-					//Resets variables when enemy dies 
-					actorToBeGone = nullptr;
-					inCombat = false;
-					onAIMovement = false;
-				}
 				Attack(DeltaTime, actorToBeGone);
 			}
 		}
@@ -1438,9 +1452,17 @@ void APlayerControls::StartCombat(AActor* enemy)
 
 	if (enemy && !findEnemyComponent->nearbyEnemies.Contains(enemy))
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("%s added %s"), *GetName(), *enemy->GetName());
 		findEnemyComponent->nearbyEnemies.Add(enemy);
 	}
-	if (!onAIControl) return; //If character is not on ai control, character wont choose an enemy automaticly
+	if (!onAIControl) //If character is not on ai control, character wont choose an enemy automaticly
+	{
+		if (findEnemyComponent->nearbyEnemies.Num() == 0) //If there are no enemy near to player character then inCombat sets to false
+		{
+			inCombat = false;
+		}
+		return;
+	}
 
 	//Checks everysecond if there are better target to attack
 	GetWorldTimerManager().SetTimer(pickEnemyTimer,
@@ -1452,6 +1474,7 @@ void APlayerControls::StartCombat(AActor* enemy)
 				//If there are no enemy stops combat
 				if (!actorToBeGone)
 				{
+					UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
 					StopAIMovement(true);
 					inCombat = false;
 
@@ -1528,7 +1551,10 @@ void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* 
 {
 	if (OtherActor && OtherActor != this && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("%s deleted: %s"), *GetName(), *OtherActor->GetName());
 		findEnemyComponent->nearbyEnemies.Remove(OtherActor);
+		GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+		StartCombat(nullptr);
 	}
 }
 
@@ -1572,4 +1598,14 @@ void APlayerControls::SkillThree()
 	{
 		skills->skillThreeTargeting = false;
 	}
+}
+
+void APlayerControls::SlowTime()
+{
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.25f);
+}
+
+void APlayerControls::BackToNormalTime()
+{
+	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f);
 }

@@ -23,3 +23,8 @@ float UManageWidgets::PlayerHealthBar()
 	//playerCurrentHealth -= 0.1;
 	return characterProfiles->characterCurrentHealth / characterProfiles->characterMaximumHealth;
 }
+
+float UManageWidgets::PlayerEnergyBar()
+{
+	return characterProfiles->characterCurrentEnergy / characterProfiles->characterMaximumEnergy;
+}

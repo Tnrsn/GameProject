@@ -253,6 +253,8 @@ public:
 		void StartCombat(AActor* enemy);
 	UFUNCTION()
 		void ApplyDamage(int damage);
+	UFUNCTION()
+		void HitFast();
 
 	//Combat AI Behaviour
 	UFUNCTION()
@@ -267,6 +269,11 @@ public:
 		void SkillTwo();
 	UFUNCTION()
 		void SkillThree();
+	//Slowing time
+	UFUNCTION()
+		void SlowTime();
+	UFUNCTION()
+		void BackToNormalTime();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

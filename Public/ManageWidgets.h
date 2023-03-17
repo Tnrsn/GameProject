@@ -23,6 +23,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		float PlayerHealthBar();
+	UFUNCTION(BlueprintCallable)
+		float PlayerEnergyBar();
 
 	UPROPERTY(BlueprintReadOnly)
 		UCharacterProfiles* characterProfiles;

@@ -17,15 +17,19 @@ AActor* UEnemyFinderComp::PickEnemy()
 		for (AActor* actor : nearbyEnemies)
 		{
 			APlayerControls* enemy = Cast<APlayerControls>(actor);
-			APlayerControls* pickedChar = Cast<APlayerControls>(pickedActor);
 
 			if (!pickedActor)
 			{
 				pickedActor = actor;
 			}
-			else if (enemy->characterProfile->characterCurrentHealth < pickedChar->characterProfile->characterCurrentHealth)
+			else if (pickedActor)
 			{
-				pickedActor = enemy;
+				APlayerControls* pickedChar = Cast<APlayerControls>(pickedActor);
+				if (enemy->characterProfile->characterCurrentHealth < pickedChar->characterProfile->characterCurrentHealth ||
+					pickedChar->characterProfile->characterCurrentHealth <= 0) //If previous picked enemy died It also switches to new enemy
+				{
+					pickedActor = enemy;
+				}
 			}
 		}
 
@@ -33,6 +37,7 @@ AActor* UEnemyFinderComp::PickEnemy()
 	}
 	else
 	{
+		pickedActor = nullptr;
 		return nullptr;
 	}
 }
