@@ -102,6 +102,7 @@ void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
 	{
 		for (UClass* el : itemsRef)
 		{
+			childActorRef->AddRelativeLocation(FVector(0, 0, -1000));
 			childActorRef->SetChildActorClass(el);
 			item = Cast<AMasterItem>(childActorRef->GetChildActor());
 			if (item->ItemProperties.rarity > FMath::RandRange(0, 100))

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/LevelStreaming.h"
+#include "GroomComponent.h"
 #include "SaveSystem.h"
 #include "Public/PlayerSpringArmComponent.h"
 #include "Public/PlayerCameraComponent.h"
@@ -42,7 +43,7 @@ public:
 
 	//Skeletal Mesh Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMeshComponent* hairMesh;
+		UGroomComponent* hairGroom;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* headMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -54,7 +55,7 @@ public:
 
 	//Body Parts - Male
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		USkeletalMesh* hairBodyMesh;
+		UGroomAsset* HairGroomAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Male Meshes
 		USkeletalMesh* headMaleBodyMesh;
@@ -164,6 +165,10 @@ public:
 	//Combat Skills
 	UPROPERTY(VisibleAnywhere)
 		UClassSkills* skills;
+
+	//Animation
+	UPROPERTY(BlueprintReadOnly)
+		bool punchAnim = false;
 
 protected:
 	// Called when the game starts or when spawned

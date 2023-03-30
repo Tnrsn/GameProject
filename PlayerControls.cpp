@@ -42,8 +42,8 @@ APlayerControls::APlayerControls()
 	torsoMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Torso Mesh");
 	torsoMesh->SetupAttachment(RootComponent);
 
-	hairMesh = CreateDefaultSubobject<USkeletalMeshComponent>("Hair Mesh");
-	hairMesh->SetupAttachment(RootComponent);
+	hairGroom = CreateDefaultSubobject<UGroomComponent>("Hair Groom");
+	hairGroom->SetupAttachment(headMesh);
 	//****
 }
 
@@ -598,15 +598,15 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 {
 	if (WearableSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddWearableSlots in WP_Inventory Blueprint.)
 	{
-		headMesh->SetVisibility(true);
-		if (hairBodyMesh)
-		{
-			hairMesh->SetSkeletalMesh(hairBodyMesh);
-		}
-		else
-		{
-			hairMesh->SetSkeletalMesh(NULL);
-		}
+		//headMesh->SetVisibility(true);
+		//if (HairGroomAsset)
+		//{
+		//	hairGroom->SetGroomAsset(HairGroomAsset);
+		//}
+		//else
+		//{
+		//	hairGroom->SetGroomAsset(NULL);
+		//}
 
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
 		AddItemToInventory(itemProperties->characterArmor.head);
@@ -806,7 +806,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 0);
 			}
-			hairMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+			//hairGroom->SetSkeletalMesh(itemProperties.skeletalMesh);
 			if (itemProperties.hideHeadMesh)
 			{
 				headMesh->SetVisibility(false);
@@ -1348,6 +1348,12 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 		else
 		{
 			//Play punch animation
+			punchAnim = true;
+
+			FTimerHandle punchTime;
+			GetWorldTimerManager().SetTimer(punchTime, FTimerDelegate::CreateLambda([=]() {
+				punchAnim = false;
+				}), 1.9f, false);
 			return characterProfile->characterStats.strength * FMath::RandRange(1, 5);
 		}
 	}
