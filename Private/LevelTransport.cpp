@@ -42,6 +42,11 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 	if (player->groupMembers.Num() != 0)
 	{
 		player = player->groupMembers[0];
+		if (!player->questSystem->mainQuestLine[opensAfter])
+		{
+			return;
+		}
+
 		saveSystem->SwitchToMainCharacter(player);
 	}
 	else

@@ -55,8 +55,17 @@ void ANPC_Management::StartDialog()
 	SetActorRotation((UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation() - GetActorLocation()).Rotation());
 }
 
-bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect)
+bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest)
 {
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FMainQuestLine>()->GetValueAsString(completedQuest));
+	//Sets true of the quest if it's completed
+	APlayerControls* player = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	player->groupMembers[0]->questSystem->mainQuestLine[completedQuest] = true;
+	//groupMembers[0]->questSystem->mainQuestLine[completedQuest] = true;
+
+	//Changes players relation with npcs
+	characterProfile->relationWithPlayer = FMath::Clamp(characterProfile->relationWithPlayer + relationEffect, -100, 100);
+
 	if (type == Neutral)
 	{
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
@@ -71,6 +80,16 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 	{
 		NPCStyle = Hostile;
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+
+		findEnemyComponent->nearbyEnemies.Empty();
+
+		TArray<AActor*> actors;
+		findEnemyComponent->GetOverlappingActors(actors);
+		for (AActor* actor : actors)
+		{
+			OverlappedWithActor(actor);
+		}
+
 		return true;
 	}
 	else if (type == JoinToPlayer)
@@ -94,7 +113,6 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 		return true;
 	}
 
-	//Changes players relation with npcs
-	characterProfile->relationWithPlayer = FMath::Clamp(characterProfile->relationWithPlayer + relationEffect, -100, 100);
+
 	return false;
 }

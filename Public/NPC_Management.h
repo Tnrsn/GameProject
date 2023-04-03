@@ -65,6 +65,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void StartDialog();
 	UFUNCTION(BlueprintCallable)
-		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect); //Returns if player still in a dialog
+		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest); //Returns if player still in a dialog
 
 };

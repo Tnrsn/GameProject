@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "QuestSystem.h"
 #include "ManageWidgets.h"
 #include "UObject/NoExportTypes.h"
 #include "NPCDialogSystem.generated.h"
@@ -33,6 +34,8 @@ struct FDialogAnswer
 		TEnumAsByte<FAnswerType> Type;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		int relationEffect = 0;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		TEnumAsByte<FMainQuestLine> CompletesQuest;
 };
 USTRUCT(BlueprintType)
 struct FDialogTalk

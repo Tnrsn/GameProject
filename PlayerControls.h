@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Public/QuestSystem.h"
 #include "Engine/LevelStreaming.h"
 #include "GroomComponent.h"
 #include "SaveSystem.h"
@@ -169,6 +170,13 @@ public:
 	//Animation
 	UPROPERTY(BlueprintReadOnly)
 		bool punchAnim = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool spellCasting = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool dead = false;
+
+	//Quest System
+	UQuestSystem* questSystem;
 
 protected:
 	// Called when the game starts or when spawned
@@ -267,6 +275,8 @@ public:
 			int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UFUNCTION()
+		void OverlappedWithActor(AActor* OtherActor);
 	//Combat Skills
 	UFUNCTION()
 		void SkillOne();

@@ -101,21 +101,36 @@ void APlayerControls::Tick(float DeltaTime)
 			AddItemToInventoryFromGround();
 		}
 	}
+	//if (questSystem)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s"), (questSystem->mainQuestLine[1] ? TEXT("true") : TEXT("false")));
+	//}
 
-	//Interactions with npcs (talking or combat)
-	NPCInteractions(DeltaTime);
-
-	//Stops ai movement If Its necessary
-	StopAIOnInput();
-
-	//Character dies if their health is under of 0
-	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
+	if (!dead)
 	{
-		Destroy();
+		//Interactions with npcs (talking or combat)
+		NPCInteractions(DeltaTime);
+
+		//Stops ai movement If Its necessary
+		StopAIOnInput();
+
+		//Character dies if their health is under of 0
+		if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
+		{
+			StopAIMovement(true);
+			dead = true;
+			//Destroy();
+		}
+
+		//Npcs in group follows controlled character
+		FollowControlledCharacter();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: Dead"), *GetName());
 	}
 
-	//Npcs in group follows controlled character
-	FollowControlledCharacter();
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charClass));
 }
 
 void APlayerControls::InitCharacter()
@@ -139,6 +154,7 @@ void APlayerControls::InitCharacter()
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
 
+		questSystem = NewObject<UQuestSystem>();
 	}
 
 	findEnemyComponent->OnComponentBeginOverlap.Clear();
@@ -204,9 +220,66 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("FastHit", IE_Pressed, this, &APlayerControls::HitFast);
 }
 
+void APlayerControls::OverlappedWithActor(AActor* OtherActor)
+{
+	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
+	{
+		if (Cast<ANPC_Management>(OtherActor))
+		{
+			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
+			if (Cast<ANPC_Management>(this)) //If this is not main character...
+			{
+				ANPC_Management* ally = Cast<ANPC_Management>(this);
+
+				//If npc is not in group or if npc is not a Hostile then npc wont attack anyone
+				//To attack anyone npc has to be in group or has to be a hostile
+				if (ally->NPCStyle != Hostile && !ally->inGroup) return;
+
+				if (ally->NPCStyle == Hostile)
+				{
+					//Hostile Npc only attacks to npcs in group
+					if (onAIControl && enemy->inGroup)
+					{
+						StartCombat(enemy);
+					}
+				}
+				else
+				{
+					if (onAIControl && enemy->NPCStyle == Hostile)
+					{
+						StartCombat(enemy);
+					}
+				}
+			}
+			else
+			{
+				//Main characters interaction with npcs
+				//If main character is on AI control then attacks to enemy
+				if (enemy->NPCStyle == Hostile)
+				{
+					StartCombat(enemy);
+				}
+
+			}
+		}
+		else
+		{
+			//If npc overlaps with main character
+			if (Cast<APlayerControls>(OtherActor) && Cast<ANPC_Management>(this))
+			{
+				ANPC_Management* npc = Cast<ANPC_Management>(this);
+				if (onAIControl && npc->NPCStyle == Hostile)
+				{
+					StartCombat(OtherActor);
+				}
+			}
+		}
+	}
+}
+
 void APlayerControls::MoveForward(float value)
 {
-	if ((Controller != nullptr) && (value != 0) && (!inDialog))
+	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !dead)
 	{
 		if (lootObject)
 		{
@@ -231,7 +304,7 @@ void APlayerControls::MoveForward(float value)
 
 void APlayerControls::MoveRight(float value)
 {
-	if ((Controller != nullptr) && (value != 0) && (!inDialog))
+	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !dead)
 	{
 		if (lootObject)
 		{
@@ -1289,6 +1362,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 		}
 		else
 		{
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), GetActorLocation());
 			TurnToEnemy(enemy->GetActorLocation());
 
 			combatCounter += attackSpeed * DeltaTime;
@@ -1330,9 +1404,10 @@ void APlayerControls::HitFast()
 int APlayerControls::CalculateDamage(AActor* enemyActor)
 {
 	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
+	FTimerHandle hitTime;
 
-	if ((!characterProfile->characterArmor.weapon1.isEquipped && characterProfile->charClass != Mage)
-		|| characterProfile->characterArmor.weapon1.weaponType == Melee)
+	if ((!characterProfile->characterArmor.weapon1.isEquipped && (characterProfile->charClass != Mage)
+		|| characterProfile->characterArmor.weapon1.weaponType == Melee))
 	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
 		if (characterProfile->characterArmor.weapon2.isEquipped)
 		{
@@ -1350,8 +1425,7 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 			//Play punch animation
 			punchAnim = true;
 
-			FTimerHandle punchTime;
-			GetWorldTimerManager().SetTimer(punchTime, FTimerDelegate::CreateLambda([=]() {
+			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
 				punchAnim = false;
 				}), 1.9f, false);
 			return characterProfile->characterStats.strength * FMath::RandRange(1, 5);
@@ -1366,12 +1440,21 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 		}
 		else if(characterProfile->characterArmor.weapon1.isEquipped)
 		{
-			//Staff animation
+			spellCasting = true;
+
+			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
+				spellCasting = false;
+				}), 1.9f, false);
+
 			return (characterProfile->characterStats.intelligence * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
 		}
 		else
 		{
-			//Unequiped magic animation
+			spellCasting = true;
+			
+			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
+				spellCasting = false;
+				}), 1.9f, false);
 			return characterProfile->characterStats.intelligence * FMath::RandRange(1, 5);
 		}
 	}
@@ -1402,7 +1485,13 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C"))
 	{
 		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
-		
+		if (npc->dead)
+		{
+			actorToBeGone = nullptr;
+			return;
+		}
+
+
 		if ((npc->NPCStyle == Hostile || npc->inGroup) && inCombat)
 		{//Npcs combat with other npcs
 			//if (npc->characterProfile->characterCurrentHealth <= 0)
@@ -1498,59 +1587,7 @@ void APlayerControls::ApplyDamage(int Damage)
 
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor && OtherActor != this && Cast<ACharacter>(OtherActor))
-	{
-		if (Cast<ANPC_Management>(OtherActor))
-		{
-			ANPC_Management* enemy = Cast<ANPC_Management>(OtherActor);
-			if (Cast<ANPC_Management>(this)) //If this is not main character...
-			{
-				ANPC_Management* ally = Cast<ANPC_Management>(this);
-
-				//If npc is not in group or if npc is not a Hostile then npc wont attack anyone
-				//To attack anyone npc has to be in group or has to be a hostile
-				if (ally->NPCStyle != Hostile && !ally->inGroup) return;
-
-				if (ally->NPCStyle == Hostile)
-				{
-					//Hostile Npc only attacks to npcs in group
-					if (onAIControl && enemy->inGroup) 
-					{
-						StartCombat(enemy);
-					}
-				}
-				else
-				{
-					if (onAIControl && enemy->NPCStyle == Hostile)
-					{
-						StartCombat(enemy);
-					}
-				}
-			}
-			else
-			{
-				//Main characters interaction with npcs
-				//If main character is on AI control then attacks to enemy
-				if (enemy->NPCStyle == Hostile)
-				{
-					StartCombat(enemy);
-				}
-
-			}
-		}
-		else
-		{
-			//If npc overlaps with main character
-			if (Cast<APlayerControls>(OtherActor) && Cast<ANPC_Management>(this))
-			{
-				ANPC_Management* npc = Cast<ANPC_Management>(this);
-				if (onAIControl && npc->NPCStyle == Hostile)
-				{
-					StartCombat(OtherActor);
-				}
-			}
-		}
-	}
+	OverlappedWithActor(OtherActor);
 }
 
 void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
