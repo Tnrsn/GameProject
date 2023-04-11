@@ -37,6 +37,9 @@ public:
 	FTimerHandle chargeTimer;
 	FVector startLocation;
 
+	//VFX Timer
+	FTimerHandle vfxTimer;
+
 	UFUNCTION()
 		bool isDamageToHostile(ACharacter* player); //Checks for area damages
 	UFUNCTION()
@@ -72,4 +75,8 @@ public:
 		void SuperNova(ACharacter* player, FVector target);
 	UFUNCTION()
 		void Blink(ACharacter* player, FVector target);
+
+	//VFX
+	UFUNCTION()
+		void PlaySparks(ACharacter* player, FVector location, FVector scale = FVector(1));
 };

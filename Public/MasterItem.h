@@ -75,7 +75,7 @@ struct FItemProperties
 		int maximumAmount;
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		bool isStackable;
-	UPROPERTY(Blueprintreadwrite)
+	UPROPERTY(Blueprintreadwrite, EditAnyWhere)
 		int currentAmount = 1;
 	UPROPERTY(Blueprintreadonly, EditAnywhere)
 		float rarity;
@@ -97,6 +97,14 @@ struct FItemProperties
 		bool isEquipped = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		USkeletalMesh* skeletalMesh = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		UStaticMesh* staticMesh = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		FVector location = FVector(0);
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		FQuat rotation = FQuat(0);
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		FVector scale = FVector(0);
 	UPROPERTY(BlueprintReadOnly)
 		bool hideHeadMesh = false;
 	UPROPERTY(BlueprintReadOnly)
@@ -113,6 +121,8 @@ struct FItemProperties
 		FString texturePath;
 	UPROPERTY()
 		FString skeletalMeshPath;
+	UPROPERTY()
+		FString staticMeshPath;
 };
 //Everytime I add a new variable to FItemProperties dont forget to add it to SaveSystem.h SaveItem function too.
 

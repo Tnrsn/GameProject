@@ -52,6 +52,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 		bool moveToLootObject = false;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Loot");
+		bool generateItems = true;
 
 
 protected:

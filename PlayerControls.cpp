@@ -44,6 +44,7 @@ APlayerControls::APlayerControls()
 
 	hairGroom = CreateDefaultSubobject<UGroomComponent>("Hair Groom");
 	hairGroom->SetupAttachment(headMesh);
+
 	//****
 }
 
@@ -161,8 +162,30 @@ void APlayerControls::InitCharacter()
 	findEnemyComponent->OnComponentEndOverlap.Clear();
 	findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
 	findEnemyComponent->OnComponentEndOverlap.AddDynamic(this, &APlayerControls::OnOverlapEnd);
+	//****
+	// 
+	hand1 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(1));
+	if (hand1)
+	{
+		//hand1->SetScale
+		UE_LOG(LogTemp, Warning, TEXT("%s: Hand1 Attached"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: Hand1 Couldn't Attached"), *GetName());
+	}
 
+	hand2 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(0));
+	if (hand2)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s: Hand2 Attached"), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: Hand2 Couldn't Attached"), *GetName());
+	}
 
+	//*******
 	if (inGroup)
 	{
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -178,6 +201,10 @@ void APlayerControls::InitCharacter()
 	{
 		saveSystem->LoadGame("TransportSave", true);
 	}
+
+
+	SetMesh();
+	//characterProfile->charGender = Female;
 }
 
 // Called to bind functionality to input
@@ -275,6 +302,11 @@ void APlayerControls::OverlappedWithActor(AActor* OtherActor)
 			}
 		}
 	}
+}
+
+void APlayerControls::SetMesh()
+{
+	headMesh->SetSkeletalMesh(headMaleBodyMesh);
 }
 
 void APlayerControls::MoveForward(float value)
@@ -803,6 +835,12 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 					if (characterProfile->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
 					{
 						PutOffItem(characterProfile, 7);
+
+						hand1->SetRelativeLocation(itemProperties.location);
+						hand1->SetRelativeRotation(itemProperties.rotation);
+						hand1->SetRelativeScale3D(itemProperties.scale);
+						hand1->SetStaticMesh(itemProperties.staticMesh);
+
 						characterProfile->characterArmor.weapon1 = itemProperties;
 						characterProfile->characterArmor.weapon1.isEquipped = true;
 						DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
@@ -811,6 +849,12 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 					else if(characterProfile->characterArmor.weapon2.WearableType == OneHandedWeapon)
 					{
 						PutOffItem(characterProfile, 8);
+
+						hand2->SetRelativeLocation(itemProperties.location);
+						hand2->SetRelativeRotation(itemProperties.rotation);
+						hand2->SetRelativeScale3D(itemProperties.scale);
+						hand2->SetStaticMesh(itemProperties.staticMesh);
+
 						characterProfile->characterArmor.weapon2 = itemProperties;
 						characterProfile->characterArmor.weapon2.isEquipped = true;
 						characterProfile->characterArmor.weapon2.weapon2Item = true;
@@ -821,6 +865,11 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 				}
 				else
 				{
+					hand2->SetRelativeLocation(itemProperties.location);
+					hand2->SetRelativeRotation(itemProperties.rotation);
+					hand2->SetRelativeScale3D(itemProperties.scale);
+					hand2->SetStaticMesh(itemProperties.staticMesh);
+
 					characterProfile->characterArmor.weapon2 = itemProperties;
 					characterProfile->characterArmor.weapon2.isEquipped = true;
 					characterProfile->characterArmor.weapon2.weapon2Item = true;
@@ -830,6 +879,11 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			}
 			else
 			{
+				hand1->SetRelativeLocation(itemProperties.location);
+				hand1->SetRelativeRotation(itemProperties.rotation);
+				hand1->SetRelativeScale3D(itemProperties.scale);
+				hand1->SetStaticMesh(itemProperties.staticMesh);
+
 				characterProfile->characterArmor.weapon1 = itemProperties;
 				characterProfile->characterArmor.weapon1.isEquipped = true;
 				DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);

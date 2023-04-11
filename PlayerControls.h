@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <Particles/ParticleSystemComponent.h>
+#include <Particles/ParticleSystem.h>
 #include "Public/QuestSystem.h"
 #include "Engine/LevelStreaming.h"
 #include "GroomComponent.h"
@@ -22,6 +24,9 @@
 #include "GameFramework/Character.h"
 #include "Public/ClassSkills.h"
 #include "PlayerControls.generated.h"
+
+
+
 
 UCLASS()
 class GAMEPROJECT_API APlayerControls : public ACharacter
@@ -53,6 +58,11 @@ public:
 		USkeletalMeshComponent* footsMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
 		USkeletalMeshComponent* torsoMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		UStaticMeshComponent* hand1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		UStaticMeshComponent* hand2;
 
 	//Body Parts - Male
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -173,10 +183,18 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool spellCasting = false;
 	UPROPERTY(BlueprintReadOnly)
+		bool slashAnim = false;
+	UPROPERTY(BlueprintReadOnly)
 		bool dead = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool defending = false;
 
 	//Quest System
 	UQuestSystem* questSystem;
+
+	//VFX
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VFX")
+		UParticleSystem* sparks_F;
 
 protected:
 	// Called when the game starts or when spawned
@@ -289,6 +307,9 @@ public:
 		void SlowTime();
 	UFUNCTION()
 		void BackToNormalTime();
+	//Set Appearence
+	UFUNCTION()
+		void SetMesh();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -98,17 +98,27 @@ void ALootObject::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Othe
 
 void ALootObject::GenerateRandomItems(TArray<UClass*> itemsRef)
 {
-	for (int i = 0; i < FMath::RandRange(0, lootLevet); i++)
+	if (generateItems)
 	{
-		for (UClass* el : itemsRef)
+		for (int i = 0; i < FMath::RandRange(0, lootLevet); i++)
 		{
-			childActorRef->AddRelativeLocation(FVector(0, 0, -1000));
-			childActorRef->SetChildActorClass(el);
-			item = Cast<AMasterItem>(childActorRef->GetChildActor());
-			if (item->ItemProperties.rarity > FMath::RandRange(0, 100))
+			for (UClass* el : itemsRef)
 			{
-				AddItemToLoot(item->ItemProperties);
+				childActorRef->AddRelativeLocation(FVector(0, 0, -1000));
+				childActorRef->SetChildActorClass(el);
+				item = Cast<AMasterItem>(childActorRef->GetChildActor());
+				if (item->ItemProperties.rarity > FMath::RandRange(0, 100))
+				{
+					AddItemToLoot(item->ItemProperties);
+				}
 			}
+		}
+	}
+	else
+	{
+		for (FItemProperties& test : storage)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *test.name);
 		}
 	}
 }

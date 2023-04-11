@@ -65,6 +65,7 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 			return;
 		}
 
+		//APlayerControls* plyr = Cast<APlayerControls>(player);
 		Charge(player, target);
 	}
 	else if (charClass == Rogue)
@@ -160,7 +161,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	hitter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Overlap);
-
+	
 	//****************************************************************
 	// Calculate the direction to move in
 	FVector direction = target - currentLocation;
@@ -173,6 +174,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	player->GetCharacterMovement()->Launch(direction * 10000);
 
 	//Play Animation********
+	hitter->slashAnim = true;
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
@@ -191,6 +193,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 					player->GetWorldTimerManager().ClearTimer(chargeTimer);
 
 					//Stop Animation*******
+					hitter->slashAnim = false;
 				}
 			}), player->GetWorld()->GetDeltaSeconds(), true);
 }
@@ -210,6 +213,8 @@ void UClassSkills::WhirlWind(ACharacter* player)
 
 		damageZone->damageToHostile = isDamageToHostile(player);
 	}
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+	hitter->slashAnim = true;
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
@@ -217,7 +222,8 @@ void UClassSkills::WhirlWind(ACharacter* player)
 				damageZone->SetActorLocation(currentLocation);
 				damageZone->Destroy();
 
-				//Play Animation
+				//Stop Animation
+				hitter->slashAnim = false;
 			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
 }
 
@@ -231,6 +237,13 @@ void UClassSkills::PowerStrike(ACharacter* player)
 	{
 		if (CanHit(hitter))
 		{
+			hitter->slashAnim = true;
+
+			player->GetWorldTimerManager().SetTimer(chargeTimer,
+				FTimerDelegate::CreateLambda([=]()
+					{
+						hitter->slashAnim = false;
+					}), player->GetWorld()->GetDeltaSeconds(), false);
 			//Play Animation
 		}
 	}
@@ -251,6 +264,14 @@ void UClassSkills::DualWield(ACharacter* player)
 	{
 		if (CanHit(hitter))
 		{
+			hitter->slashAnim = true;
+
+			player->GetWorldTimerManager().SetTimer(chargeTimer,
+			FTimerDelegate::CreateLambda([=]()
+				{
+					hitter->slashAnim = false;
+				}), player->GetWorld()->GetDeltaSeconds(), false);
+			
 			//Play Animation
 		}
 	}
@@ -273,10 +294,13 @@ void UClassSkills::Evasion(ACharacter* player)
 	Defender->characterProfile->characterStats.dexterity += 15;
 	evasionActivated = true;
 	//Play Animation
+	Defender->defending = true;
+	
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
+				Defender->defending = false;
 				Defender->characterProfile->characterStats.dexterity = charDex; //Return dexterity to default value
 				evasionActivated = false;
 			}), player->GetWorld()->GetDeltaSeconds() * 10, false);
@@ -296,6 +320,15 @@ void UClassSkills::BacksStab(ACharacter* player)
 			hitter->SetActorLocation(enemy->GetActorLocation() + (enemy->GetActorForwardVector() * -25));
 			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
 			//Play Animation
+
+			hitter->slashAnim = true;
+
+			player->GetWorldTimerManager().SetTimer(chargeTimer,
+			FTimerDelegate::CreateLambda([=]()
+				{
+					hitter->slashAnim = false;
+				}), player->GetWorld()->GetDeltaSeconds(), false);
+			
 		}
 	}
 	else //It falls in else if character is too far away from the enemy or there are no enemy
@@ -317,6 +350,16 @@ void UClassSkills::Blitz(ACharacter* player)
 			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
 			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 3);
 			//Play Animation
+
+			hitter->spellCasting = true;
+
+			PlaySparks(player, enemy->GetActorLocation());
+
+			player->GetWorldTimerManager().SetTimer(chargeTimer,
+			FTimerDelegate::CreateLambda([=]()
+			{
+				hitter->spellCasting = false;
+			}), player->GetWorld()->GetDeltaSeconds(), false);
 		}
 	}
 	else //It falls in else if character is too far away from the enemy or there are no enemy
@@ -346,10 +389,16 @@ void UClassSkills::SuperNova(ACharacter* player, FVector target)
 
 		damageZone->damageToHostile = isDamageToHostile(player);
 	}
+
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+	hitter->spellCasting = true;
+	
+	PlaySparks(player, damageZone->GetActorLocation(), FVector(10));
 	
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
+				hitter->spellCasting = false;
 				damageZone->Destroy();
 			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
 }
@@ -375,10 +424,41 @@ void UClassSkills::Blink(ACharacter* player, FVector target)
 		damageZone->damageToHostile = isDamageToHostile(player);
 	}
 
+	APlayerControls* hitter = Cast<APlayerControls>(player);
+	hitter->spellCasting = true;
+	
+	PlaySparks(player, player->GetActorLocation());
+
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
+				hitter->spellCasting = false;
 				damageZone->Destroy();
 				player->SetActorLocation(target);
 			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
 }
+
+void UClassSkills::PlaySparks(ACharacter* player, FVector location, FVector scale)
+{
+	APlayerControls* character = Cast<APlayerControls>(player);
+	UParticleSystemComponent* sparkComp = UGameplayStatics::SpawnEmitterAtLocation(character->GetWorld(), character->sparks_F, location);
+
+	sparkComp->SetRelativeScale3D(scale);
+
+	/*FTimerHandle vfxTimer;*/
+	character->GetWorldTimerManager().SetTimer(vfxTimer,
+		FTimerDelegate::CreateLambda([=]()
+			{
+				sparkComp->Deactivate();
+			}), character->GetWorld()->GetDeltaSeconds() * 1.5f, false);
+}
+
+
+//UParticleSystemComponent* sparkComp = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), sparks_F, GetActorLocation());
+//
+//FTimerHandle vfxTimer;
+//GetWorldTimerManager().SetTimer(vfxTimer,
+//	FTimerDelegate::CreateLambda([=]()
+//		{
+//			sparkComp->Deactivate();
+//		}), GetWorld()->GetDeltaSeconds() * 1.5f, false);
