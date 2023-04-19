@@ -38,7 +38,7 @@ public:
 	FVector startLocation;
 
 	//VFX Timer
-	FTimerHandle vfxTimer;
+	//FTimerHandle vfxTimer;
 
 	UFUNCTION()
 		bool isDamageToHostile(ACharacter* player); //Checks for area damages

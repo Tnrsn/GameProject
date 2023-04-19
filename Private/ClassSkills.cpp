@@ -56,26 +56,36 @@ bool UClassSkills::CanHit(ACharacter* player)
 
 void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
 {
+	APlayerControls* plyr = Cast<APlayerControls>(player);
+
+	if (plyr->characterProfile->characterCurrentEnergy < 15) return;
+
 	if (charClass == Warrior)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Warrior: Charge"));
+
 		if (!skillOneTargeting)
 		{
 			skillOneTargeting = true;
 			return;
 		}
 
-		//APlayerControls* plyr = Cast<APlayerControls>(player);
+		plyr->characterProfile->characterCurrentEnergy -= 15;
+
 		Charge(player, target);
 	}
 	else if (charClass == Rogue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rogue: DualWield"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 15;
 		DualWield(player);
 	}
 	else if (charClass == Mage)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Mage: Blitz"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 15;
 		Blitz(player);
 	}
 
@@ -84,14 +94,21 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 
 void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
 {
+	APlayerControls* plyr = Cast<APlayerControls>(player);
+	if (plyr->characterProfile->characterCurrentEnergy < 25) return;
+
 	if (charClass == Warrior)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Warrior: Whirlwind"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 25;
 		WhirlWind(player);
 	}
 	else if (charClass == Rogue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rogue: Evasion"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 25;
 		Evasion(player);
 	}
 	else if (charClass == Mage)
@@ -103,6 +120,7 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 			return;
 		}
 
+		plyr->characterProfile->characterCurrentEnergy -= 25;
 		SuperNova(player, target);
 	}
 
@@ -111,14 +129,21 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 
 void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
 {
+	APlayerControls* plyr = Cast<APlayerControls>(player);
+	if (plyr->characterProfile->characterCurrentEnergy < 35) return;
+
 	if (charClass == Warrior)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Warrior: Power Strike"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 35;
 		PowerStrike(player);
 	}
 	else if (charClass == Rogue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rogue: Backstab"));
+
+		plyr->characterProfile->characterCurrentEnergy -= 35;
 		BacksStab(player);
 	}
 	else if (charClass == Mage)
@@ -130,6 +155,7 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 			return;
 		}
 
+		plyr->characterProfile->characterCurrentEnergy -= 35;
 		Blink(player, target);
 	}
 
@@ -176,6 +202,9 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	//Play Animation********
 	hitter->slashAnim = true;
 
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
@@ -195,7 +224,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 					//Stop Animation*******
 					hitter->slashAnim = false;
 				}
-			}), player->GetWorld()->GetDeltaSeconds(), true);
+			}), DelayTime, true);
 }
 
 void UClassSkills::WhirlWind(ACharacter* player)
@@ -216,6 +245,9 @@ void UClassSkills::WhirlWind(ACharacter* player)
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	hitter->slashAnim = true;
 
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = player->GetWorld()->GetDeltaSeconds() * 5 / TimeDilation;
+
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
@@ -224,7 +256,7 @@ void UClassSkills::WhirlWind(ACharacter* player)
 
 				//Stop Animation
 				hitter->slashAnim = false;
-			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
+			}), DelayTime, false);
 }
 
 void UClassSkills::PowerStrike(ACharacter* player)
@@ -239,11 +271,14 @@ void UClassSkills::PowerStrike(ACharacter* player)
 		{
 			hitter->slashAnim = true;
 
+			float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+			float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+
 			player->GetWorldTimerManager().SetTimer(chargeTimer,
 				FTimerDelegate::CreateLambda([=]()
 					{
 						hitter->slashAnim = false;
-					}), player->GetWorld()->GetDeltaSeconds(), false);
+					}), DelayTime, false);
 			//Play Animation
 		}
 	}
@@ -266,11 +301,14 @@ void UClassSkills::DualWield(ACharacter* player)
 		{
 			hitter->slashAnim = true;
 
+			float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+			float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+
 			player->GetWorldTimerManager().SetTimer(chargeTimer,
 			FTimerDelegate::CreateLambda([=]()
 				{
 					hitter->slashAnim = false;
-				}), player->GetWorld()->GetDeltaSeconds(), false);
+				}), DelayTime, false);
 			
 			//Play Animation
 		}
@@ -296,6 +334,8 @@ void UClassSkills::Evasion(ACharacter* player)
 	//Play Animation
 	Defender->defending = true;
 	
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = player->GetWorld()->GetDeltaSeconds() * 10 / TimeDilation;
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
@@ -303,7 +343,7 @@ void UClassSkills::Evasion(ACharacter* player)
 				Defender->defending = false;
 				Defender->characterProfile->characterStats.dexterity = charDex; //Return dexterity to default value
 				evasionActivated = false;
-			}), player->GetWorld()->GetDeltaSeconds() * 10, false);
+			}), DelayTime, false);
 }
 
 void UClassSkills::BacksStab(ACharacter* player)
@@ -323,11 +363,14 @@ void UClassSkills::BacksStab(ACharacter* player)
 
 			hitter->slashAnim = true;
 
+			float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+			float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+
 			player->GetWorldTimerManager().SetTimer(chargeTimer,
 			FTimerDelegate::CreateLambda([=]()
 				{
 					hitter->slashAnim = false;
-				}), player->GetWorld()->GetDeltaSeconds(), false);
+				}), DelayTime, false);
 			
 		}
 	}
@@ -355,11 +398,14 @@ void UClassSkills::Blitz(ACharacter* player)
 
 			PlaySparks(player, enemy->GetActorLocation());
 
+			float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+			float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+
 			player->GetWorldTimerManager().SetTimer(chargeTimer,
 			FTimerDelegate::CreateLambda([=]()
 			{
 				hitter->spellCasting = false;
-			}), player->GetWorld()->GetDeltaSeconds(), false);
+			}), DelayTime, false);
 		}
 	}
 	else //It falls in else if character is too far away from the enemy or there are no enemy
@@ -395,12 +441,15 @@ void UClassSkills::SuperNova(ACharacter* player, FVector target)
 	
 	PlaySparks(player, damageZone->GetActorLocation(), FVector(10));
 	
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = player->GetWorld()->GetDeltaSeconds() * 5 / TimeDilation;
+
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
 				hitter->spellCasting = false;
 				damageZone->Destroy();
-			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
+			}), DelayTime, false);
 }
 
 void UClassSkills::Blink(ACharacter* player, FVector target)
@@ -411,31 +460,35 @@ void UClassSkills::Blink(ACharacter* player, FVector target)
 
 	if (FVector::Distance(player->GetActorLocation(), target) > 1100)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Too far!: SuperNova"));
+		UE_LOG(LogTemp, Warning, TEXT("Too far!: Blink"));
 		return;
-	}
-
-	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), player->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
-	if (damageZone)
-	{
-		damageZone->damageArea->SetSphereRadius(150);
-		damageZone->damage = 25;
-
-		damageZone->damageToHostile = isDamageToHostile(player);
 	}
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	hitter->spellCasting = true;
-	
-	PlaySparks(player, player->GetActorLocation());
+
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = player->GetWorld()->GetDeltaSeconds() * 25 / TimeDilation;
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
+				ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), player->GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+				if (damageZone)
+				{
+					damageZone->damageArea->SetSphereRadius(150);
+					damageZone->damage = 25;
+
+					damageZone->damageToHostile = isDamageToHostile(player);
+				}
+				PlaySparks(player, player->GetActorLocation());
+
 				hitter->spellCasting = false;
 				damageZone->Destroy();
-				player->SetActorLocation(target);
-			}), player->GetWorld()->GetDeltaSeconds() * 5, false);
+				player->SetActorLocation(FVector(target.X, target.Y, target.Z + 50));
+
+				PlaySparks(player, player->GetActorLocation());
+			}), DelayTime, false);
 }
 
 void UClassSkills::PlaySparks(ACharacter* player, FVector location, FVector scale)
@@ -445,12 +498,15 @@ void UClassSkills::PlaySparks(ACharacter* player, FVector location, FVector scal
 
 	sparkComp->SetRelativeScale3D(scale);
 
-	/*FTimerHandle vfxTimer;*/
+	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	float DelayTime = character->GetWorld()->GetDeltaSeconds() * 1.5f / TimeDilation;
+
+	FTimerHandle vfxTimer;
 	character->GetWorldTimerManager().SetTimer(vfxTimer,
 		FTimerDelegate::CreateLambda([=]()
 			{
 				sparkComp->Deactivate();
-			}), character->GetWorld()->GetDeltaSeconds() * 1.5f, false);
+			}), DelayTime, false);
 }
 
 

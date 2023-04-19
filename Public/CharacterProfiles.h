@@ -85,6 +85,8 @@ class GAMEPROJECT_API UCharacterProfiles : public UObject
 	
 
 public:
+	void InitRefilling(UWorld* world);
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Name")
 		FString charName;
 
@@ -109,6 +111,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		int statPoints = 12;
 
+	UPROPERTY(BlueprintReadOnly)
+		bool dead = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FCharacterStats beginningStats;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
@@ -123,8 +128,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
 		TEnumAsByte<FCharacterClasses> charClass;
 
+	UPROPERTY()
+		FTimerHandle energyTimer;
+
+
 	UFUNCTION(BlueprintCallable)
 		void ChangeStat(int value, TEnumAsByte<FStatTypes> types);
 	UFUNCTION()
 		void RefreshStats();
+	UFUNCTION()
+		void HoldEnergyAndHealthAtMax();
 };

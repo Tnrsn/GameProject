@@ -66,7 +66,7 @@ public:
 
 	//Body Parts - Male
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
-		UGroomAsset* HairGroomAsset;
+		UGroomAsset* maleHairGroom;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Male Meshes
 		USkeletalMesh* headMaleBodyMesh;
@@ -78,6 +78,9 @@ public:
 		USkeletalMesh* torsoMaleBodyMesh;
 
 	//" " - Female
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
+		UGroomAsset* femaleHairGroom;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes") //Female Meshes
 		USkeletalMesh* headFemaleBodyMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Meshes")
@@ -178,14 +181,24 @@ public:
 		UClassSkills* skills;
 
 	//Animation
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimClasses")
+		UClass* maleAnimRef;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimClasses")
+		UGroomBindingAsset* maleHairBinding;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimClasses")
+		UClass* femaleAnimRef;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AnimClasses")
+		UGroomBindingAsset* femaleHairBinding;
+
 	UPROPERTY(BlueprintReadOnly)
 		bool punchAnim = false;
 	UPROPERTY(BlueprintReadOnly)
 		bool spellCasting = false;
 	UPROPERTY(BlueprintReadOnly)
 		bool slashAnim = false;
-	UPROPERTY(BlueprintReadOnly)
-		bool dead = false;
+	//UPROPERTY(BlueprintReadOnly)
+	//	bool dead = false;
 	UPROPERTY(BlueprintReadOnly)
 		bool defending = false;
 
@@ -308,7 +321,7 @@ public:
 	UFUNCTION()
 		void BackToNormalTime();
 	//Set Appearence
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void SetMesh();
 
 	// Called every frame

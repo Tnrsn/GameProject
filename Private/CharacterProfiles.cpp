@@ -2,6 +2,35 @@
 
 
 #include "CharacterProfiles.h"
+#include <Kismet/GameplayStatics.h>
+
+void UCharacterProfiles::InitRefilling(UWorld* world)
+{
+	world->GetTimerManager().SetTimer(energyTimer, FTimerDelegate::CreateLambda([=]() {
+	if (!dead)
+	{
+		
+		if (characterMaximumEnergy > characterCurrentEnergy)
+		{
+			characterCurrentEnergy += 5;
+			if (characterCurrentEnergy > characterMaximumEnergy)
+				characterCurrentEnergy = characterMaximumEnergy;
+		}
+
+		if (characterMaximumHealth > characterCurrentHealth)
+		{
+			characterCurrentHealth += 5;
+			if (characterCurrentHealth > characterMaximumHealth)
+				characterCurrentHealth = characterMaximumHealth;
+		}
+	}
+	else
+	{
+		characterCurrentEnergy = 0;
+		characterCurrentHealth = 0;
+	}
+	}), 1.5f, true);
+}
 
 void UCharacterProfiles::ChangeStat(int value, TEnumAsByte<FStatTypes> types)
 {
@@ -47,5 +76,14 @@ void UCharacterProfiles::RefreshStats()
 	//Calculates Maximum Energy
 	characterMaximumEnergy = (beginningStats.wisdom * 10) + ((characterStats.wisdom - beginningStats.wisdom) * 2);
 
+}
+
+void UCharacterProfiles::HoldEnergyAndHealthAtMax()
+{
+	if (characterCurrentHealth > characterMaximumHealth)
+		characterCurrentHealth = characterMaximumHealth;
+
+	if (characterCurrentEnergy > characterMaximumEnergy)
+		characterCurrentEnergy = characterMaximumEnergy;
 }
 

@@ -195,6 +195,11 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		player->charIndex = SpawnInfo.charIndex;
 		player->inGroup = SpawnInfo.inGroup;
 
+		if (player->characterProfile && *player->GetName() == FName("BP_PlayerControls_C_0"))
+		{
+			player->SetMesh();
+		}
+
 		//Character Armor
 		LoadItem(player, SpawnInfo.characterArmor.head, player->characterProfile->characterArmor.head, player->headMesh);
 		LoadItem(player, SpawnInfo.characterArmor.top, player->characterProfile->characterArmor.top, player->torsoMesh);

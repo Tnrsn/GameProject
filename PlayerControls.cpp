@@ -83,6 +83,8 @@ void APlayerControls::BeginPlay()
 
 		springArm->LookFromFront();
 	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 }
 
 // Called every frame
@@ -102,12 +104,8 @@ void APlayerControls::Tick(float DeltaTime)
 			AddItemToInventoryFromGround();
 		}
 	}
-	//if (questSystem)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s"), (questSystem->mainQuestLine[1] ? TEXT("true") : TEXT("false")));
-	//}
 
-	if (!dead)
+	if (!characterProfile->dead)
 	{
 		//Interactions with npcs (talking or combat)
 		NPCInteractions(DeltaTime);
@@ -119,7 +117,7 @@ void APlayerControls::Tick(float DeltaTime)
 		if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
 		{
 			StopAIMovement(true);
-			dead = true;
+			characterProfile->dead = true;
 			//Destroy();
 		}
 
@@ -128,10 +126,23 @@ void APlayerControls::Tick(float DeltaTime)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s: Dead"), *GetName());
+		characterProfile->characterCurrentHealth = 0;
+	}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: characterProfile->dead"), *GetName());
+	//}
+
+	if (characterProfile)
+	{
+		characterProfile->HoldEnergyAndHealthAtMax();
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charClass));
+	//if (characterProfile)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charClass));
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+	//}
 }
 
 void APlayerControls::InitCharacter()
@@ -165,25 +176,25 @@ void APlayerControls::InitCharacter()
 	//****
 	// 
 	hand1 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(1));
-	if (hand1)
-	{
-		//hand1->SetScale
-		UE_LOG(LogTemp, Warning, TEXT("%s: Hand1 Attached"), *GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s: Hand1 Couldn't Attached"), *GetName());
-	}
+	//if (hand1)
+	//{
+	//	//hand1->SetScale
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: Hand1 Attached"), *GetName());
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Error, TEXT("%s: Hand1 Couldn't Attached"), *GetName());
+	//}
 
 	hand2 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(0));
-	if (hand2)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s: Hand2 Attached"), *GetName());
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s: Hand2 Couldn't Attached"), *GetName());
-	}
+	//if (hand2)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: Hand2 Attached"), *GetName());
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Error, TEXT("%s: Hand2 Couldn't Attached"), *GetName());
+	//}
 
 	//*******
 	if (inGroup)
@@ -202,8 +213,9 @@ void APlayerControls::InitCharacter()
 		saveSystem->LoadGame("TransportSave", true);
 	}
 
-
-	SetMesh();
+	characterProfile->InitRefilling(GetWorld());
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+	//SetMesh();
 	//characterProfile->charGender = Female;
 }
 
@@ -306,12 +318,55 @@ void APlayerControls::OverlappedWithActor(AActor* OtherActor)
 
 void APlayerControls::SetMesh()
 {
-	headMesh->SetSkeletalMesh(headMaleBodyMesh);
+	if (characterProfile->charGender == Male)
+	{
+		hairGroom->SetGroomAsset(maleHairGroom);
+		hairGroom->SetBinding(maleHairBinding);
+
+		headMesh->SetSkeletalMesh(headMaleBodyMesh);
+		torsoMesh->SetSkeletalMesh(torsoMaleBodyMesh);
+		handsMesh->SetSkeletalMesh(handsMaleBodyMesh);
+		footsMesh->SetSkeletalMesh(footsMaleBodyMesh);
+
+		headMesh->SetAnimClass(maleAnimRef);
+		torsoMesh->SetAnimClass(maleAnimRef);
+		handsMesh->SetAnimClass(maleAnimRef);
+		footsMesh->SetAnimClass(maleAnimRef);
+
+		//if (characterProfile)
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("To Male %s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+		//}
+
+		UE_LOG(LogTemp, Warning, TEXT("To Male"));
+	}
+	else
+	{
+		hairGroom->SetGroomAsset(femaleHairGroom);
+		hairGroom->SetBinding(femaleHairBinding);
+
+		headMesh->SetSkeletalMesh(headFemaleBodyMesh);
+		torsoMesh->SetSkeletalMesh(torsoFemaleBodyMesh);
+		handsMesh->SetSkeletalMesh(handsFemaleBodyMesh);
+		footsMesh->SetSkeletalMesh(footsFemaleBodyMesh);
+
+		headMesh->SetAnimClass(femaleAnimRef);
+		torsoMesh->SetAnimClass(femaleAnimRef);
+		handsMesh->SetAnimClass(femaleAnimRef);
+		footsMesh->SetAnimClass(femaleAnimRef);
+
+		//if (characterProfile)
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("To Female %s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+		//}
+		UE_LOG(LogTemp, Warning, TEXT("To Female"));
+		
+	}
 }
 
 void APlayerControls::MoveForward(float value)
 {
-	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !dead)
+	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !characterProfile->dead)
 	{
 		if (lootObject)
 		{
@@ -336,7 +391,7 @@ void APlayerControls::MoveForward(float value)
 
 void APlayerControls::MoveRight(float value)
 {
-	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !dead)
+	if ((Controller != nullptr) && (value != 0) && (!inDialog) && !characterProfile->dead)
 	{
 		if (lootObject)
 		{
@@ -762,41 +817,50 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 		AddItemToInventory(itemProperties->characterArmor.foot);
 		itemProperties->characterArmor.foot = FItemProperties();
 	}
-	else if (WearableSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
-	{
-		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
-		AddItemToInventory(itemProperties->characterArmor.firstRing);
-		itemProperties->characterArmor.firstRing = FItemProperties();
-	}
-	else if (WearableSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
-	{
-		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
-		AddItemToInventory(itemProperties->characterArmor.secondRing);
-		itemProperties->characterArmor.secondRing = FItemProperties();
-	}
+	//else if (WearableSlotIndex + 1 == FirstRing && itemProperties->characterArmor.firstRing.isEquipped) //Ring1
+	//{
+	//	characterProfile->currentInventoryWeight -= itemProperties->characterArmor.firstRing.weight;
+	//	AddItemToInventory(itemProperties->characterArmor.firstRing);
+	//	itemProperties->characterArmor.firstRing = FItemProperties();
+	//}
+	//else if (WearableSlotIndex + 1 == SecondRing && itemProperties->characterArmor.secondRing.isEquipped) //Ring2
+	//{
+	//	characterProfile->currentInventoryWeight -= itemProperties->characterArmor.secondRing.weight;
+	//	AddItemToInventory(itemProperties->characterArmor.secondRing);
+	//	itemProperties->characterArmor.secondRing = FItemProperties();
+	//}
 	else if (WearableSlotIndex + 1 == Neck && itemProperties->characterArmor.neck.isEquipped) //Neck
 	{
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.neck.weight;
 		AddItemToInventory(itemProperties->characterArmor.neck);
 		itemProperties->characterArmor.neck = FItemProperties();
 	}
-	else if (WearableSlotIndex == 7 && itemProperties->characterArmor.weapon1.isEquipped)
+	else if (WearableSlotIndex == 5 && itemProperties->characterArmor.weapon1.isEquipped)
 	{
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.weapon1.weight;
 		AddItemToInventory(itemProperties->characterArmor.weapon1);
 		itemProperties->characterArmor.weapon1 = FItemProperties();
 
+
 		if (itemProperties->characterArmor.weapon2.isEquipped && itemProperties->characterArmor.weapon2.WearableType != Shield)
 		{
 			itemProperties->characterArmor.weapon1 = itemProperties->characterArmor.weapon2;
 			itemProperties->characterArmor.weapon2 = FItemProperties();
+
+			hand2->SetStaticMesh(nullptr);
+		}
+		else
+		{
+			hand1->SetStaticMesh(nullptr);
 		}
 	}
-	else if (WearableSlotIndex == 8 && itemProperties->characterArmor.weapon2.isEquipped)
+	else if (WearableSlotIndex == 6 && itemProperties->characterArmor.weapon2.isEquipped)
 	{
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.weapon2.weight;
 		AddItemToInventory(itemProperties->characterArmor.weapon2);
 		itemProperties->characterArmor.weapon2 = FItemProperties();
+
+		hand2->SetStaticMesh(nullptr);
 	}
 	ResetInventoryUI();
 	ResetAnimations();
@@ -850,8 +914,10 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 					{
 						PutOffItem(characterProfile, 8);
 
-						hand2->SetRelativeLocation(itemProperties.location);
-						hand2->SetRelativeRotation(itemProperties.rotation);
+						
+
+						hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
+						hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
 						hand2->SetRelativeScale3D(itemProperties.scale);
 						hand2->SetStaticMesh(itemProperties.staticMesh);
 
@@ -865,8 +931,8 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 				}
 				else
 				{
-					hand2->SetRelativeLocation(itemProperties.location);
-					hand2->SetRelativeRotation(itemProperties.rotation);
+					hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
+					hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
 					hand2->SetRelativeScale3D(itemProperties.scale);
 					hand2->SetStaticMesh(itemProperties.staticMesh);
 
@@ -1460,8 +1526,8 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 	FTimerHandle hitTime;
 
-	if ((!characterProfile->characterArmor.weapon1.isEquipped && (characterProfile->charClass != Mage)
-		|| characterProfile->characterArmor.weapon1.weaponType == Melee))
+	if (characterProfile->charClass != Mage
+		|| (characterProfile->characterArmor.weapon1.weaponType == Melee && characterProfile->characterArmor.weapon1.isEquipped))
 	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
 		if (characterProfile->characterArmor.weapon2.isEquipped)
 		{
@@ -1478,7 +1544,7 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 		{
 			//Play punch animation
 			punchAnim = true;
-
+			UE_LOG(LogTemp, Warning, TEXT("%s: Punching"), *GetName());
 			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
 				punchAnim = false;
 				}), 1.9f, false);
@@ -1487,7 +1553,7 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 	}
 	else
 	{
-		if (characterProfile->characterArmor.weapon1.damageType == StrDamage)
+		if (characterProfile->characterArmor.weapon1.isEquipped && characterProfile->characterArmor.weapon1.damageType == StrDamage)
 		{
 			//Bow animation
 			return (characterProfile->characterStats.strength * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
@@ -1495,6 +1561,7 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 		else if(characterProfile->characterArmor.weapon1.isEquipped)
 		{
 			spellCasting = true;
+			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
 
 			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
 				spellCasting = false;
@@ -1505,7 +1572,8 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 		else
 		{
 			spellCasting = true;
-			
+			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
+
 			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
 				spellCasting = false;
 				}), 1.9f, false);
@@ -1539,7 +1607,7 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C"))
 	{
 		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
-		if (npc->dead)
+		if (npc->characterProfile->dead)
 		{
 			actorToBeGone = nullptr;
 			return;
