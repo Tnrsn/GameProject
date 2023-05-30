@@ -59,6 +59,6 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 	APlayerControls::toNewWorld = true;
 	saveSystem->SaveGame("", true);
 
-	UGameplayStatics::OpenLevel(GetWorld(), worldName);
+	UGameplayStatics::OpenLevel(player->GetWorld(), worldName);
 }
 

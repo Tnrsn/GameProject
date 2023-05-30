@@ -143,6 +143,11 @@ void APlayerControls::Tick(float DeltaTime)
 	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charClass));
 	//	UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 	//}
+
+	//if (characterProfile->characterArmor.top.isEquipped)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s, %s"), *characterProfile->characterArmor.top.name, *GetName());
+	//}
 }
 
 void APlayerControls::InitCharacter()
@@ -173,30 +178,10 @@ void APlayerControls::InitCharacter()
 	findEnemyComponent->OnComponentEndOverlap.Clear();
 	findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
 	findEnemyComponent->OnComponentEndOverlap.AddDynamic(this, &APlayerControls::OnOverlapEnd);
-	//****
-	// 
+
 	hand1 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(1));
-	//if (hand1)
-	//{
-	//	//hand1->SetScale
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: Hand1 Attached"), *GetName());
-	//}
-	//else
-	//{
-	//	UE_LOG(LogTemp, Error, TEXT("%s: Hand1 Couldn't Attached"), *GetName());
-	//}
-
 	hand2 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(0));
-	//if (hand2)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: Hand2 Attached"), *GetName());
-	//}
-	//else
-	//{
-	//	UE_LOG(LogTemp, Error, TEXT("%s: Hand2 Couldn't Attached"), *GetName());
-	//}
 
-	//*******
 	if (inGroup)
 	{
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -214,6 +199,13 @@ void APlayerControls::InitCharacter()
 	}
 
 	characterProfile->InitRefilling(GetWorld());
+
+
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &APlayerControls::SetFirstItems, .5f, false);
+
+	//firstEncounter = false;
+	//SetFirstItems();
 	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 	//SetMesh();
 	//characterProfile->charGender = Female;
@@ -1016,7 +1008,15 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 1);
 			}
-			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
+			if (characterProfile->charGender == Male)
+			{
+				torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
 
 			characterProfile->characterArmor.top = itemProperties;
 			characterProfile->characterArmor.top.isEquipped = true;
@@ -1030,7 +1030,15 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 2);
 			}
-			handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
+			if (characterProfile->charGender == Male)
+			{
+				handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
 
 			characterProfile->characterArmor.hand = itemProperties;
 			characterProfile->characterArmor.hand.isEquipped = true;
@@ -1043,7 +1051,15 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 3);
 			}
-			footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh);
+
+			if (characterProfile->charGender == Male)
+			{
+				footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
 
 			characterProfile->characterArmor.foot = itemProperties;
 			characterProfile->characterArmor.foot.isEquipped = true;
@@ -1056,6 +1072,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 4);
 			}
+
 			characterProfile->characterArmor.firstRing = itemProperties;
 			characterProfile->characterArmor.firstRing.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.firstRing);
@@ -1067,6 +1084,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 5);
 			}
+
 			characterProfile->characterArmor.secondRing = itemProperties;
 			characterProfile->characterArmor.secondRing.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.secondRing);
@@ -1078,6 +1096,7 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				PutOffItem(characterProfile, 6);
 			}
+
 			characterProfile->characterArmor.neck = itemProperties;
 			characterProfile->characterArmor.neck.isEquipped = true;
 			DecreaseItemFromInventory(characterProfile->characterArmor.neck);
@@ -1773,4 +1792,41 @@ void APlayerControls::SlowTime()
 void APlayerControls::BackToNormalTime()
 {
 	UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 1.f);
+}
+
+void APlayerControls::SetFirstItems()
+{
+	if (firstEncounter)
+	{
+		if (firstHeadGear) PutOnItem(firstHeadGear);
+		if (firstTopGear) PutOnItem(firstTopGear);
+		if (firstHandsGear) PutOnItem(firstHandsGear);
+		if (firstBootsGear) PutOnItem(firstBootsGear);
+		//if (firstHand1Gear) PutOnItem(firstHand1Gear);
+		//if (firstHand2Gear) PutOnItem(firstHand2Gear);
+
+		ResetAnimations();
+
+		UE_LOG(LogTemp, Warning, TEXT("%s 2"), *GetName());
+		firstEncounter = false;
+	}
+}
+
+void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
+{
+	FItemProperties itemProperties = GetWorld()->SpawnActor<AMasterItem>(itemClass)->ItemProperties;
+
+	if (characterProfile->charGender == Male)
+	{
+		torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+	}
+	else
+	{
+		torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+	}
+
+	characterProfile->characterArmor.top = itemProperties;
+	characterProfile->characterArmor.top.isEquipped = true;
+
+	characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
 }

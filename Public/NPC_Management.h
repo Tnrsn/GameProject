@@ -51,8 +51,8 @@ public:
 		TEnumAsByte<FCharacterGender> charGender;
 	UPROPERTY(EditAnywhere)
 		TEnumAsByte<FCharacterClasses> charClass;
-	UPROPERTY(EditAnywhere)
-		FCharacterWearables characterWearables;
+	//UPROPERTY(EditAnywhere)
+	//	FCharacterWearables characterWearables;
 
 protected:
 	// Called when the game starts or when spawned

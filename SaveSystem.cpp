@@ -64,6 +64,9 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 
 	//Character Status
 	ActorData.characterCurrentHealth = player->characterProfile->characterCurrentHealth;
+	
+
+	ActorData.firstEncounter = player->firstEncounter;
 
 	//Group info
 	//ActorData.controlledCharIndex = player->controlledCharIndex;
@@ -163,10 +166,22 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 				{
 					item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
 				}
-				if (item.skeletalMeshPath != "")
+
+				if (player->characterProfile->charGender == Male)
 				{
-					item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
+					if (item.skeletalMeshPath_M != "")
+					{
+						item.skeletalMesh_M = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath_M);
+					}
 				}
+				else
+				{
+					if (item.skeletalMeshPath_F != "")
+					{
+						item.skeletalMesh_F = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath_F);
+					}
+				}
+
 				player->inventory.Add(item);
 			}
 		}
@@ -183,7 +198,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		player->characterProfile->beginningStats = SpawnInfo.beginningStats;
 		player->characterProfile->characterStats = SpawnInfo.characterStats;
-		player->characterProfile->RefreshStats(); //Does stat calculations again, It saved my time by not saving max health and inventory value
+		player->characterProfile->RefreshStats(); //Does stat calculations again
 
 		player->characterProfile->statPoints = SpawnInfo.statPoints;
 		player->characterProfile->relationWithPlayer = SpawnInfo.relationWithPlayer;
@@ -191,11 +206,17 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		//Character Status
 		player->characterProfile->characterCurrentHealth = SpawnInfo.characterCurrentHealth;
 
+		//if (SpawnInfo.firstEncounter)
+		//{
+		player->firstEncounter = SpawnInfo.firstEncounter;
+		UE_LOG(LogTemp, Warning, TEXT("%s teeeeeest 1"), *player->GetName());
+		//}
+
 		//Group Info
 		player->charIndex = SpawnInfo.charIndex;
 		player->inGroup = SpawnInfo.inGroup;
 
-		if (player->characterProfile && *player->GetName() == FName("BP_PlayerControls_C_0"))
+		if (player->characterProfile && *player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 		{
 			player->SetMesh();
 		}
@@ -209,9 +230,10 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		LoadItem(player, SpawnInfo.characterArmor.secondRing, player->characterProfile->characterArmor.secondRing, nullptr);
 		LoadItem(player, SpawnInfo.characterArmor.neck, player->characterProfile->characterArmor.neck, nullptr);
 		//Weapons will have a skeletalMesh soon for now Its nullptr
-		LoadItem(player, SpawnInfo.characterArmor.weapon1, player->characterProfile->characterArmor.weapon1, nullptr);
-		LoadItem(player, SpawnInfo.characterArmor.weapon2, player->characterProfile->characterArmor.weapon2, nullptr);
+		LoadItem(player, SpawnInfo.characterArmor.weapon1, player->characterProfile->characterArmor.weapon1, nullptr, player->hand1);
+		LoadItem(player, SpawnInfo.characterArmor.weapon2, player->characterProfile->characterArmor.weapon2, nullptr, player->hand2);
 
+		player->firstArmorsEquipped = true;
 
 		//After wearing everything, resetting animations stabilizes character animation
 		player->ResetAnimations();
@@ -238,7 +260,7 @@ void USaveSystem::OnLevelLoad()
 
 	for (AActor* actor : level->GetLoadedLevel()->Actors)
 	{
-		if (actor->GetClass()->GetSuperClass()->GetName() == "BP_NPC_Management_C")
+		if (actor && actor->GetClass()->GetSuperClass()->GetName() == "BP_NPC_Management_C")
 		{
 			FString actorName = actor->GetName().Left(actor->GetName().Find("_C_"));
 			AActor* newActor = GetWorld()->SpawnActor<ANPC_Management>(actor->GetClass(), FVector::ZeroVector, FRotator::ZeroRotator);
@@ -392,18 +414,46 @@ void USaveSystem::SwitchToMainCharacter(APlayerControls* player)
 	player->controlledChar = player;
 }
 
-void USaveSystem::LoadItem(APlayerControls* player, FItemProperties& item, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh)
+void USaveSystem::LoadItem(APlayerControls* player, FItemProperties& SpawnItem, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh, UStaticMeshComponent* staticMeshComp)
 {
-	if (item.name != "")
+	if (SpawnItem.name != "")
 	{
-		item.texture = LoadObject<UTexture>(nullptr, *item.texturePath);
-		item.skeletalMesh = LoadObject<USkeletalMesh>(nullptr, *item.skeletalMeshPath);
+		SpawnItem.texture = LoadObject<UTexture>(nullptr, *SpawnItem.texturePath);
 
-		playerItem = item;
-		if (skeletalMesh != nullptr)
+		if (staticMeshComp != nullptr)
 		{
-			//Player mesh required here (headMesh, topMesh etc.)
-			skeletalMesh->SetSkeletalMesh(playerItem.skeletalMesh);
+			SpawnItem.staticMesh = LoadObject<UStaticMesh>(nullptr, *SpawnItem.staticMeshPath);
+			staticMeshComp->SetStaticMesh(SpawnItem.staticMesh);
+			staticMeshComp->SetRelativeLocation(SpawnItem.location);
+			staticMeshComp->SetRelativeRotation(SpawnItem.rotation);
+			staticMeshComp->SetRelativeScale3D(SpawnItem.scale);
+
+
+			playerItem = SpawnItem;
+			return;
+		}
+
+		if (player->characterProfile->charGender == Male)
+		{
+			SpawnItem.skeletalMesh_M = LoadObject<USkeletalMesh>(nullptr, *SpawnItem.skeletalMeshPath_M);
+
+			playerItem = SpawnItem;
+			if (skeletalMesh != nullptr)
+			{
+				//Player mesh required here (headMesh, topMesh etc.)
+				skeletalMesh->SetSkeletalMesh(playerItem.skeletalMesh_M);
+			}
+		}
+		else
+		{
+			SpawnItem.skeletalMesh_F = LoadObject<USkeletalMesh>(nullptr, *SpawnItem.skeletalMeshPath_F);
+
+			playerItem = SpawnItem;
+			if (skeletalMesh != nullptr)
+			{
+				//Player mesh required here (headMesh, topMesh etc.)
+				skeletalMesh->SetSkeletalMesh(playerItem.skeletalMesh_F);
+			}
 		}
 	}
 }

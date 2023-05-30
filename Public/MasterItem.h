@@ -57,9 +57,32 @@ USTRUCT(BlueprintType, Category = "Item Properties")
 struct FItemProperties
 {
 	GENERATED_BODY();
-	FItemProperties(): name(""), description(""), weight(0), Category(0), maximumAmount(0), isStackable(0), currentAmount(0)
-	, rarity(0), inInventory(0), ConsumableEffect(0), effectStrength(0), effectTime(0), WearableType(0), armorBonus(0), isEquipped(0), weapon2Item(0)
-	, damageBonus(0), texturePath(""), skeletalMeshPath("") {}
+	FItemProperties()
+		: name("")
+		, description("")
+		, weight(0)
+		, Category(0)
+		, maximumAmount(0)
+		, isStackable(0)
+		, currentAmount(0)
+		, rarity(0)
+		, inInventory(0)
+		, ConsumableEffect(0)
+		, effectStrength(0)
+		, effectTime(0)
+		, WearableType(0)
+		, armorBonus(0)
+		, isEquipped(0)
+		, weapon2Item(0)
+		, damageBonus(0)
+		, location(0)
+		, rotation(0)
+		, scale(0)
+		, texturePath("")
+		, skeletalMeshPath_M("")
+		, skeletalMeshPath_F("")
+		, staticMeshPath("")
+	{}
 
 	UPROPERTY(EditAnywhere, Blueprintreadwrite)
 		FString name;
@@ -93,10 +116,12 @@ struct FItemProperties
 		TEnumAsByte<FWearableType> WearableType;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		int armorBonus;
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		bool isEquipped = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-		USkeletalMesh* skeletalMesh = nullptr;
+		USkeletalMesh* skeletalMesh_M = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+		USkeletalMesh* skeletalMesh_F = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UStaticMesh* staticMesh = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -120,7 +145,9 @@ struct FItemProperties
 	UPROPERTY() //texturePath and SkeletalMeshPath are assigning while saving game in SaveSystem.h
 		FString texturePath;
 	UPROPERTY()
-		FString skeletalMeshPath;
+		FString skeletalMeshPath_M;
+	UPROPERTY()
+		FString skeletalMeshPath_F;
 	UPROPERTY()
 		FString staticMeshPath;
 };

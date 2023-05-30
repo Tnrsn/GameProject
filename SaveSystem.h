@@ -50,15 +50,42 @@ struct FActorSpawnInfo
 		Ar << item.damageBonus;
 		Ar << item.weapon2Item;
 
-		if (item.skeletalMesh != nullptr)
+		Ar << item.location;
+		Ar << item.rotation;
+		Ar << item.scale;
+
+		if (item.skeletalMesh_M != nullptr)
 		{
-			item.skeletalMeshPath = item.skeletalMesh->GetPathName();
-			Ar << item.skeletalMeshPath;
+			item.skeletalMeshPath_M = item.skeletalMesh_M->GetPathName();
+			Ar << item.skeletalMeshPath_M;
 		}
 		else
 		{
-			item.skeletalMeshPath = "";
-			Ar << item.skeletalMeshPath;
+			item.skeletalMeshPath_M = "";
+			Ar << item.skeletalMeshPath_M;
+		}
+
+		if (item.skeletalMesh_F != nullptr)
+		{
+			item.skeletalMeshPath_F = item.skeletalMesh_F->GetPathName();
+			Ar << item.skeletalMeshPath_F;
+		}
+		else
+		{
+			item.skeletalMeshPath_F = "";
+			Ar << item.skeletalMeshPath_F;
+		}
+
+		//For Weapon Save
+		if (item.staticMesh != nullptr)
+		{
+			item.staticMeshPath = item.staticMesh->GetPathName();
+			Ar << item.staticMeshPath;
+		}
+		else
+		{
+			item.staticMeshPath = "";
+			Ar << item.staticMeshPath;
 		}
 
 		//Save Texture
@@ -125,6 +152,9 @@ struct FActorSpawnInfo
 		int charIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		bool inGroup;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		bool firstEncounter;
 //---------------------------------------------------------------------------------------^^^^ Datas to save ^^^^----------------------------
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
@@ -172,6 +202,8 @@ struct FActorSpawnInfo
 
 		Ar << ActorData.ActorTransform;
 		Ar << ActorData.currentWorldName;
+
+		Ar << ActorData.firstEncounter;
 
 		//-----Group values------
 		Ar << ActorData.charIndex;
@@ -225,5 +257,5 @@ public:
 	UFUNCTION()
 		void SwitchToMainCharacter(APlayerControls* player);
 	UFUNCTION()
-		void LoadItem(APlayerControls* player, FItemProperties& item, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh = nullptr);
+		void LoadItem(APlayerControls* player, FItemProperties& SpawnItem, FItemProperties& playerItem, USkeletalMeshComponent* skeletalMesh = nullptr, UStaticMeshComponent* staticMesh = nullptr);
 };

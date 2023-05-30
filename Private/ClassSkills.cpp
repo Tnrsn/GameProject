@@ -202,8 +202,8 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	//Play Animation********
 	hitter->slashAnim = true;
 
-	float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
-	float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
+	//float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
+	//float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
 
 	player->GetWorldTimerManager().SetTimer(chargeTimer,
 		FTimerDelegate::CreateLambda([=]()
@@ -224,7 +224,7 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 					//Stop Animation*******
 					hitter->slashAnim = false;
 				}
-			}), DelayTime, true);
+			}), player->GetWorld()->GetDeltaSeconds(), true);
 }
 
 void UClassSkills::WhirlWind(ACharacter* player)

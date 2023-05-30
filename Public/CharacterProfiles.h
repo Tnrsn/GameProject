@@ -59,23 +59,23 @@ struct FCharacterWearables
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties head;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties top;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties hand;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties foot;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties firstRing;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties secondRing;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties neck;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties weapon1;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		FItemProperties weapon2;
 };
 UCLASS()
@@ -118,7 +118,7 @@ public:
 		FCharacterStats beginningStats;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
 		FCharacterStats characterStats;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Armor")
 		FCharacterWearables characterArmor;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")

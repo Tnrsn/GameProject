@@ -122,6 +122,9 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool inventoryEnabled = false;
 
+	UPROPERTY(BlueprintReadWrite)
+		bool firstArmorsEquipped = false;
+
 	//Camera
 	UPROPERTY()
 		bool camRotating = false;
@@ -141,7 +144,7 @@ public:
 		bool inCombat = false;
 	UPROPERTY(BlueprintReadWrite)
 		bool inDialog = false;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 		UCharacterProfiles* characterProfile;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		TArray<APlayerControls*> groupMembers;
@@ -169,6 +172,8 @@ public:
 		FString currentWorldName;
 	static bool newLevelLoaded;
 	static bool toNewWorld;
+
+	bool firstEncounter = true;
 
 	//Combat
 	FTimerHandle pickEnemyTimer;
@@ -208,6 +213,21 @@ public:
 	//VFX
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VFX")
 		UParticleSystem* sparks_F;
+
+	//First Items
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstHeadGear;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstTopGear;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstHandsGear;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstBootsGear;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstHand1Gear;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
+		TSubclassOf<AMasterItem> firstHand2Gear;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -323,6 +343,10 @@ public:
 	//Set Appearence
 	UFUNCTION(BlueprintCallable)
 		void SetMesh();
+	UFUNCTION()
+		void SetFirstItems();
+	UFUNCTION()
+		void PutOnItem(TSubclassOf<AMasterItem> itemClass);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

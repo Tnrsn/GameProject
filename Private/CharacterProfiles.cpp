@@ -86,4 +86,3 @@ void UCharacterProfiles::HoldEnergyAndHealthAtMax()
 	if (characterCurrentEnergy > characterMaximumEnergy)
 		characterCurrentEnergy = characterMaximumEnergy;
 }
-
