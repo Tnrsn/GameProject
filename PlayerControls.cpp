@@ -128,25 +128,17 @@ void APlayerControls::Tick(float DeltaTime)
 	{
 		characterProfile->characterCurrentHealth = 0;
 	}
-	//else
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: characterProfile->dead"), *GetName());
-	//}
 
 	if (characterProfile)
 	{
 		characterProfile->HoldEnergyAndHealthAtMax();
 	}
 
-	//if (characterProfile)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charClass));
-	//	UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
-	//}
+	WhenPaused();
 
-	//if (characterProfile->characterArmor.top.isEquipped)
+	//if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Q)))
 	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("%s, %s"), *characterProfile->characterArmor.top.name, *GetName());
+	//	UE_LOG(LogTemp, Warning, TEXT("testt"));
 	//}
 }
 
@@ -249,6 +241,8 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("SlowTime", IE_Released, this, &APlayerControls::BackToNormalTime);
 
 	PlayerInputComponent->BindAction("FastHit", IE_Pressed, this, &APlayerControls::HitFast);
+
+	PlayerInputComponent->BindAction("PauseToggle", IE_Pressed, this, &APlayerControls::PauseGame);
 }
 
 void APlayerControls::OverlappedWithActor(AActor* OtherActor)
@@ -750,16 +744,6 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 {
 	if (WearableSlotIndex + 1 == Head && itemProperties->characterArmor.head.isEquipped) //Head (This ranking is determined within AddWearableSlots in WP_Inventory Blueprint.)
 	{
-		//headMesh->SetVisibility(true);
-		//if (HairGroomAsset)
-		//{
-		//	hairGroom->SetGroomAsset(HairGroomAsset);
-		//}
-		//else
-		//{
-		//	hairGroom->SetGroomAsset(NULL);
-		//}
-
 		characterProfile->currentInventoryWeight -= itemProperties->characterArmor.head.weight;
 		AddItemToInventory(itemProperties->characterArmor.head);
 		itemProperties->characterArmor.head = FItemProperties();
@@ -833,7 +817,6 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 		AddItemToInventory(itemProperties->characterArmor.weapon1);
 		itemProperties->characterArmor.weapon1 = FItemProperties();
 
-
 		if (itemProperties->characterArmor.weapon2.isEquipped && itemProperties->characterArmor.weapon2.WearableType != Shield)
 		{
 			itemProperties->characterArmor.weapon1 = itemProperties->characterArmor.weapon2;
@@ -854,6 +837,7 @@ void APlayerControls::PutOffItem(UCharacterProfiles* itemProperties, int Wearabl
 
 		hand2->SetStaticMesh(nullptr);
 	}
+
 	ResetInventoryUI();
 	ResetAnimations();
 }
@@ -884,99 +868,58 @@ void APlayerControls::ItemInteraction(FItemProperties itemProperties) //Called i
 			{
 				if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
 				{
-					PutOffItem(characterProfile, 7);
+					PutOffItem(characterProfile, 5);
+					PutOn2FirstHand(itemProperties);
 				}
 				else if (characterProfile->characterArmor.weapon2.isEquipped)
 				{
 					if (characterProfile->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
 					{
-						PutOffItem(characterProfile, 7);
-
-						hand1->SetRelativeLocation(itemProperties.location);
-						hand1->SetRelativeRotation(itemProperties.rotation);
-						hand1->SetRelativeScale3D(itemProperties.scale);
-						hand1->SetStaticMesh(itemProperties.staticMesh);
-
-						characterProfile->characterArmor.weapon1 = itemProperties;
-						characterProfile->characterArmor.weapon1.isEquipped = true;
-						DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
-						characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
+						PutOffItem(characterProfile, 5);
+						PutOn2FirstHand(itemProperties);
 					}
 					else if(characterProfile->characterArmor.weapon2.WearableType == OneHandedWeapon)
 					{
-						PutOffItem(characterProfile, 8);
-
-						
-
-						hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
-						hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
-						hand2->SetRelativeScale3D(itemProperties.scale);
-						hand2->SetStaticMesh(itemProperties.staticMesh);
-
-						characterProfile->characterArmor.weapon2 = itemProperties;
-						characterProfile->characterArmor.weapon2.isEquipped = true;
-						characterProfile->characterArmor.weapon2.weapon2Item = true;
-						DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
-						characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
+						PutOffItem(characterProfile, 6);
+						PutOn2SecondHand(itemProperties);
 					}
 
 				}
 				else
 				{
-					hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
-					hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
-					hand2->SetRelativeScale3D(itemProperties.scale);
-					hand2->SetStaticMesh(itemProperties.staticMesh);
-
-					characterProfile->characterArmor.weapon2 = itemProperties;
-					characterProfile->characterArmor.weapon2.isEquipped = true;
-					characterProfile->characterArmor.weapon2.weapon2Item = true;
-					DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
-					characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
+					PutOn2SecondHand(itemProperties);
 				}/*_*/
 			}
 			else
 			{
-				hand1->SetRelativeLocation(itemProperties.location);
-				hand1->SetRelativeRotation(itemProperties.rotation);
-				hand1->SetRelativeScale3D(itemProperties.scale);
-				hand1->SetStaticMesh(itemProperties.staticMesh);
-
-				characterProfile->characterArmor.weapon1 = itemProperties;
-				characterProfile->characterArmor.weapon1.isEquipped = true;
-				DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
-				characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
+				PutOn2FirstHand(itemProperties);
 			}
 		}//One Handed Weapons End
 		else if (itemProperties.WearableType == TwoHandedWeapon)
 		{
-			if (characterProfile->characterArmor.weapon1.isEquipped)
-			{
-				PutOffItem(characterProfile, 7);
-			}
 			if (characterProfile->characterArmor.weapon2.isEquipped)
 			{
-				PutOffItem(characterProfile, 8);
+				PutOffItem(characterProfile, 6);
 			}
-			characterProfile->characterArmor.weapon1 = itemProperties;
-			characterProfile->characterArmor.weapon1.isEquipped = true;
-			DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
-			characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
+			if (characterProfile->characterArmor.weapon1.isEquipped)
+			{
+				PutOffItem(characterProfile, 5);
+			}
+
+			PutOn2FirstHand(itemProperties);
 		}//Two Handede Weapons End
 		else if (itemProperties.WearableType == Shield)
 		{
-			if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
-			{
-				PutOffItem(characterProfile, 7);
-			}
 			if (characterProfile->characterArmor.weapon2.isEquipped)
 			{
-				PutOffItem(characterProfile, 8);
+				PutOffItem(characterProfile, 6);
 			}
-			characterProfile->characterArmor.weapon2 = itemProperties;
-			characterProfile->characterArmor.weapon2.isEquipped = true;
-			DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
-			characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
+			if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
+			{
+				PutOffItem(characterProfile, 5);
+			}
+
+			PutOn2SecondHand(itemProperties);
 		}
 		ResetAnimations();
 	}
@@ -1179,8 +1122,6 @@ void APlayerControls::ControlThirdCharacter()
 void APlayerControls::ControlFourthCharacter()
 {
 	ControlNPC(3);
-
-	//characterProfile->charGender = static_cast<FCharacterGender>(1);
 }
 
 void APlayerControls::ControlNPC(int index)
@@ -1389,6 +1330,7 @@ void APlayerControls::FollowControlledCharacter()
 {
 	if (!onAIMovement && onAIControl && inGroup && !inCombat)
 	{	
+		UE_LOG(LogTemp, Warning, TEXT("11111 %s"), *GetName());
 		if (600.f < GetDistanceTo(controlledChar))
 		{
 			
@@ -1414,6 +1356,15 @@ void APlayerControls::FollowControlledCharacter()
 		{
 			StopAIMovement(true);
 			followingChar = false;
+		}
+	}
+	else if (inCombat)
+	{
+
+		if (findEnemyComponent->nearbyEnemies.Num() <= 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("222222 %s"), *GetName());
+
 		}
 	}
 	
@@ -1522,13 +1473,14 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 		}
 	}
 
-	//if (findEnemyComponent->nearbyEnemies.Contains(enemy) && enemy->characterProfile->characterCurrentHealth <= 0)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("hello"));
-	//	//actorToBeGone = nullptr;
-	//	findEnemyComponent->nearbyEnemies.Remove(enemy);
-	//	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
-	//}
+	UE_LOG(LogTemp, Warning, TEXT("tessstt"));
+	if (findEnemyComponent->nearbyEnemies.Contains(enemy) && enemy->characterProfile->characterCurrentHealth <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s removeeeee enemy"), *GetName());
+		//actorToBeGone = nullptr;
+		findEnemyComponent->nearbyEnemies.Remove(enemy);
+		//GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+	}
 }
 
 void APlayerControls::HitFast()
@@ -1544,8 +1496,8 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 {
 	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
 	FTimerHandle hitTime;
-
-	if (characterProfile->charClass != Mage
+	
+	if ((characterProfile->charClass != Mage && characterProfile->characterArmor.weapon1.weaponType != Ranged)
 		|| (characterProfile->characterArmor.weapon1.weaponType == Melee && characterProfile->characterArmor.weapon1.isEquipped))
 	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
 		if (characterProfile->characterArmor.weapon2.isEquipped)
@@ -1735,7 +1687,6 @@ void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* 
 {
 	if (OtherActor && OtherActor != this && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s deleted: %s"), *GetName(), *OtherActor->GetName());
 		findEnemyComponent->nearbyEnemies.Remove(OtherActor);
 		GetWorldTimerManager().ClearTimer(pickEnemyTimer);
 		StartCombat(nullptr);
@@ -1802,8 +1753,9 @@ void APlayerControls::SetFirstItems()
 		if (firstTopGear) PutOnItem(firstTopGear);
 		if (firstHandsGear) PutOnItem(firstHandsGear);
 		if (firstBootsGear) PutOnItem(firstBootsGear);
-		//if (firstHand1Gear) PutOnItem(firstHand1Gear);
-		//if (firstHand2Gear) PutOnItem(firstHand2Gear);
+
+		if (firstHand1Gear) PutOnItem(firstHand1Gear);
+		if (firstHand2Gear) PutOnItem(firstHand2Gear);
 
 		ResetAnimations();
 
@@ -1812,21 +1764,176 @@ void APlayerControls::SetFirstItems()
 	}
 }
 
+void APlayerControls::PauseGame()
+{
+	if (lootObject)
+	{
+		if (lootObject->lootUIEnabled)
+		{
+			lootObject->DisableLootUI(SelectedActor);
+			return;
+		}
+	}
+
+	if (inventoryEnabled && inventoryHUD)
+	{
+		inventoryHUD->RemoveFromParent();
+		inventoryEnabled = false;
+		return;
+	}
+
+	if (!isPaused)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Paused"));
+		pauseHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), pauseUI);
+		pauseHUD->AddToViewport();
+
+		FTimerHandle pauseHandle;
+		GetWorldTimerManager().SetTimer(pauseHandle, this, &APlayerControls::WhenPaused, 0.1f, true);
+		GetWorld()->GetWorldSettings()->TimeDilation = 0.f;
+		isPaused = true;
+		delayContinue = 0;
+	}
+	else if(isPaused)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Continue"));
+
+		pauseHUD->RemoveFromParent();
+		GetWorld()->GetWorldSettings()->TimeDilation = 1.f;
+		isPaused = false;
+		delayContinue = 0;
+	}
+}
+
+void APlayerControls::WhenPaused()
+{
+	if (!isPaused) return;
+
+	if (delayContinue < 10)
+	{
+		delayContinue++;
+		return;
+	}
+
+
+	if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Q)))
+	{
+		PauseGame();
+	}
+}
+
 void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 {
 	FItemProperties itemProperties = GetWorld()->SpawnActor<AMasterItem>(itemClass)->ItemProperties;
-
-	if (characterProfile->charGender == Male)
+	if (itemProperties.Category == Armor)
 	{
-		torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+		if (characterProfile->charGender == Male)
+		{
+			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+		}
+		else
+		{
+			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+		}
+
+		characterProfile->characterArmor.top = itemProperties;
+		characterProfile->characterArmor.top.isEquipped = true;
+
+		characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
 	}
-	else
+	else if (itemProperties.Category == Weapon)
 	{
-		torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+		if (itemProperties.WearableType == OneHandedWeapon)
+		{
+			if (characterProfile->characterArmor.weapon1.isEquipped)
+			{
+				if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
+				{
+					PutOffItem(characterProfile, 7);
+				}
+				else if (characterProfile->characterArmor.weapon2.isEquipped)
+				{
+					if (characterProfile->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
+					{
+						PutOffItem(characterProfile, 7);
+						PutOn2FirstHand(itemProperties, false);
+					}
+					else if (characterProfile->characterArmor.weapon2.WearableType == OneHandedWeapon)
+					{
+						PutOffItem(characterProfile, 8);
+						PutOn2SecondHand(itemProperties, false);
+					}
+
+				}
+				else
+				{
+					PutOn2SecondHand(itemProperties, false);
+				}
+			}
+			else
+			{
+				PutOn2FirstHand(itemProperties, false);
+			}
+		}//One Handed Weapons End
+		else if (itemProperties.WearableType == TwoHandedWeapon)
+		{
+			if (characterProfile->characterArmor.weapon1.isEquipped)
+			{
+				PutOffItem(characterProfile, 5);
+			}
+			if (characterProfile->characterArmor.weapon2.isEquipped)
+			{
+				PutOffItem(characterProfile, 6);
+			}
+			PutOn2FirstHand(itemProperties, false);
+		}//Two Handede Weapons End
+		else if (itemProperties.WearableType == Shield)
+		{
+			if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
+			{
+				PutOffItem(characterProfile, 5);
+			}
+			if (characterProfile->characterArmor.weapon2.isEquipped)
+			{
+				PutOffItem(characterProfile, 6);
+			}
+			PutOn2SecondHand(itemProperties, false);
+		}
 	}
+}
 
-	characterProfile->characterArmor.top = itemProperties;
-	characterProfile->characterArmor.top.isEquipped = true;
+void APlayerControls::PutOn2FirstHand(FItemProperties itemProperties, bool DecreaseFromInventory)
+{
+	hand1->SetRelativeLocation(itemProperties.location);
+	hand1->SetRelativeRotation(itemProperties.rotation);
+	hand1->SetRelativeScale3D(itemProperties.scale);
+	hand1->SetStaticMesh(itemProperties.staticMesh);
 
-	characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
+	characterProfile->characterArmor.weapon1 = itemProperties;
+	characterProfile->characterArmor.weapon1.isEquipped = true;
+
+	if (DecreaseFromInventory)
+	{
+		DecreaseItemFromInventory(characterProfile->characterArmor.weapon1);
+	}
+	
+	characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon1.weight;
+}
+
+void APlayerControls::PutOn2SecondHand(FItemProperties itemProperties, bool DecreaseFromInventory)
+{
+	hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
+	hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
+	hand2->SetRelativeScale3D(itemProperties.scale);
+	hand2->SetStaticMesh(itemProperties.staticMesh);
+
+	characterProfile->characterArmor.weapon2 = itemProperties;
+	characterProfile->characterArmor.weapon2.isEquipped = true;
+	characterProfile->characterArmor.weapon2.weapon2Item = true;
+
+	if (DecreaseFromInventory)
+	{
+		DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
+	}
+	characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
 }

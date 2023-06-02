@@ -109,8 +109,13 @@ public:
 		UManageWidgets* inventoryHUD;
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> mainUI;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Widget")
 		UManageWidgets* mainHUD;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> pauseUI;
+	UPROPERTY()
+		UManageWidgets* pauseHUD;
 
 	//Looting
 	UPROPERTY(Blueprintreadwrite)
@@ -228,6 +233,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
 		TSubclassOf<AMasterItem> firstHand2Gear;
 
+	//Pause Menu
+	bool isPaused = false;
+	int delayContinue = 0;
 
 protected:
 	// Called when the game starts or when spawned
@@ -266,6 +274,10 @@ public:
 		void DecreaseItemFromInventory(FItemProperties itemProperties);
 	UFUNCTION(BlueprintCallable)
 		void PutOffItem(UCharacterProfiles* itemProperties, int WearableSlotIndex);
+	UFUNCTION()
+		void PutOn2FirstHand(FItemProperties itemProperties, bool DecreaseFromInventory = true);
+	UFUNCTION()
+		void PutOn2SecondHand(FItemProperties itemProperties, bool DecreaseFromInventory = true);
 	UFUNCTION(BlueprintCallable)
 		int GetArmorRating();
 
@@ -347,6 +359,12 @@ public:
 		void SetFirstItems();
 	UFUNCTION()
 		void PutOnItem(TSubclassOf<AMasterItem> itemClass);
+
+	//Pause
+	UFUNCTION()
+		void PauseGame();
+	UFUNCTION()
+		void WhenPaused();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
