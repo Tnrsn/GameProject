@@ -28,6 +28,13 @@ AActor* UEnemyFinderComp::PickEnemy()
 				if (enemy->characterProfile->characterCurrentHealth < pickedChar->characterProfile->characterCurrentHealth ||
 					pickedChar->characterProfile->characterCurrentHealth <= 0) //If previous picked enemy died It also switches to new enemy
 				{
+					if (pickedActor == enemy)
+					{
+						pickedActor = nullptr;
+						return nullptr;
+					}
+
+
 					pickedActor = enemy;
 				}
 			}
@@ -39,5 +46,18 @@ AActor* UEnemyFinderComp::PickEnemy()
 	{
 		pickedActor = nullptr;
 		return nullptr;
+	}
+}
+
+void UEnemyFinderComp::RefreshNearbyEnemies(ACharacter* actor)
+{
+	APlayerControls* actorChar = Cast<APlayerControls>(actor);
+	nearbyEnemies.Empty();
+
+	TArray<AActor*> actors;
+	GetOverlappingActors(actors);
+	for (AActor* otherActor : actors)
+	{
+		actorChar->OverlappedWithActor(otherActor);
 	}
 }

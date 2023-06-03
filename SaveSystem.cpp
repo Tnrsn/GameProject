@@ -256,6 +256,9 @@ void USaveSystem::OnLevelLoad()
 	//If it false it means game loads a new level. When level loaded it will run again and load save data.
 	if (!LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4), SName, TSave)) return;
 
+	
+
+
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
 	for (AActor* actor : level->GetLoadedLevel()->Actors)
@@ -327,7 +330,23 @@ void USaveSystem::OnLevelLoad()
 	APlayerControls::toNewWorld = false;
 	TSave = false;
 	SName = "";
-	UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
+
+	ULevelStreaming* levelStreaming = GetWorld()->GetStreamingLevels()[0];
+	
+	
+	//UGameplayStatics::UnloadStreamLevel(GetWorld(), levelStreaming->GetWorldAssetPackageFName(), FLatentActionInfo(), true);
+
+	//UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
+	//FString Message = FString::Printf(TEXT("Level Name: %s"), *levelStreaming->GetWorldAssetPackageFName().ToString());
+	//GEngine->AddOnScreenDebugMessage(0, 5.0f, FColor::Red, Message, true);
+
+	if (levelStreaming)
+	{
+		//levelStreaming->bShouldBeLoaded = false;
+		//levelStreaming->bShouldBeVisible = false;
+		levelStreaming->SetShouldBeLoaded(false);
+		levelStreaming->SetShouldBeVisible(false);
+	}
 }
 
 void USaveSystem::SaveGame(FString saveName, bool transportSave)

@@ -361,7 +361,7 @@ public:
 		void PutOnItem(TSubclassOf<AMasterItem> itemClass);
 
 	//Pause
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void PauseGame();
 	UFUNCTION()
 		void WhenPaused();

@@ -81,13 +81,11 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 		NPCStyle = Hostile;
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 
-		findEnemyComponent->nearbyEnemies.Empty();
+		findEnemyComponent->RefreshNearbyEnemies(this);
 
-		TArray<AActor*> actors;
-		findEnemyComponent->GetOverlappingActors(actors);
-		for (AActor* actor : actors)
+		for (APlayerControls* groupMember : player->groupMembers)
 		{
-			OverlappedWithActor(actor);
+			groupMember->findEnemyComponent->RefreshNearbyEnemies(groupMember);
 		}
 
 		return true;

@@ -26,4 +26,8 @@ public:
 private:
 	AActor* pickedActor;
 
+
+public:
+	UFUNCTION()
+		void RefreshNearbyEnemies(ACharacter* actor);
 };

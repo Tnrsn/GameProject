@@ -324,7 +324,7 @@ void APlayerControls::SetMesh()
 		//	UE_LOG(LogTemp, Warning, TEXT("To Male %s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 		//}
 
-		UE_LOG(LogTemp, Warning, TEXT("To Male"));
+		//UE_LOG(LogTemp, Warning, TEXT("To Male"));
 	}
 	else
 	{
@@ -345,7 +345,7 @@ void APlayerControls::SetMesh()
 		//{
 		//	UE_LOG(LogTemp, Warning, TEXT("To Female %s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 		//}
-		UE_LOG(LogTemp, Warning, TEXT("To Female"));
+		//UE_LOG(LogTemp, Warning, TEXT("To Female"));
 		
 	}
 }
@@ -1122,6 +1122,20 @@ void APlayerControls::ControlThirdCharacter()
 void APlayerControls::ControlFourthCharacter()
 {
 	ControlNPC(3);
+
+
+	//UEngine* Engine = GEngine;
+
+	//// Iterate through the level streaming objects in the world
+	//for (ULevelStreaming* LevelStreaming : GetWorld()->GetStreamingLevels())
+	//{
+	//	// Get the level name
+	//	FString LevelName = LevelStreaming->GetWorldAssetPackageName();
+
+	//	// Display the level name as a debug message on the screen
+	//	FString Message = FString::Printf(TEXT("Level Name: %s"), *LevelName);
+	//	Engine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, Message);
+	//}
 }
 
 void APlayerControls::ControlNPC(int index)
@@ -1330,7 +1344,6 @@ void APlayerControls::FollowControlledCharacter()
 {
 	if (!onAIMovement && onAIControl && inGroup && !inCombat)
 	{	
-		UE_LOG(LogTemp, Warning, TEXT("11111 %s"), *GetName());
 		if (600.f < GetDistanceTo(controlledChar))
 		{
 			
@@ -1360,12 +1373,21 @@ void APlayerControls::FollowControlledCharacter()
 	}
 	else if (inCombat)
 	{
-
+		//UE_LOG(LogTemp, Warning, TEXT("66 %s"), *GetName());
 		if (findEnemyComponent->nearbyEnemies.Num() <= 0)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("222222 %s"), *GetName());
+			//UE_LOG(LogTemp, Warning, TEXT("26 %s"), *GetName());
+
+		//	//actorToBeGone = controlledChar;
+		//	//onAIMovement = false;
+		//	//inCombat = false;
+		//	//UE_LOG(LogTemp, Warning, TEXT("222222 %s"), *GetName());
 
 		}
+	}
+	else if (onAIMovement)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("onAIMovement %s"), *GetName());
 	}
 	
 }
@@ -1473,13 +1495,10 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("tessstt"));
+
 	if (findEnemyComponent->nearbyEnemies.Contains(enemy) && enemy->characterProfile->characterCurrentHealth <= 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("%s removeeeee enemy"), *GetName());
-		//actorToBeGone = nullptr;
 		findEnemyComponent->nearbyEnemies.Remove(enemy);
-		//GetWorldTimerManager().ClearTimer(pickEnemyTimer);
 	}
 }
 
@@ -1638,6 +1657,22 @@ void APlayerControls::StartCombat(AActor* enemy)
 	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
 	inCombat = true;
 
+	if (enemy)
+	{
+		APlayerControls* enemyChar = Cast<APlayerControls>(enemy);
+		if (enemyChar->characterProfile->characterCurrentHealth <= 0)
+		{
+			if (actorToBeGone)
+			{
+				actorToBeGone = nullptr;
+			}
+
+			inCombat = false;
+			return;
+		}		
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("test %s"), *GetName());
 	if (enemy && !findEnemyComponent->nearbyEnemies.Contains(enemy))
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("%s added %s"), *GetName(), *enemy->GetName());
@@ -1659,10 +1694,12 @@ void APlayerControls::StartCombat(AActor* enemy)
 			if (inCombat)
 			{
 				actorToBeGone = findEnemyComponent->PickEnemy();
+
+				//UE_LOG(LogTemp, Warning, TEXT("55 %s"), *GetName());
 				//If there are no enemy stops combat
 				if (!actorToBeGone)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
+					//UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
 					StopAIMovement(true);
 					inCombat = false;
 
@@ -1670,6 +1707,11 @@ void APlayerControls::StartCombat(AActor* enemy)
 					GetWorldTimerManager().ClearTimer(pickEnemyTimer);
 				}
 			}
+			//else
+			//{
+			//	onAIMovement = false;
+			//	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+			//}
 		}), 1.0f, true);
 }
 
@@ -1759,7 +1801,7 @@ void APlayerControls::SetFirstItems()
 
 		ResetAnimations();
 
-		UE_LOG(LogTemp, Warning, TEXT("%s 2"), *GetName());
+		//UE_LOG(LogTemp, Warning, TEXT("%s 2"), *GetName());
 		firstEncounter = false;
 	}
 }
