@@ -22,6 +22,7 @@
 #include <GameFramework/CharacterMovementComponent.h>
 #include <GameFramework/PlayerController.h>
 #include "GameFramework/Character.h"
+#include "Public/DefaultGameInstance.h"
 #include "Public/ClassSkills.h"
 #include "PlayerControls.generated.h"
 
@@ -176,7 +177,7 @@ public:
 	UPROPERTY()
 		FString currentWorldName;
 	static bool newLevelLoaded;
-	static bool toNewWorld;
+	static bool loadAfterNewWorld;
 
 	bool firstEncounter = true;
 
@@ -314,6 +315,8 @@ public:
 		void SaveGame();
 	UFUNCTION()
 		void LoadGame();
+	UFUNCTION()
+		void LoadGameAfterDeath();
 	//Combat
 	UFUNCTION()
 		void Attack(float DeltaTime, AActor* enemyActor);
@@ -375,4 +378,4 @@ public:
 };
 
 bool APlayerControls::newLevelLoaded = false; //It's for when player loads save
-bool APlayerControls::toNewWorld = false; //It's for when character transports between worlds
+bool APlayerControls::loadAfterNewWorld = false; //It's for when character transports between worlds

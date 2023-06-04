@@ -21,12 +21,13 @@ bool USaveSystem::ShouldCreateSubsystem(UObject* Outer) const
 	return World && World->IsGameWorld();
 }
 
-void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, bool transportSave)
+void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, bool autoSave)
 {
 	FString FilePath;
-	if (transportSave)
+	if (autoSave)
 	{
-		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "TransportSave/" + path + ".dat";
+		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
+		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
 	}
 	else
 	{
@@ -101,17 +102,20 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	if (FFileHelper::SaveArrayToFile(ActorData.ActorSaveData, *FilePath)) {}
 }
 
-bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bool transportSave)
+bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bool autoSave)
 {
 	FString FilePath;
 
-	if (transportSave)
+	if (autoSave)
 	{
-		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "TransportSave/" + path + ".dat";
+		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + Actor->GetName() + "/" + path + ".dat";
+		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
 	}
 	else
 	{
+		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
 		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
+
 	}
 
 	if(FPaths::FileExists(FilePath))
@@ -136,21 +140,21 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		APlayerControls* player = Cast<APlayerControls>(Actor);
 		
-		if (transportSave && !SpawnInfo.inGroup) return false;
+		if (autoSave && !SpawnInfo.inGroup) return false;
 
 		//Character Location
-		if (!player->newLevelLoaded && !APlayerControls::toNewWorld && SpawnInfo.currentWorldName != GetWorld()->GetName() 
-			&& player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
-		{
-			//loads world when player loads a save and if player is on a different world
-			UGameplayStatics::OpenLevel(GetWorld(), *SpawnInfo.currentWorldName);
-			player->newLevelLoaded = true;
-			return false;
-		}
+		//if (!player->newLevelLoaded && !APlayerControls::loadAfterNewWorld && SpawnInfo.currentWorldName != GetWorld()->GetName() 
+		//	&& player->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+		//{
+		//	//loads world when player loads a save and if player is on a different world
+		//	UGameplayStatics::OpenLevel(GetWorld(), *SpawnInfo.currentWorldName);
+		//	player->newLevelLoaded = true;
+		//	return false;
+		//}
 
-		if (!APlayerControls::toNewWorld)
+		if (!APlayerControls::loadAfterNewWorld)
 		{
-			ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
+			//ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
 			ActorOut->Serialize(Ar);
 			player->currentWorldName = SpawnInfo.currentWorldName;
 		}
@@ -191,6 +195,8 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		//Character Stats
 		player->characterProfile->charName = SpawnInfo.charName;
+		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *player->characterProfile->charName);
+		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *SpawnInfo.charName);
 
 		player->characterProfile->charGender = static_cast<FCharacterGender>(SpawnInfo.charGender);
 		player->characterProfile->charRace = static_cast<FCharacterRace>(SpawnInfo.charRace);
@@ -206,11 +212,7 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		//Character Status
 		player->characterProfile->characterCurrentHealth = SpawnInfo.characterCurrentHealth;
 
-		//if (SpawnInfo.firstEncounter)
-		//{
 		player->firstEncounter = SpawnInfo.firstEncounter;
-		UE_LOG(LogTemp, Warning, TEXT("%s teeeeeest 1"), *player->GetName());
-		//}
 
 		//Group Info
 		player->charIndex = SpawnInfo.charIndex;
@@ -256,9 +258,6 @@ void USaveSystem::OnLevelLoad()
 	//If it false it means game loads a new level. When level loaded it will run again and load save data.
 	if (!LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4), SName, TSave)) return;
 
-	
-
-
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
 	for (AActor* actor : level->GetLoadedLevel()->Actors)
@@ -283,7 +282,7 @@ void USaveSystem::OnLevelLoad()
 				if (NPCSave->inGroup)
 				{
 					LoadGroupMembers(playerSave, NPCSave);
-					if (NPCSave->toNewWorld) //Set NPCs locations behind the player if they are moving to new world
+					if (NPCSave->loadAfterNewWorld) //Set NPCs locations behind the player if they are moving to new world
 					{
 						if (NPCSave->charIndex == 1)
 						{
@@ -322,34 +321,27 @@ void USaveSystem::OnLevelLoad()
 	if (TSave)
 	{
 		IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
-		FString path = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/TransportSave";
+		FString path = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/AutoSave";
 		FileManager.DeleteDirectoryRecursively(*path);
 	}
 	
 	timesLoaded++;
-	APlayerControls::toNewWorld = false;
+	APlayerControls::loadAfterNewWorld = false;
 	TSave = false;
 	SName = "";
 
 	ULevelStreaming* levelStreaming = GetWorld()->GetStreamingLevels()[0];
 	
-	
-	//UGameplayStatics::UnloadStreamLevel(GetWorld(), levelStreaming->GetWorldAssetPackageFName(), FLatentActionInfo(), true);
-
 	//UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
-	//FString Message = FString::Printf(TEXT("Level Name: %s"), *levelStreaming->GetWorldAssetPackageFName().ToString());
-	//GEngine->AddOnScreenDebugMessage(0, 5.0f, FColor::Red, Message, true);
 
 	if (levelStreaming)
 	{
-		//levelStreaming->bShouldBeLoaded = false;
-		//levelStreaming->bShouldBeVisible = false;
 		levelStreaming->SetShouldBeLoaded(false);
 		levelStreaming->SetShouldBeVisible(false);
 	}
 }
 
-void USaveSystem::SaveGame(FString saveName, bool transportSave)
+void USaveSystem::SaveGame(FString saveName, bool autoSave)
 {
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
@@ -359,15 +351,15 @@ void USaveSystem::SaveGame(FString saveName, bool transportSave)
 			(actor->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C") 
 				|| actor->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls")))
 		{
-			CreateSaveFile(actor, actor->GetName().Left(actor->GetName().Len() - 4), saveName, transportSave);
+			CreateSaveFile(actor, actor->GetName().Left(actor->GetName().Len() - 4), saveName, autoSave);
 		}
 	}
 }
 
-void USaveSystem::LoadGame(FString saveName, bool transportSave)
+void USaveSystem::LoadGame(FString saveName, bool autoSave)
 {
 	SName = saveName;
-	TSave = transportSave;
+	TSave = autoSave;
 
 	level = UGameplayStatics::GetStreamingLevel(GetWorld(), FName("SaveLevel"));
 	if (!saveLevelSet)

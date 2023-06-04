@@ -55,9 +55,18 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 		player->inMenu = false;
 	}
 
+	player->currentWorldName = worldName.ToString();
 
-	APlayerControls::toNewWorld = true;
-	saveSystem->SaveGame("", true);
+	APlayerControls::loadAfterNewWorld = true;
+	if (!player->groupMembers[0]->characterProfile->charName.IsEmpty() && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
+	{
+		saveSystem->SaveGame(player->groupMembers[0]->characterProfile->charName, false);
+		saveSystem->SaveGame("", true);
+	}
+	else
+	{
+		saveSystem->SaveGame("", true);
+	}
 
 	UGameplayStatics::OpenLevel(player->GetWorld(), worldName);
 }

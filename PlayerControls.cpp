@@ -140,6 +140,8 @@ void APlayerControls::Tick(float DeltaTime)
 	//{
 	//	UE_LOG(LogTemp, Warning, TEXT("testt"));
 	//}
+
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *characterProfile->charName);
 }
 
 void APlayerControls::InitCharacter()
@@ -179,16 +181,26 @@ void APlayerControls::InitCharacter()
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	}
 	
+	//!DO NOT TOUCH HERE!
 	if (APlayerControls::newLevelLoaded && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 	{
-		LoadGame();
+		//LoadGame();
+		saveSystem->LoadGame("", true);
+
 		APlayerControls::newLevelLoaded = false;
 	}
-
-	if (APlayerControls::toNewWorld && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	if (APlayerControls::loadAfterNewWorld && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 	{
-		saveSystem->LoadGame("TransportSave", true);
+		saveSystem->LoadGame("AutoSave", true);
 	}
+
+	UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (gameInstance && gameInstance->reloading && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	{
+		saveSystem->LoadGame(gameInstance->playerName, false);
+	}
+	//^^^^^^^^^^
+
 
 	characterProfile->InitRefilling(GetWorld());
 
@@ -1122,20 +1134,6 @@ void APlayerControls::ControlThirdCharacter()
 void APlayerControls::ControlFourthCharacter()
 {
 	ControlNPC(3);
-
-
-	//UEngine* Engine = GEngine;
-
-	//// Iterate through the level streaming objects in the world
-	//for (ULevelStreaming* LevelStreaming : GetWorld()->GetStreamingLevels())
-	//{
-	//	// Get the level name
-	//	FString LevelName = LevelStreaming->GetWorldAssetPackageName();
-
-	//	// Display the level name as a debug message on the screen
-	//	FString Message = FString::Printf(TEXT("Level Name: %s"), *LevelName);
-	//	Engine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, Message);
-	//}
 }
 
 void APlayerControls::ControlNPC(int index)
@@ -1242,7 +1240,7 @@ void APlayerControls::ControlNPC(int index)
 
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
-	if (!toNewWorld) //Game crashes if this function works while moving to new world
+	if (!loadAfterNewWorld) //Game crashes if this function works while moving to new world
 	{
 		groupMembers[index]->springArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 		groupMembers[index]->springArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
@@ -1415,10 +1413,31 @@ void APlayerControls::SaveGame()
 
 void APlayerControls::LoadGame()
 {
-	if (saveSystem)
+	//if (saveSystem)
+	//{
+	//	saveSystem->LoadGame("Save1", true);
+	//}
+
+	//APlayerControls::toNewWorld = true;
+	//UGameplayStatics::OpenLevel(GetWorld(), "Woods");
+	//*****************************************************
+
+	UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (gameInstance)
 	{
-		saveSystem->LoadGame("Save1");
+		gameInstance->playerName = groupMembers[0]->characterProfile->charName;
+		gameInstance->reloading = true;
+		UGameplayStatics::OpenLevel(GetWorld(), FName(*currentWorldName));
 	}
+}
+
+void APlayerControls::LoadGameAfterDeath()
+{
+	//saveSystem->SavePlayerName(this, GetWorld()->GetName());
+	//UGameplayStatics::OpenLevel(GetWorld(), FName(*currentWorldName));
+
+	//UE_LOG(LogTemp, Warning, TEXT("test"));
+	//saveSystem->SaveGame(characterProfile)
 }
 
 void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack range <= 120, ranged attack range <= 1000
@@ -1697,21 +1716,17 @@ void APlayerControls::StartCombat(AActor* enemy)
 
 				//UE_LOG(LogTemp, Warning, TEXT("55 %s"), *GetName());
 				//If there are no enemy stops combat
-				if (!actorToBeGone)
+				if (actorToBeGone == nullptr)
 				{
-					//UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
+					UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
 					StopAIMovement(true);
 					inCombat = false;
 
 					//Stops loop
-					GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+					pickEnemyTimer.Invalidate();
+					//GetWorldTimerManager().ClearTimer(pickEnemyTimer);
 				}
 			}
-			//else
-			//{
-			//	onAIMovement = false;
-			//	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
-			//}
 		}), 1.0f, true);
 }
 
