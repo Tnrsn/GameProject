@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include <Particles/ParticleSystemComponent.h>
-#include "Components/DecalComponent.h"
 #include <Particles/ParticleSystem.h>
 #include "Public/QuestSystem.h"
 #include "DefaultGameMode.h"
@@ -226,9 +225,6 @@ public:
 	//VFX
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VFX")
 		UParticleSystem* sparks_F;
-	UPROPERTY(EditAnywhere, Category = "Decal")
-		UDecalComponent* abilityAreaDecal;
-		
 
 	//First Items
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
@@ -365,6 +361,8 @@ public:
 		void SkillTwo();
 	UFUNCTION()
 		void SkillThree();
+	UFUNCTION()
+		void CancelSkill();
 	//Slowing time
 	UFUNCTION()
 		void SlowTime();

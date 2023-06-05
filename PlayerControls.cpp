@@ -286,6 +286,8 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("SkillTwo", IE_Pressed, this, &APlayerControls::SkillTwo);
 	PlayerInputComponent->BindAction("SkillThree", IE_Pressed, this, &APlayerControls::SkillThree);
 
+	PlayerInputComponent->BindAction("CancelTargeting", IE_Pressed, this, &APlayerControls::CancelSkill);
+
 	//Time inputs
 	PlayerInputComponent->BindAction("SlowTime", IE_Pressed, this, &APlayerControls::SlowTime);
 	PlayerInputComponent->BindAction("SlowTime", IE_Released, this, &APlayerControls::BackToNormalTime);
@@ -2112,4 +2114,9 @@ void APlayerControls::PutOn2SecondHand(FItemProperties itemProperties, bool Decr
 		DecreaseItemFromInventory(characterProfile->characterArmor.weapon2);
 	}
 	characterProfile->currentInventoryWeight += characterProfile->characterArmor.weapon2.weight;
+}
+
+void APlayerControls::CancelSkill()
+{
+	skills->CancelSkillTargetings();
 }

@@ -37,8 +37,7 @@ public:
 	FTimerHandle chargeTimer;
 	FVector startLocation;
 
-	//VFX Timer
-	//FTimerHandle vfxTimer;
+	
 
 	UFUNCTION()
 		bool isDamageToHostile(ACharacter* player); //Checks for area damages
@@ -58,25 +57,30 @@ public:
 	UFUNCTION()
 		void WhirlWind(ACharacter* player);
 	UFUNCTION()
-		void PowerStrike(ACharacter* player);
+		bool PowerStrike(ACharacter* player);
 
 	//Rogue Skills
 	UFUNCTION()
-		void DualWield(ACharacter* player);
+		bool DualWield(ACharacter* player);
 	UFUNCTION()
 		void Evasion(ACharacter* player);
 	UFUNCTION()
-		void BacksStab(ACharacter* player);
+		bool BacksStab(ACharacter* player);
 
 	//Mage Skills
 	UFUNCTION()
-		void Blitz(ACharacter* player);
+		bool Blitz(ACharacter* player);
 	UFUNCTION()
-		void SuperNova(ACharacter* player, FVector target);
+		bool SuperNova(ACharacter* player, FVector target);
 	UFUNCTION()
-		void Blink(ACharacter* player, FVector target);
+		bool Blink(ACharacter* player, FVector target);
 
 	//VFX
 	UFUNCTION()
 		void PlaySparks(ACharacter* player, FVector location, FVector scale = FVector(1));
+	UFUNCTION()
+		void HandleAbilityAreaDecal(ACharacter* player, float abilityAreaSize, float selectionAreaSize);
+
+	UFUNCTION()
+		void CancelSkillTargetings();
 };

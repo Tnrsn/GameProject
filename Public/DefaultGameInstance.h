@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilityDecal.h"
 #include "Engine/GameInstance.h"
 #include "DefaultGameInstance.generated.h"
 
@@ -18,4 +19,9 @@ class GAMEPROJECT_API UDefaultGameInstance : public UGameInstance
 public:
 	FString playerName;
 	bool reloading = false;
+
+	UPROPERTY(EditAnywhere, Category = "Decals")
+		TSubclassOf<AAbilityDecal> selectionArea;
+	UPROPERTY(EditAnywhere, Category = "Decals")
+		TSubclassOf<AAbilityDecal> abilityArea;
 };
