@@ -48,110 +48,147 @@ APlayerControls::APlayerControls()
 	//****
 }
 
-// Called when the game starts or when spawned
 void APlayerControls::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GetWorld())
+	UWorld* World = GetWorld();
+	if (World)
 	{
-		saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
+		saveSystem = World->GetSubsystem<USaveSystem>();
 	}
-	
-	playerController = UGameplayStatics::GetPlayerController(this, 0);
+
+	playerController = World->GetFirstPlayerController();
+	playerController->bShowMouseCursor = true;
+	playerController->bEnableClickEvents = true;
+	playerController->bEnableMouseOverEvents = true;
+	//**********************************************************************************************Create new companions previous ones are broken
 	characterProfile = NewObject<UCharacterProfiles>();
 	skills = NewObject<UClassSkills>();
 
-	GetWorld()->GetFirstPlayerController()->bShowMouseCursor = true;
-	GetWorld()->GetFirstPlayerController()->bEnableClickEvents = true;
-	GetWorld()->GetFirstPlayerController()->bEnableMouseOverEvents = true;
-
-	if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
-	{//If player is in game then enables game inputs and initializes game character
-		FInputModeGameAndUI inputMode;
-		inputMode.SetHideCursorDuringCapture(false);
-		playerController->SetInputMode(inputMode);
+	FName LevelName = FName(World->GetName());
+	if (LevelName != FName("MainMenu") && LevelName != FName("CharacterCreationMenu"))
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		playerController->SetInputMode(InputMode);
 
 		inMenu = false;
-		InitCharacter();
+		InitCharacter(World);
 	}
 	else
-	{//If player is in menu or character creation menu then disables every input except ui inputs
-		FInputModeUIOnly inputMode;
-		inputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		playerController->SetInputMode(inputMode);
+	{
+		FInputModeUIOnly InputMode;
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		playerController->SetInputMode(InputMode);
 
 		springArm->LookFromFront();
 	}
-
-	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 }
 
-// Called every frame
 void APlayerControls::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 	if (camRotating)
 	{
 		springArm->RotateCamera(playerController);
 	}
 
-	if (itemRef) //Interacts with items around world
+	if (itemRef && itemRef->canLoot && itemRef->moveToObject)
 	{
-		if (itemRef->canLoot && itemRef->moveToObject)
-		{
-			AddItemToInventoryFromGround();
-		}
+		AddItemToInventoryFromGround();
 	}
 
-	if (!characterProfile->dead)
+	if (!characterProfile)
 	{
-		//Interactions with npcs (talking or combat)
-		NPCInteractions(DeltaTime);
-
-		//Stops ai movement If Its necessary
-		StopAIOnInput();
-
-		//Character dies if their health is under of 0
-		if (*GetWorld()->GetName() != FName("MainMenu") && *GetWorld()->GetName() != FName("CharacterCreationMenu") && characterProfile->characterCurrentHealth <= 0)
-		{
-			StopAIMovement(true);
-			characterProfile->dead = true;
-			//Destroy();
-		}
-
-		//Npcs in group follows controlled character
-		FollowControlledCharacter();
+		return;
 	}
-	else
+
+	if (characterProfile->dead)
 	{
 		characterProfile->characterCurrentHealth = 0;
+		return;
 	}
 
-	if (characterProfile)
+	if (IsInMenuLevel())
 	{
-		characterProfile->HoldEnergyAndHealthAtMax();
+		return;
 	}
+
+	RefillHealthAndEnergy();
+
+	//Interactions with npcs (talking or combat)
+	NPCInteractions(DeltaTime);
+
+	//Stops ai movement If It's necessary
+	StopAIOnInput();
+
+	//Character dies if their health is under 0
+	if (isGroupDead())
+	{
+		if (mainHUD && mainHUD->IsInViewport())
+		{
+			mainHUD->RemoveFromParent();
+		}
+
+		if (inventoryHUD && inventoryHUD->IsInViewport())
+		{
+			inventoryHUD->RemoveFromParent();
+		}
+
+		deathHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), deathUI);
+		deathHUD->AddToViewport();
+
+		UGameplayStatics::SetGlobalTimeDilation(GetWorld(), 0.15f);
+	}
+	//if (characterProfile->characterCurrentHealth <= 0)
+	//{
+	//	StopAIMovement(true);
+	//	characterProfile->dead = true;
+	//	
+	//	if (controlledChar == this)
+	//	{
+	//		int currentCharIndex = groupMembers.Find(this) + 1;
+	//		int maximum
+	//		if (groupMembers.Num() > currentCharIndex)
+	//		{
+	//			ControlNPC(currentCharIndex + 1);
+	//		}
+	//		else if()
+	//	}
+	//}
+
+	//if (charIndex)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("%s: %d"), *GetName(), charIndex);
+	//}
+
+	//Npcs in group follow controlled character
+	FollowControlledCharacter();
+
+	characterProfile->HoldEnergyAndHealthAtMax();
 
 	WhenPaused();
-
-	//if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Q)))
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("testt"));
-	//}
 
 	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *characterProfile->charName);
 }
 
-void APlayerControls::InitCharacter()
+bool APlayerControls::IsInMenuLevel() const
 {
-	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(GetWorld(), 0), mainUI);
-	currentWorldName = GetWorld()->GetName();
+	FName currentLevelName = *GetWorld()->GetName();
+	return currentLevelName == FName("MainMenu") || currentLevelName == FName("CharacterCreationMenu");
+}
+
+
+void APlayerControls::InitCharacter(UWorld* world)
+{
+	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(world, 0), mainUI);
+	currentWorldName = world->GetName();
 	
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
-		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)));
+		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(world, 0)));
 		inGroup = true;
 		onAIControl = false;
 		charIndex = 0;
@@ -193,16 +230,17 @@ void APlayerControls::InitCharacter()
 	{
 		saveSystem->LoadGame("AutoSave", true);
 	}
-
+	//*
 	UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
 	if (gameInstance && gameInstance->reloading && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("%s"), *gameInstance->playerName);
 		saveSystem->LoadGame(gameInstance->playerName, false);
 	}
 	//^^^^^^^^^^
 
 
-	characterProfile->InitRefilling(GetWorld());
+	/*characterProfile->InitRefilling(world);*/
 
 
 	FTimerHandle TimerHandle;
@@ -240,8 +278,8 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("PassToFourthCharacter", IE_Pressed, this, &APlayerControls::ControlFourthCharacter);
 
 	//Save/Load inputs
-	PlayerInputComponent->BindAction("QuickSave", IE_Pressed, this, &APlayerControls::SaveGame);
-	PlayerInputComponent->BindAction("QuickLoad", IE_Pressed, this, &APlayerControls::LoadGame);
+	//PlayerInputComponent->BindAction("QuickSave", IE_Pressed, this, &APlayerControls::SaveGame);
+	//PlayerInputComponent->BindAction("QuickLoad", IE_Pressed, this, &APlayerControls::LoadGame);
 
 	//Skill inputs
 	PlayerInputComponent->BindAction("SkillOne", IE_Pressed, this, &APlayerControls::SkillOne);
@@ -1422,22 +1460,15 @@ void APlayerControls::LoadGame()
 	//UGameplayStatics::OpenLevel(GetWorld(), "Woods");
 	//*****************************************************
 
+
 	UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
+
 	if (gameInstance)
 	{
 		gameInstance->playerName = groupMembers[0]->characterProfile->charName;
 		gameInstance->reloading = true;
 		UGameplayStatics::OpenLevel(GetWorld(), FName(*currentWorldName));
 	}
-}
-
-void APlayerControls::LoadGameAfterDeath()
-{
-	//saveSystem->SavePlayerName(this, GetWorld()->GetName());
-	//UGameplayStatics::OpenLevel(GetWorld(), FName(*currentWorldName));
-
-	//UE_LOG(LogTemp, Warning, TEXT("test"));
-	//saveSystem->SaveGame(characterProfile)
 }
 
 void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack range <= 120, ranged attack range <= 1000
@@ -1454,6 +1485,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 			combatCounter += attackSpeed * DeltaTime;
 			if (combatCounter >= 2)
 			{
+				CheckCombatAnim(enemy);
 				if (!isDamagedEnemy(enemy))
 				{
 					combatCounter = 0;
@@ -1499,6 +1531,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 			combatCounter += attackSpeed * DeltaTime;
 			if (combatCounter >= 2)
 			{
+				CheckCombatAnim(enemy);
 				if (!isDamagedEnemy(enemy))
 				{
 					combatCounter = 0;
@@ -1513,7 +1546,6 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 			}
 		}
 	}
-
 
 	if (findEnemyComponent->nearbyEnemies.Contains(enemy) && enemy->characterProfile->characterCurrentHealth <= 0)
 	{
@@ -1533,30 +1565,22 @@ void APlayerControls::HitFast()
 int APlayerControls::CalculateDamage(AActor* enemyActor)
 {
 	APlayerControls* enemy = Cast<APlayerControls>(enemyActor);
-	FTimerHandle hitTime;
+	//FTimerHandle hitTime;
 	
 	if ((characterProfile->charClass != Mage && characterProfile->characterArmor.weapon1.weaponType != Ranged)
 		|| (characterProfile->characterArmor.weapon1.weaponType == Melee && characterProfile->characterArmor.weapon1.isEquipped))
 	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
 		if (characterProfile->characterArmor.weapon2.isEquipped)
 		{
-			//Play two handed sword animation
 			return (characterProfile->characterStats.strength *
 				(characterProfile->characterArmor.weapon1.damageBonus + enemy->characterProfile->characterArmor.weapon2.damageBonus)) / FMath::RandRange(1, 20);
 		}
 		else if(characterProfile->characterArmor.weapon1.isEquipped)
 		{
-			//Play one handed sword animation
 			return (characterProfile->characterStats.strength * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
 		}
 		else
 		{
-			//Play punch animation
-			punchAnim = true;
-			UE_LOG(LogTemp, Warning, TEXT("%s: Punching"), *GetName());
-			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
-				punchAnim = false;
-				}), 1.9f, false);
 			return characterProfile->characterStats.strength * FMath::RandRange(1, 5);
 		}
 	}
@@ -1564,28 +1588,14 @@ int APlayerControls::CalculateDamage(AActor* enemyActor)
 	{
 		if (characterProfile->characterArmor.weapon1.isEquipped && characterProfile->characterArmor.weapon1.damageType == StrDamage)
 		{
-			//Bow animation
 			return (characterProfile->characterStats.strength * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
 		}
 		else if(characterProfile->characterArmor.weapon1.isEquipped)
 		{
-			spellCasting = true;
-			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
-
-			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
-				spellCasting = false;
-				}), 1.9f, false);
-
 			return (characterProfile->characterStats.intelligence * characterProfile->characterArmor.weapon1.damageBonus) / FMath::RandRange(1, 20);
 		}
 		else
 		{
-			spellCasting = true;
-			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
-
-			GetWorldTimerManager().SetTimer(hitTime, FTimerDelegate::CreateLambda([=]() {
-				spellCasting = false;
-				}), 1.9f, false);
 			return characterProfile->characterStats.intelligence * FMath::RandRange(1, 5);
 		}
 	}
@@ -1732,7 +1742,15 @@ void APlayerControls::StartCombat(AActor* enemy)
 
 void APlayerControls::ApplyDamage(int Damage)
 {
+	characterProfile->StartRefillCooldown(GetWorld());
+
+	FTimerHandle timerHandle;
+	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]() {
+		characterProfile->canRefill = true;
+		}, 10.0f, false);
+
 	characterProfile->characterCurrentHealth -= Damage - int(GetArmorRating() / 5);
+
 }
 
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -1819,6 +1837,107 @@ void APlayerControls::SetFirstItems()
 		//UE_LOG(LogTemp, Warning, TEXT("%s 2"), *GetName());
 		firstEncounter = false;
 	}
+}
+
+void APlayerControls::CheckCombatAnim(AActor* enemyActor)
+{
+	FTimerHandle animTime;
+	APlayerControls* enemy = Cast <APlayerControls>(enemyActor);
+
+	if ((characterProfile->charClass != Mage && characterProfile->characterArmor.weapon1.weaponType != Ranged)
+		|| (characterProfile->characterArmor.weapon1.weaponType == Melee && characterProfile->characterArmor.weapon1.isEquipped))
+	{ //Calculates melee damages. Mage characters does ranged attack without a weapon
+		if (characterProfile->characterArmor.weapon2.isEquipped)
+		{
+			//Play two handed sword animation
+		}
+		else if (characterProfile->characterArmor.weapon1.isEquipped)
+		{
+			//Play one handed sword animation
+			slashAnim = true;
+
+			GetWorldTimerManager().SetTimer(animTime, FTimerDelegate::CreateLambda([=]() {
+				slashAnim = false;
+				}), GetWorld()->GetDeltaSeconds(), false);
+		}
+		else
+		{
+			//Play punch animation
+			punchAnim = true;
+			GetWorldTimerManager().SetTimer(animTime, FTimerDelegate::CreateLambda([=]() {
+				punchAnim = false;
+				}), 1.9f, false);
+
+		}
+	}
+	else
+	{
+		if (characterProfile->characterArmor.weapon1.isEquipped && characterProfile->characterArmor.weapon1.damageType == StrDamage)
+		{
+			//Bow animation
+		}
+		else if (characterProfile->characterArmor.weapon1.isEquipped)
+		{
+			spellCasting = true;
+			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
+
+			GetWorldTimerManager().SetTimer(animTime, FTimerDelegate::CreateLambda([=]() {
+				spellCasting = false;
+				}), 1.9f, false);
+		}
+		else
+		{
+			spellCasting = true;
+			skills->PlaySparks(this, enemy->GetActorLocation(), FVector(.5f));
+
+			GetWorldTimerManager().SetTimer(animTime, FTimerDelegate::CreateLambda([=]() {
+				spellCasting = false;
+				}), 1.9f, false);
+
+		}
+	}
+}
+
+void APlayerControls::RefillHealthAndEnergy()
+{
+	if (characterProfile->canRefill && (characterProfile->characterMaximumEnergy > characterProfile->characterCurrentEnergy
+		|| characterProfile->characterMaximumHealth > characterProfile->characterCurrentHealth) && !characterProfile->isRefilling)
+	{
+		UWorld* world = GetWorld();
+		float deltaSec = world->GetDeltaSeconds();
+		characterProfile->InitRefilling(world, deltaSec);
+	}
+}
+
+bool APlayerControls::isGroupDead()
+{
+	if (characterProfile->characterCurrentHealth <= 0)
+	{
+		StopAIMovement(true);
+		characterProfile->dead = true;
+
+		if (controlledChar == this)
+		{
+			int currentCharIndex = groupMembers.Find(this);
+			int groupSize = groupMembers.Num();
+
+			for (int i = 1; i < groupSize; i++)
+			{
+				// Calculate the next character index using modular arithmetic
+				int nextCharIndex = (currentCharIndex + i) % groupSize;
+
+				if (!groupMembers[nextCharIndex]->characterProfile->dead)
+				{
+					ControlNPC(nextCharIndex);
+					return false;
+				}
+			}
+			// If no living character is found, return true indicating the group is dead
+			return true;
+		}
+	}
+	// Return false by default if the character is not dead or not controlled by the player
+	return false;
 }
 
 void APlayerControls::PauseGame()

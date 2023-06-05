@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include <Particles/ParticleSystemComponent.h>
+#include "Components/DecalComponent.h"
 #include <Particles/ParticleSystem.h>
 #include "Public/QuestSystem.h"
+#include "DefaultGameMode.h"
 #include "Engine/LevelStreaming.h"
 #include "GroomComponent.h"
 #include "SaveSystem.h"
@@ -118,6 +120,11 @@ public:
 	UPROPERTY()
 		UManageWidgets* pauseHUD;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+		TSubclassOf<UUserWidget> deathUI;
+	UPROPERTY()
+		UManageWidgets* deathHUD;
+
 	//Looting
 	UPROPERTY(Blueprintreadwrite)
 		TArray<FItemProperties> inventory;
@@ -219,6 +226,9 @@ public:
 	//VFX
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "VFX")
 		UParticleSystem* sparks_F;
+	UPROPERTY(EditAnywhere, Category = "Decal")
+		UDecalComponent* abilityAreaDecal;
+		
 
 	//First Items
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "First Armor")
@@ -244,7 +254,7 @@ protected:
 
 public:
 	UFUNCTION()
-		void InitCharacter();
+		void InitCharacter(UWorld* world);
 
 	void StartCameraRotation();
 	void StopCameraRotation();
@@ -313,10 +323,8 @@ public:
 	//Save load
 	UFUNCTION()
 		void SaveGame();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void LoadGame();
-	UFUNCTION()
-		void LoadGameAfterDeath();
 	//Combat
 	UFUNCTION()
 		void Attack(float DeltaTime, AActor* enemyActor);
@@ -334,6 +342,13 @@ public:
 		void ApplyDamage(int damage);
 	UFUNCTION()
 		void HitFast();
+
+	UFUNCTION()
+		bool isGroupDead();
+	UFUNCTION()
+		void CheckCombatAnim(AActor* enemyActor);
+	UFUNCTION()
+		void RefillHealthAndEnergy();
 
 	//Combat AI Behaviour
 	UFUNCTION()
@@ -368,6 +383,8 @@ public:
 		void PauseGame();
 	UFUNCTION()
 		void WhenPaused();
+	UFUNCTION()
+		bool IsInMenuLevel() const;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

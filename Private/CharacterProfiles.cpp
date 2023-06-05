@@ -4,32 +4,61 @@
 #include "CharacterProfiles.h"
 #include <Kismet/GameplayStatics.h>
 
-void UCharacterProfiles::InitRefilling(UWorld* world)
+void UCharacterProfiles::InitRefilling(UWorld* world, float deltaSeconds)
 {
-	world->GetTimerManager().SetTimer(energyTimer, FTimerDelegate::CreateLambda([=]() {
-	if (!dead)
+	if (world)
 	{
-		
-		if (characterMaximumEnergy > characterCurrentEnergy)
-		{
-			characterCurrentEnergy += 5;
-			if (characterCurrentEnergy > characterMaximumEnergy)
-				characterCurrentEnergy = characterMaximumEnergy;
-		}
+		isRefilling = true;
+		//FTimerHandle refillTimerHandle;
 
-		if (characterMaximumHealth > characterCurrentHealth)
-		{
-			characterCurrentHealth += 5;
-			if (characterCurrentHealth > characterMaximumHealth)
-				characterCurrentHealth = characterMaximumHealth;
-		}
+		world->GetTimerManager().SetTimer(refillTimerHandle, [&, deltaSeconds, world]() {
+			if (!dead)
+			{
+				if (characterMaximumEnergy > characterCurrentEnergy)
+				{
+					float energyToAdd = (characterMaximumEnergy - characterCurrentEnergy) * 0.000000001f;
+					characterCurrentEnergy += energyToAdd;
+
+					// Interpolate the energy value for smoother refills
+					characterCurrentEnergy = FMath::FInterpTo(characterCurrentEnergy, characterMaximumEnergy, deltaSeconds, 0.2f);
+
+					if (characterCurrentEnergy + 1 >= characterMaximumEnergy)
+					{
+						characterCurrentEnergy = characterMaximumEnergy;
+					}
+				}
+
+				if (characterMaximumHealth > characterCurrentHealth)
+				{
+					float healthToAdd = (characterMaximumHealth - characterCurrentHealth) * 0.000000001f;
+					characterCurrentHealth += healthToAdd;
+
+					// Interpolate the health value for smoother refills
+					characterCurrentHealth = FMath::FInterpTo(characterCurrentHealth, characterMaximumHealth, deltaSeconds, 0.2f);
+
+					if (characterCurrentHealth + 1 >= characterMaximumHealth)
+					{
+						characterCurrentHealth = characterMaximumHealth;
+					}
+				}
+
+				// Check if both energy and health are at their maximum
+				if (characterCurrentEnergy >= characterMaximumEnergy && characterCurrentHealth >= characterMaximumHealth)
+				{
+					isRefilling = false;
+					world->GetTimerManager().ClearTimer(refillTimerHandle);
+				}
+			}
+			else
+			{
+				characterCurrentEnergy = 0;
+				characterCurrentHealth = 0;
+
+				isRefilling = false;
+				world->GetTimerManager().ClearTimer(refillTimerHandle);
+			}
+			}, deltaSeconds, true);
 	}
-	else
-	{
-		characterCurrentEnergy = 0;
-		characterCurrentHealth = 0;
-	}
-	}), 1.5f, true);
 }
 
 void UCharacterProfiles::ChangeStat(int value, TEnumAsByte<FStatTypes> types)
@@ -85,4 +114,30 @@ void UCharacterProfiles::HoldEnergyAndHealthAtMax()
 
 	if (characterCurrentEnergy > characterMaximumEnergy)
 		characterCurrentEnergy = characterMaximumEnergy;
+}
+
+void UCharacterProfiles::StartRefillCooldown(UWorld* world)
+{
+	if (world)
+	{
+		world->GetTimerManager().ClearTimer(refillTimerHandle);
+
+		if (refillCooldownTimerHandle.IsValid())
+		{
+			// Timer is already active, reset it
+			world->GetTimerManager().ClearTimer(refillCooldownTimerHandle);
+		}
+		else
+		{
+			canRefill = false;
+		}
+
+		refillCooldownTimerHandle.Invalidate();
+		isRefilling = false;
+
+		world->GetTimerManager().SetTimer(refillCooldownTimerHandle, [this]() {
+			canRefill = true;
+			refillCooldownTimerHandle.Invalidate();
+			}, 4.0f, false);
+	}
 }

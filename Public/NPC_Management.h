@@ -47,7 +47,7 @@ public:
 		FCharacterStats characterStats;
 	UPROPERTY(EditAnywhere)
 		TEnumAsByte<FCharacterRace> charRace;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 		TEnumAsByte<FCharacterGender> charGender;
 	UPROPERTY(EditAnywhere)
 		TEnumAsByte<FCharacterClasses> charClass;
@@ -66,5 +66,4 @@ public:
 		void StartDialog();
 	UFUNCTION(BlueprintCallable)
 		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest); //Returns if player still in a dialog
-
 };

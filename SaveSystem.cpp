@@ -140,7 +140,8 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		APlayerControls* player = Cast<APlayerControls>(Actor);
 		
-		if (autoSave && !SpawnInfo.inGroup) return false;
+		//if (autoSave && !SpawnInfo.inGroup) return false;
+		if (!SpawnInfo.inGroup) return false;
 
 		//Character Location
 		//if (!player->newLevelLoaded && !APlayerControls::loadAfterNewWorld && SpawnInfo.currentWorldName != GetWorld()->GetName() 
@@ -255,8 +256,12 @@ void USaveSystem::OnLevelLoad()
 	APlayerControls* playerSave = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	playerSave = playerSave->groupMembers[0];
 	SwitchToMainCharacter(playerSave);
-	//If it false it means game loads a new level. When level loaded it will run again and load save data.
-	if (!LoadSaveFile(playerSave, playerSave->GetName().Left(playerSave->GetName().Len() - 4), SName, TSave)) return;
+
+	// If false, it means the game loads a new level. When the level is loaded, it will run again and load save data.
+	if (!LoadSaveFile(playerSave, playerSave->GetName().LeftChop(4), SName, TSave))
+	{
+		return;
+	}
 
 	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
 
@@ -266,7 +271,7 @@ void USaveSystem::OnLevelLoad()
 		{
 			FString actorName = actor->GetName().Left(actor->GetName().Find("_C_"));
 			AActor* newActor = GetWorld()->SpawnActor<ANPC_Management>(actor->GetClass(), FVector::ZeroVector, FRotator::ZeroRotator);
-			
+
 			if (LoadSaveFile(newActor, actorName, SName, TSave))
 			{
 				ANPC_Management* NPCSave = Cast<ANPC_Management>(newActor);
@@ -282,8 +287,10 @@ void USaveSystem::OnLevelLoad()
 				if (NPCSave->inGroup)
 				{
 					LoadGroupMembers(playerSave, NPCSave);
-					if (NPCSave->loadAfterNewWorld) //Set NPCs locations behind the player if they are moving to new world
+
+					if (NPCSave->loadAfterNewWorld)
 					{
+						// Set NPCs' locations behind the player if they are moving to a new world
 						if (NPCSave->charIndex == 1)
 						{
 							NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(155, 290));
@@ -298,6 +305,7 @@ void USaveSystem::OnLevelLoad()
 						}
 					}
 				}
+
 				for (AActor* persistentActor : persistentLevelActors)
 				{
 					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Find("_C_")) == actorName)
@@ -313,26 +321,27 @@ void USaveSystem::OnLevelLoad()
 			}
 			else
 			{
-				newActor->Destroy();
+				if (newActor)
+				{
+					newActor->Destroy();
+				}
 			}
-			
 		}
 	}
+
 	if (TSave)
 	{
 		IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
 		FString path = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/AutoSave";
 		FileManager.DeleteDirectoryRecursively(*path);
 	}
-	
+
 	timesLoaded++;
 	APlayerControls::loadAfterNewWorld = false;
 	TSave = false;
 	SName = "";
 
 	ULevelStreaming* levelStreaming = GetWorld()->GetStreamingLevels()[0];
-	
-	//UGameplayStatics::UnloadStreamLevel(GetWorld(), FName("SaveLevel"), FLatentActionInfo(), true);
 
 	if (levelStreaming)
 	{
@@ -340,6 +349,7 @@ void USaveSystem::OnLevelLoad()
 		levelStreaming->SetShouldBeVisible(false);
 	}
 }
+
 
 void USaveSystem::SaveGame(FString saveName, bool autoSave)
 {

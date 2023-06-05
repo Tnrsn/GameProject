@@ -82,10 +82,9 @@ UCLASS()
 class GAMEPROJECT_API UCharacterProfiles : public UObject
 {
 	GENERATED_BODY()
-	
 
 public:
-	void InitRefilling(UWorld* world);
+	
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Name")
 		FString charName;
@@ -114,12 +113,22 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 		bool dead = false;
 
+	UPROPERTY(BlueprintReadOnly)
+		bool isRefilling = false;
+	UPROPERTY(BlueprintReadOnly)
+		bool canRefill = true;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FCharacterStats beginningStats;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Character Stats")
 		FCharacterStats characterStats;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Armor")
 		FCharacterWearables characterArmor;
+
+	UPROPERTY()
+		FTimerHandle refillCooldownTimerHandle;
+	UPROPERTY()
+		FTimerHandle refillTimerHandle;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
 		TEnumAsByte<FCharacterGender> charGender;
@@ -128,8 +137,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Character Properties")
 		TEnumAsByte<FCharacterClasses> charClass;
 
-	UPROPERTY()
-		FTimerHandle energyTimer;
+	//UPROPERTY()
+	//	FTimerHandle energyTimer;
 
 
 	UFUNCTION(BlueprintCallable)
@@ -138,4 +147,8 @@ public:
 		void RefreshStats();
 	UFUNCTION()
 		void HoldEnergyAndHealthAtMax();
+	UFUNCTION()
+		void StartRefillCooldown(UWorld* world);
+	UFUNCTION()
+		void InitRefilling(UWorld* world, float deltaSeconds);
 };

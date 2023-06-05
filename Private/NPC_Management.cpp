@@ -14,7 +14,7 @@ void ANPC_Management::BeginPlay()
 	Super::BeginPlay();
 
 	dialogSystem = NewObject<UNPCDialogSystem>();
-	characterProfile = NewObject<UCharacterProfiles>();
+	//characterProfile = NewObject<UCharacterProfiles>();
 
 	mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
 	mainHUD->characterProfiles = characterProfile;
@@ -27,7 +27,9 @@ void ANPC_Management::BeginPlay()
 		characterProfile->charGender = charGender;
 		characterProfile->charRace = charRace;
 		characterProfile->charClass = charClass;
-		
+
+		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+
 		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
@@ -41,7 +43,6 @@ void ANPC_Management::BeginPlay()
 void ANPC_Management::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ANPC_Management::StartDialog()

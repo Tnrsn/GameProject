@@ -5,6 +5,8 @@
 #include "../SaveSystem.h"
 #include <Kismet/GameplayStatics.h>
 #include "../PlayerControls.h"
+#include "../DefaultGameMode.h"
+
 
 // Sets default values
 ALevelTransport::ALevelTransport()
@@ -35,10 +37,12 @@ void ALevelTransport::Tick(float DeltaTime)
 
 void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed)
 {
-	USaveSystem* saveSystem;
-	saveSystem = GetWorld()->GetSubsystem<USaveSystem>();
+	UWorld* world = GetWorld();
 
-	APlayerControls* player = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	USaveSystem* saveSystem;
+	saveSystem = world->GetSubsystem<USaveSystem>();
+
+	APlayerControls* player = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(world, 0));
 	if (player->groupMembers.Num() != 0)
 	{
 		player = player->groupMembers[0];
@@ -51,14 +55,14 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 	}
 	else
 	{
-		player->InitCharacter();
+		player->InitCharacter(world);
 		player->inMenu = false;
 	}
 
 	player->currentWorldName = worldName.ToString();
 
 	APlayerControls::loadAfterNewWorld = true;
-	if (!player->groupMembers[0]->characterProfile->charName.IsEmpty() && *GetWorld()->GetName() != FName("CharacterCreationMenu"))
+	if (!player->groupMembers[0]->characterProfile->charName.IsEmpty() && *world->GetName() != FName("CharacterCreationMenu"))
 	{
 		saveSystem->SaveGame(player->groupMembers[0]->characterProfile->charName, false);
 		saveSystem->SaveGame("", true);
@@ -68,6 +72,56 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 		saveSystem->SaveGame("", true);
 	}
 
-	UGameplayStatics::OpenLevel(player->GetWorld(), worldName);
+	UGameplayStatics::OpenLevel(world, worldName);
+
+	//LoadingScreen(worldName.ToString());
 }
 
+//void ALevelTransport::LoadingScreen(FString LevelName)
+//{
+//	// Get the level's asset registry
+//	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+//	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+//
+//	// Retrieve all assets in the level
+//	TArray<FAssetData> LevelAssets;
+//	FARFilter Filter;
+//	FString PackagePath = "/Content/Levels/" + LevelName;
+//	Filter.PackagePaths.Add(*PackagePath); // Assuming all assets are located in "/Game/LevelName" directory
+//	AssetRegistry.GetAssets(Filter, LevelAssets);
+//
+//	// Create an array to store the asset paths to load
+//	TArray<FSoftObjectPath> AssetPathsToLoad;
+//
+//	// Add the asset paths to load
+//	for (const FAssetData& AssetData : LevelAssets)
+//	{
+//		FSoftObjectPath AssetPath = AssetData.ToSoftObjectPath();
+//		AssetPathsToLoad.Add(AssetPath);
+//	}
+//
+//	// Request asynchronous loading of assets
+//	StreamableManager.RequestAsyncLoad(AssetPathsToLoad, FStreamableDelegate());
+//
+//	// Display your loading screen
+//	// Check if all assets have finished loading
+//	bool AllAssetsLoaded = true;
+//	for (const FSoftObjectPath& AssetPath : AssetPathsToLoad)
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("loading"));
+//		if (!StreamableManager.IsAsyncLoadComplete(AssetPath))
+//		{
+//			UE_LOG(LogTemp, Warning, TEXT("Something went wrong"));
+//			AllAssetsLoaded = false;
+//			break;
+//		}
+//	}
+//
+//	if (AllAssetsLoaded)
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("Everything loaded"));
+//		// All assets have finished loading, hide the loading screen
+//		// ...
+//	}
+//}
+//

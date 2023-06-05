@@ -89,6 +89,7 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 		Blitz(player);
 	}
 
+	plyr->characterProfile->StartRefillCooldown(plyr->GetWorld());
 	skillOneTargeting = false;
 }
 
@@ -124,6 +125,7 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 		SuperNova(player, target);
 	}
 
+	plyr->characterProfile->StartRefillCooldown(plyr->GetWorld());
 	skillTwoTargeting = false;
 }
 
@@ -159,6 +161,7 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 		Blink(player, target);
 	}
 
+	plyr->characterProfile->StartRefillCooldown(plyr->GetWorld());
 	skillThreeTargeting = false;
 }
 

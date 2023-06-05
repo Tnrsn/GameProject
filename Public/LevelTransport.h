@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "QuestSystem.h"
 #include <Components/StaticMeshComponent.h>
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "GameFramework/Actor.h"
 #include "LevelTransport.generated.h"
 
@@ -25,7 +27,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Which Quest Opens The Door")
 		TEnumAsByte<FMainQuestLine> opensAfter;
 
-
+	FStreamableManager StreamableManager;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -36,4 +38,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed);
+	//UFUNCTION()
+	//	void LoadingScreen(FString LevelName);
 };
