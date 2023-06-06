@@ -182,67 +182,79 @@ bool APlayerControls::IsInMenuLevel() const
 
 void APlayerControls::InitCharacter(UWorld* world)
 {
+	// Initialize mainHUD and currentWorldName
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(world, 0), mainUI);
 	currentWorldName = world->GetName();
-	
+	FString charClass = *GetClass()->GetSuperClass()->GetName();
+
 	if (groupMembers.Num() == 0 && GetController() == playerController)
 	{
+		// Add the player character to the group
 		groupMembers.Add(Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(world, 0)));
 		inGroup = true;
 		onAIControl = false;
 		charIndex = 0;
 
+		// Create and set characterProfiles
 		mainHUD->characterProfiles = NewObject<UCharacterProfiles>();
-
 		mainHUD->characterProfiles = characterProfile;
 		mainHUD->AddToViewport();
 
+		// Refresh character stats and set current health and energy
 		characterProfile->RefreshStats();
 		characterProfile->characterCurrentHealth = characterProfile->characterMaximumHealth;
 		characterProfile->characterCurrentEnergy = characterProfile->characterMaximumEnergy;
 
+		// Create questSystem
 		questSystem = NewObject<UQuestSystem>();
 	}
 
+	// Set instance possessedActor
 	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
 	instance->possessedActor = this;
 
+	// Set overlap events for findEnemyComponent
 	findEnemyComponent->OnComponentBeginOverlap.Clear();
 	findEnemyComponent->OnComponentEndOverlap.Clear();
 	findEnemyComponent->OnComponentBeginOverlap.AddDynamic(this, &APlayerControls::OnOverlapBegin);
 	findEnemyComponent->OnComponentEndOverlap.AddDynamic(this, &APlayerControls::OnOverlapEnd);
 
+	// Set hand1 and hand2
 	hand1 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(1));
 	hand2 = Cast<UStaticMeshComponent>(handsMesh->GetChildComponent(0));
 
 	if (inGroup)
 	{
+		// Set controlledChar if in a group
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	}
-	
-	//!DO NOT TOUCH HERE!
-	if (APlayerControls::newLevelLoaded && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+
+	//! DO NOT TOUCH HERE !
+	if (APlayerControls::newLevelLoaded && charClass == FString("PlayerControls"))
 	{
-		//LoadGame();
+		// Load the game
 		saveSystem->LoadGame("", true);
 
 		APlayerControls::newLevelLoaded = false;
 	}
-	if (APlayerControls::loadAfterNewWorld && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	if (APlayerControls::loadAfterNewWorld && charClass == FString("PlayerControls"))
 	{
+		// Load the game with "AutoSave" slot
 		saveSystem->LoadGame("AutoSave", true);
 	}
 	//*
+
 	UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
-	if (gameInstance && gameInstance->reloading && *GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	if (gameInstance && gameInstance->reloading && charClass == FString("PlayerControls"))
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%s"), *gameInstance->playerName);
+		// Load the game with playerName
 		saveSystem->LoadGame(gameInstance->playerName, false);
 	}
 	//^^^^^^^^^^
-
-	if (*GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	
+	if (charClass == FString("PlayerControls"))
 	{
+		// Set gameInstance possessedActor after a delay
 		FTimerHandle initTimer;
 		world->GetTimerManager().SetTimer(initTimer, [gameInstance, this]() {
 			gameInstance->possessedActor = this;
@@ -250,15 +262,16 @@ void APlayerControls::InitCharacter(UWorld* world)
 	}
 	/*characterProfile->InitRefilling(world);*/
 
-
+	// Set a timer to call SetFirstItems after a delay
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &APlayerControls::SetFirstItems, .5f, false);
 
-	//firstEncounter = false;
-	//SetFirstItems();
-	//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
-	//SetMesh();
-	//characterProfile->charGender = Female;
+	// Uncommented lines removed for improved readability
+	// firstEncounter = false;
+	// SetFirstItems();
+	// UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
+	// SetMesh();
+	// characterProfile->charGender = Female;
 }
 
 // Called to bind functionality to input
