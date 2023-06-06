@@ -38,7 +38,8 @@ float UManageWidgets::PlayerEnergyBar()
 bool UManageWidgets::canShowHealthbar(AActor* actor)
 {
 	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
-	if (actor == instance->possessedActor) return false;
-	if (FVector::Distance(instance->possessedActor->GetActorLocation(), actor->GetActorLocation()) > 2200) return false; //ManageWidget line 43
+	if (!actor) return false;
+	if (!instance->possessedActor || actor == instance->possessedActor) return false;
+	if (FVector::Distance(instance->possessedActor->GetActorLocation(), actor->GetActorLocation()) > 2200) return false;
 	return true;
 }

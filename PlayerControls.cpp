@@ -241,7 +241,13 @@ void APlayerControls::InitCharacter(UWorld* world)
 	}
 	//^^^^^^^^^^
 
-
+	if (*GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	{
+		FTimerHandle initTimer;
+		world->GetTimerManager().SetTimer(initTimer, [gameInstance, this]() {
+			gameInstance->possessedActor = this;
+			}, .4f, false);
+	}
 	/*characterProfile->InitRefilling(world);*/
 
 
