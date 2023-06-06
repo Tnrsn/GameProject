@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DefaultGameInstance.h"
 #include "CharacterProfiles.h"
 #include <Kismet/GameplayStatics.h>
 #include "Blueprint/UserWidget.h"
@@ -22,9 +23,12 @@ public:
 		void ButtonReleased();
 
 	UFUNCTION(BlueprintCallable)
-		float PlayerHealthBar();
+		float PlayerHealthBar(UCharacterProfiles* charProf = nullptr);
 	UFUNCTION(BlueprintCallable)
 		float PlayerEnergyBar();
+
+	UFUNCTION(BlueprintCallable)
+		bool canShowHealthbar(AActor* actor);
 
 	UPROPERTY(BlueprintReadOnly)
 		UCharacterProfiles* characterProfiles;

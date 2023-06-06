@@ -355,11 +355,11 @@ public:
 	UFUNCTION()
 		void OverlappedWithActor(AActor* OtherActor);
 	//Combat Skills
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void SkillOne();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void SkillTwo();
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 		void SkillThree();
 	UFUNCTION()
 		void CancelSkill();
@@ -383,6 +383,14 @@ public:
 		void WhenPaused();
 	UFUNCTION()
 		bool IsInMenuLevel() const;
+
+	//Misc
+	UFUNCTION()
+		void SetHBVisible();
+	UFUNCTION()
+		void SetHBInvisible();
+	UFUNCTION()
+		bool isMovingWithKeyboard();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

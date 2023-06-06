@@ -20,6 +20,9 @@ class GAMEPROJECT_API UClassSkills : public UObject
 {
 	GENERATED_BODY()
 
+private:
+	FTimerHandle decalTimer;
+
 public:
 	UPROPERTY(BlueprintReadOnly)
 		bool skillOneTargeting = false;

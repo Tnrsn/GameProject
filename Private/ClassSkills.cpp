@@ -558,19 +558,30 @@ void UClassSkills::HandleAbilityAreaDecal(ACharacter* player, float abilityAreaS
 	AAbilityDecal* abilityAreaDecal = world->SpawnActor<AAbilityDecal>(instance->abilityArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
 	AAbilityDecal* selectionDecal = world->SpawnActor<AAbilityDecal>(instance->selectionArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
 
-	abilityAreaDecal->SetActorScale3D(FVector(2, abilityAreaSize, abilityAreaSize));
-	selectionDecal->SetActorScale3D(FVector(2, selectionAreaSize, selectionAreaSize));
+	abilityAreaDecal->SetActorScale3D(FVector(6, abilityAreaSize, abilityAreaSize));
+	selectionDecal->SetActorScale3D(FVector(6, selectionAreaSize, selectionAreaSize));
 
-	FTimerHandle decalTimer;
+	/*FTimerHandle decalTimer;*/
 	float deltaSeconds = world->GetDeltaSeconds();
 
 	world->GetTimerManager().SetTimer(decalTimer, [&, playerCharacter, abilityAreaDecal, selectionDecal, this, world]() {
 		// Destroys decals after skill used
-		if (!skillOneTargeting && !skillTwoTargeting && !skillThreeTargeting)
+		if ((!skillOneTargeting && !skillTwoTargeting && !skillThreeTargeting && decalTimer.IsValid()) || playerCharacter->characterProfile->dead)
 		{
-			selectionDecal->Destroy();
-			abilityAreaDecal->Destroy();
-			world->GetTimerManager().ClearTimer(decalTimer);
+			CancelSkillTargetings();
+
+			if (selectionDecal)
+			{
+				selectionDecal->Destroy();
+			}
+			if (abilityAreaDecal)
+			{
+				abilityAreaDecal->Destroy();
+			}
+			if (world)
+			{
+				world->GetTimerManager().ClearTimer(decalTimer);
+			}
 			return;
 		}
 
@@ -579,11 +590,22 @@ void UClassSkills::HandleAbilityAreaDecal(ACharacter* player, float abilityAreaS
 
 		// Get the screen position of the mouse
 		FHitResult HitResult;
-		playerCharacter->playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
-		if (HitResult.IsValidBlockingHit())
+
+		//UE_LOG(LogTemp, Warning, TEXT("test"));
+		if (playerCharacter)
 		{
+			playerCharacter->playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
+		}
+		if (HitResult.IsValidBlockingHit() && selectionDecal)
+		{
+			if (HitResult.GetActor() == playerCharacter)
+			{
+				// No hit result found for controlled character, try again with a different collision channel
+				playerCharacter->playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Camera, false, HitResult);
+			}
 			selectionDecal->SetActorLocation(HitResult.Location);
 		}
+		return;
 	}, deltaSeconds, true);
 }
 

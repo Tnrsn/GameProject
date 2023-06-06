@@ -18,13 +18,27 @@ void UManageWidgets::ButtonReleased()
 	UE_LOG(LogTemp, Warning, TEXT("Released"));
 }
 
-float UManageWidgets::PlayerHealthBar()
+float UManageWidgets::PlayerHealthBar(UCharacterProfiles* charProf)
 {
-	//playerCurrentHealth -= 0.1;
+	if (!characterProfiles && charProf)
+	{
+		characterProfiles = charProf;
+	}
+	else if (!characterProfiles) return .5f;
+
 	return characterProfiles->characterCurrentHealth / characterProfiles->characterMaximumHealth;
 }
 
 float UManageWidgets::PlayerEnergyBar()
 {
+	if (!characterProfiles) return .5f;
 	return characterProfiles->characterCurrentEnergy / characterProfiles->characterMaximumEnergy;
+}
+
+bool UManageWidgets::canShowHealthbar(AActor* actor)
+{
+	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
+	if (actor == instance->possessedActor) return false;
+	if (FVector::Distance(instance->possessedActor->GetActorLocation(), actor->GetActorLocation()) > 2200) return false; //ManageWidget line 43
+	return true;
 }

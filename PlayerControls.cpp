@@ -180,7 +180,6 @@ bool APlayerControls::IsInMenuLevel() const
 	return currentLevelName == FName("MainMenu") || currentLevelName == FName("CharacterCreationMenu");
 }
 
-
 void APlayerControls::InitCharacter(UWorld* world)
 {
 	mainHUD = CreateWidget<UManageWidgets>(UGameplayStatics::GetPlayerController(world, 0), mainUI);
@@ -204,6 +203,9 @@ void APlayerControls::InitCharacter(UWorld* world)
 
 		questSystem = NewObject<UQuestSystem>();
 	}
+
+	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
+	instance->possessedActor = this;
 
 	findEnemyComponent->OnComponentBeginOverlap.Clear();
 	findEnemyComponent->OnComponentEndOverlap.Clear();
@@ -295,6 +297,10 @@ void APlayerControls::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAction("FastHit", IE_Pressed, this, &APlayerControls::HitFast);
 
 	PlayerInputComponent->BindAction("PauseToggle", IE_Pressed, this, &APlayerControls::PauseGame);
+
+	//Health bar visibility
+	PlayerInputComponent->BindAction("SetHBVisible", IE_Pressed, this, &APlayerControls::SetHBVisible);
+	PlayerInputComponent->BindAction("SetHBVisible", IE_Released, this, &APlayerControls::SetHBInvisible);
 }
 
 void APlayerControls::OverlappedWithActor(AActor* OtherActor)
@@ -499,7 +505,7 @@ void APlayerControls::CameraZoom(float value)
 
 void APlayerControls::OnMouseClick()
 {
-	if (!inDialog)
+	if (!inDialog && !characterProfile->dead)
 	{
 		if (lootObject)
 		{
@@ -523,6 +529,7 @@ void APlayerControls::ClickEvents()
 	FHitResult HitResult;
 	playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, false, HitResult);
 
+
 	if (lootObject)
 	{
 		lootObject->moveToLootObject = false;
@@ -535,6 +542,12 @@ void APlayerControls::ClickEvents()
 	}
 
 	SelectedActor = HitResult.GetActor();
+
+	if (SelectedActor == this)
+	{
+		// No hit result found for controlled character, try again with a different collision channel
+		playerController->GetHitResultUnderCursor(ECollisionChannel::ECC_Camera, false, HitResult);
+	}
 
 	if (SelectedActor)
 	{
@@ -596,22 +609,28 @@ void APlayerControls::ClickEvents()
 				}
 				else //If npc is far then character moves to npc
 				{
+					onAIMovement = true;
 					actorToBeGone = SelectedActor;
 					MoveToLocation(actorToBeGone, FVector(0));
 				}
 			}
 			else if (npc->NPCStyle == Hostile)
 			{
+				onAIMovement = true;
 				actorToBeGone = SelectedActor;
 				inCombat = true;
 			}
 		}
 		else
 		{
-			inCombat = false;
-			targetLocation = HitResult.Location;
-			actorToBeGone = nullptr;
-			MoveToLocation(nullptr, targetLocation);
+			if (!isMovingWithKeyboard())
+			{
+				inCombat = false;
+				onAIMovement = true;
+				targetLocation = HitResult.Location;
+				actorToBeGone = nullptr;
+				MoveToLocation(nullptr, targetLocation);
+			}
 		}
 	}
 
@@ -1207,6 +1226,9 @@ void APlayerControls::ControlNPC(int index)
 		//Switch controllers
 		groupMembers[index]->GetController()->Possess(this);
 		playerController->Possess(groupMembers[index]);
+
+		UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
+		instance->possessedActor = groupMembers[index];
 		
 		//Continue to walk if It's on AI Control before switch
 		if (onAIMovement)
@@ -1340,8 +1362,9 @@ void APlayerControls::StopAIOnInput()
 {
 	if (onAIMovement)
 	{
-		if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
-			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
+		/*if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
+			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))*/
+		if (isMovingWithKeyboard())
 		{
 			StopAIMovement(true);
 		}
@@ -1745,14 +1768,7 @@ void APlayerControls::StartCombat(AActor* enemy)
 void APlayerControls::ApplyDamage(int Damage)
 {
 	characterProfile->StartRefillCooldown(GetWorld());
-
-	FTimerHandle timerHandle;
-	GetWorld()->GetTimerManager().SetTimer(timerHandle, [this]() {
-		characterProfile->canRefill = true;
-		}, 10.0f, false);
-
 	characterProfile->characterCurrentHealth -= Damage - int(GetArmorRating() / 5);
-
 }
 
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -2119,4 +2135,29 @@ void APlayerControls::PutOn2SecondHand(FItemProperties itemProperties, bool Decr
 void APlayerControls::CancelSkill()
 {
 	skills->CancelSkillTargetings();
+}
+
+void APlayerControls::SetHBVisible()
+{
+	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
+	instance->showHealthBars = true;
+}
+
+void APlayerControls::SetHBInvisible()
+{
+	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
+	instance->showHealthBars = false;
+}
+
+bool APlayerControls::isMovingWithKeyboard()
+{
+	if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
+		|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }

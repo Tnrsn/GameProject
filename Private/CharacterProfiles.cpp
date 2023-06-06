@@ -138,6 +138,6 @@ void UCharacterProfiles::StartRefillCooldown(UWorld* world)
 		world->GetTimerManager().SetTimer(refillCooldownTimerHandle, [this]() {
 			canRefill = true;
 			refillCooldownTimerHandle.Invalidate();
-			}, 4.0f, false);
+			}, 7.0f, false);
 	}
 }
