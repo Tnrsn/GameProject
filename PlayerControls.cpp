@@ -2117,8 +2117,8 @@ void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 
 void APlayerControls::PutOn2FirstHand(FItemProperties itemProperties, bool DecreaseFromInventory)
 {
-	hand1->SetRelativeLocation(itemProperties.location);
-	hand1->SetRelativeRotation(itemProperties.rotation);
+	//hand1->SetRelativeLocation(itemProperties.location);
+	//hand1->SetRelativeRotation(itemProperties.rotation);
 	hand1->SetRelativeScale3D(itemProperties.scale);
 	hand1->SetStaticMesh(itemProperties.staticMesh);
 
@@ -2135,8 +2135,10 @@ void APlayerControls::PutOn2FirstHand(FItemProperties itemProperties, bool Decre
 
 void APlayerControls::PutOn2SecondHand(FItemProperties itemProperties, bool DecreaseFromInventory)
 {
-	hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
-	hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
+	//hand2->SetRelativeLocation(FVector(-itemProperties.location.X, itemProperties.location.Y, itemProperties.location.Z));
+	//hand2->SetRelativeRotation(FQuat(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z, itemProperties.rotation.W));
+	//hand2->SetRelativeRotation(FRotator(itemProperties.rotation.X, -itemProperties.rotation.Y, itemProperties.rotation.Z));
+
 	hand2->SetRelativeScale3D(itemProperties.scale);
 	hand2->SetStaticMesh(itemProperties.staticMesh);
 
