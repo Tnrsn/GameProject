@@ -169,6 +169,8 @@ public:
 	UPROPERTY()
 		bool followingChar;
 	UPROPERTY()
+		bool followingCharDirectly;
+	UPROPERTY()
 		bool onAIControl = true;
 	UPROPERTY()
 		APlayerControls* controlledChar;
@@ -244,6 +246,9 @@ public:
 	bool isPaused = false;
 	int delayContinue = 0;
 
+	//misc
+	UDefaultGameInstance* instance;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -316,12 +321,16 @@ public:
 		FVector GetPlayerBehindLocation(float behind, float right);
 	UFUNCTION()
 		void ResetAnimations();
+	UFUNCTION()
+		void ToggleGroupHold();
 	//Save load
 	UFUNCTION()
 		void SaveGame();
 	UFUNCTION(BlueprintCallable)
 		void LoadGame();
 	//Combat
+	UFUNCTION()
+		void CheckIfInCombat();
 	UFUNCTION()
 		void Attack(float DeltaTime, AActor* enemyActor);
 	UFUNCTION()
@@ -345,6 +354,8 @@ public:
 		void CheckCombatAnim(AActor* enemyActor);
 	UFUNCTION()
 		void RefillHealthAndEnergy();
+	UFUNCTION()
+		bool DealHealthAfterDeath();
 
 	//Combat AI Behaviour
 	UFUNCTION()

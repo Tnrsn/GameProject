@@ -13,7 +13,8 @@ UENUM(BlueprintType)
 enum FMainQuestLine
 {
 	None,
-	TalkToElder
+	TalkToElder,
+	RescueTheGirl
 };
 UCLASS()
 class GAMEPROJECT_API UQuestSystem : public UObject

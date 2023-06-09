@@ -20,6 +20,8 @@ public:
 	FString playerName;
 	bool reloading = false;
 
+	bool groupHold = false;
+
 	UPROPERTY(BlueprintReadOnly)
 		bool showHealthBars = false;
 

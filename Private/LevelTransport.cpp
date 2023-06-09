@@ -39,6 +39,8 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 {
 	UWorld* world = GetWorld();
 
+
+
 	USaveSystem* saveSystem;
 	saveSystem = world->GetSubsystem<USaveSystem>();
 
@@ -57,6 +59,12 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 	{
 		player->InitCharacter(world);
 		player->inMenu = false;
+	}
+
+	if (worldName == "MainMenu")
+	{
+		UGameplayStatics::OpenLevel(world, worldName);
+		return;
 	}
 
 	player->currentWorldName = worldName.ToString();

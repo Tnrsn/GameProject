@@ -3,6 +3,7 @@
 
 #include "CharacterProfiles.h"
 #include <Kismet/GameplayStatics.h>
+#include "../PlayerControls.h"
 
 void UCharacterProfiles::InitRefilling(UWorld* world, float deltaSeconds)
 {
@@ -12,8 +13,8 @@ void UCharacterProfiles::InitRefilling(UWorld* world, float deltaSeconds)
 		//FTimerHandle refillTimerHandle;
 
 		world->GetTimerManager().SetTimer(refillTimerHandle, [&, deltaSeconds, world]() {
-			if (!dead)
-			{
+			//if (!dead)
+			//{
 				if (characterMaximumEnergy > characterCurrentEnergy)
 				{
 					float energyToAdd = (characterMaximumEnergy - characterCurrentEnergy) * 0.000000001f;
@@ -48,15 +49,15 @@ void UCharacterProfiles::InitRefilling(UWorld* world, float deltaSeconds)
 					isRefilling = false;
 					world->GetTimerManager().ClearTimer(refillTimerHandle);
 				}
-			}
-			else
-			{
-				characterCurrentEnergy = 0;
-				characterCurrentHealth = 0;
+			//}
+			//else
+			//{
+			//	characterCurrentEnergy = 0;
+			//	characterCurrentHealth = 0;
 
-				isRefilling = false;
-				world->GetTimerManager().ClearTimer(refillTimerHandle);
-			}
+			//	isRefilling = false;
+			//	world->GetTimerManager().ClearTimer(refillTimerHandle);
+			//}
 			}, deltaSeconds, true);
 	}
 }
