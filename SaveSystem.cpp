@@ -472,6 +472,7 @@ void USaveSystem::LoadItem(APlayerControls* player, FItemProperties& SpawnItem, 
 			return;
 		}
 
+
 		if (player->characterProfile->charGender == Male)
 		{
 			SpawnItem.skeletalMesh_M = LoadObject<USkeletalMesh>(nullptr, *SpawnItem.skeletalMeshPath_M);

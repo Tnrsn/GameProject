@@ -5,7 +5,10 @@
 
 ANPC_Management::ANPC_Management()
 {
-
+	weapon2 = CreateDefaultSubobject<UStaticMeshComponent>("weapon2");
+	weapon2->SetupAttachment(handsMesh, "LeftHand");
+	weapon1 = CreateDefaultSubobject<UStaticMeshComponent>("weapon1");
+	weapon1->SetupAttachment(handsMesh, "RightHand");
 }
 
 // Called when the game starts or when spawned

@@ -2136,19 +2136,98 @@ void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 	FItemProperties itemProperties = GetWorld()->SpawnActor<AMasterItem>(itemClass)->ItemProperties;
 	if (itemProperties.Category == Armor)
 	{
-		if (characterProfile->charGender == Male)
-		{
-			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
-		}
-		else
-		{
-			torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
-		}
+		//if (characterProfile->charGender == Male)
+		//{
+		//	torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+		//}
+		//else
+		//{
+		//	torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+		//}
 
-		characterProfile->characterArmor.top = itemProperties;
-		characterProfile->characterArmor.top.isEquipped = true;
+		//characterProfile->characterArmor.top = itemProperties;
+		//characterProfile->characterArmor.top.isEquipped = true;
 
-		characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
+		//characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
+		//****************************************************************************************
+		if (itemProperties.WearableType == Head)
+		{
+			//hairGroom->SetSkeletalMesh(itemProperties.skeletalMesh);
+			if (itemProperties.hideHeadMesh)
+			{
+				headMesh->SetVisibility(false);
+			}
+
+			characterProfile->characterArmor.head = itemProperties;
+			characterProfile->characterArmor.head.isEquipped = true;
+
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.head.weight;
+		}
+		else if (itemProperties.WearableType == Top)
+		{
+			if (characterProfile->charGender == Male)
+			{
+				torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				torsoMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
+
+			characterProfile->characterArmor.top = itemProperties;
+			characterProfile->characterArmor.top.isEquipped = true;
+
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.top.weight;
+		}
+		else if (itemProperties.WearableType == Hand)
+		{
+			if (characterProfile->charGender == Male)
+			{
+				handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				handsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
+
+			characterProfile->characterArmor.hand = itemProperties;
+			characterProfile->characterArmor.hand.isEquipped = true;
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.hand.weight;
+		}
+		else if (itemProperties.WearableType == Foot)
+		{
+			if (characterProfile->charGender == Male)
+			{
+				footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_M);
+			}
+			else
+			{
+				footsMesh->SetSkeletalMesh(itemProperties.skeletalMesh_F);
+			}
+
+			characterProfile->characterArmor.foot = itemProperties;
+			characterProfile->characterArmor.foot.isEquipped = true;
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.foot.weight;
+		}
+		else if (itemProperties.WearableType == FirstRing)
+		{
+			characterProfile->characterArmor.firstRing = itemProperties;
+			characterProfile->characterArmor.firstRing.isEquipped = true;
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.firstRing.weight;
+		}
+		else if (itemProperties.WearableType == SecondRing)
+		{
+			characterProfile->characterArmor.secondRing = itemProperties;
+			characterProfile->characterArmor.secondRing.isEquipped = true;
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.secondRing.weight;
+		}
+		else if (itemProperties.WearableType == Neck)
+		{
+			characterProfile->characterArmor.neck = itemProperties;
+			characterProfile->characterArmor.neck.isEquipped = true;
+			characterProfile->currentInventoryWeight += characterProfile->characterArmor.neck.weight;
+		}
+		ResetAnimations();
 	}
 	else if (itemProperties.Category == Weapon)
 	{
@@ -2156,20 +2235,14 @@ void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 		{
 			if (characterProfile->characterArmor.weapon1.isEquipped)
 			{
-				if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
-				{
-					PutOffItem(characterProfile, 7);
-				}
-				else if (characterProfile->characterArmor.weapon2.isEquipped)
+				if (characterProfile->characterArmor.weapon2.isEquipped)
 				{
 					if (characterProfile->characterArmor.weapon2.WearableType == Shield) //If weapon2 slots has a onehandedwaepon then put off it and wear new selected wearable
 					{
-						PutOffItem(characterProfile, 7);
 						PutOn2FirstHand(itemProperties, false);
 					}
 					else if (characterProfile->characterArmor.weapon2.WearableType == OneHandedWeapon)
 					{
-						PutOffItem(characterProfile, 8);
 						PutOn2SecondHand(itemProperties, false);
 					}
 
@@ -2186,26 +2259,10 @@ void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 		}//One Handed Weapons End
 		else if (itemProperties.WearableType == TwoHandedWeapon)
 		{
-			if (characterProfile->characterArmor.weapon1.isEquipped)
-			{
-				PutOffItem(characterProfile, 5);
-			}
-			if (characterProfile->characterArmor.weapon2.isEquipped)
-			{
-				PutOffItem(characterProfile, 6);
-			}
 			PutOn2FirstHand(itemProperties, false);
 		}//Two Handede Weapons End
 		else if (itemProperties.WearableType == Shield)
 		{
-			if (characterProfile->characterArmor.weapon1.WearableType == TwoHandedWeapon)
-			{
-				PutOffItem(characterProfile, 5);
-			}
-			if (characterProfile->characterArmor.weapon2.isEquipped)
-			{
-				PutOffItem(characterProfile, 6);
-			}
 			PutOn2SecondHand(itemProperties, false);
 		}
 	}

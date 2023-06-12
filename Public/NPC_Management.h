@@ -59,6 +59,11 @@ public:
 	//UPROPERTY(EditAnywhere)
 	//	FCharacterWearables characterWearables;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		UStaticMeshComponent* weapon1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Meshes")
+		UStaticMeshComponent* weapon2;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
