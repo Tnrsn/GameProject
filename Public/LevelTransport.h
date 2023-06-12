@@ -38,6 +38,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed);
+	UFUNCTION()
+		void ResetTimers(UWorld* world);
 	//UFUNCTION()
 	//	void LoadingScreen(FString LevelName);
 };

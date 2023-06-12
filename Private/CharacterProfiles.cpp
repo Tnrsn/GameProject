@@ -48,6 +48,7 @@ void UCharacterProfiles::InitRefilling(UWorld* world, float deltaSeconds)
 				{
 					isRefilling = false;
 					world->GetTimerManager().ClearTimer(refillTimerHandle);
+					return;
 				}
 			//}
 			//else

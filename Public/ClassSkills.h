@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include <Engine/World.h>
 #include "DamageZone.h"
+#include "DefaultGameInstance.h"
 #include "CharacterProfiles.h"
 #include "UObject/NoExportTypes.h"
 #include <Components/SphereComponent.h>
@@ -24,6 +25,8 @@ private:
 	FTimerHandle decalTimer;
 
 public:
+	AActor* owner;
+
 	UPROPERTY(BlueprintReadOnly)
 		bool skillOneTargeting = false;
 	UPROPERTY(BlueprintReadOnly)
@@ -39,20 +42,26 @@ public:
 	//Charge skill variables
 	FTimerHandle chargeTimer;
 	FVector startLocation;
-
+	FVector currentLocation;
 	
+	//Decals
+	UPROPERTY()
+		AAbilityDecal* abilityAreaDecal;
+	UPROPERTY()
+		AAbilityDecal* selectionDecal;
+
 
 	UFUNCTION()
 		bool isDamageToHostile(ACharacter* player); //Checks for area damages
 	UFUNCTION()
-		bool CanHit(ACharacter* player); //Checks for single damages
+		bool CanHit(ACharacter* player, AActor* enemy); //Checks for single damages
 
 	UFUNCTION()
-		void SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
+		void SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy = nullptr);
 	UFUNCTION()
-		void SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
+		void SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy = nullptr);
 	UFUNCTION()
-		void SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target);
+		void SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy = nullptr);
 
 	//Warrior Skills
 	UFUNCTION()
@@ -60,19 +69,19 @@ public:
 	UFUNCTION()
 		void WhirlWind(ACharacter* player);
 	UFUNCTION()
-		bool PowerStrike(ACharacter* player);
+		bool PowerStrike(ACharacter* player, AActor* enemy);
 
 	//Rogue Skills
 	UFUNCTION()
-		bool DualWield(ACharacter* player);
+		bool DualWield(ACharacter* player, AActor* enemy);
 	UFUNCTION()
 		void Evasion(ACharacter* player);
 	UFUNCTION()
-		bool BacksStab(ACharacter* player);
+		bool BacksStab(ACharacter* player, AActor* enemy);
 
 	//Mage Skills
 	UFUNCTION()
-		bool Blitz(ACharacter* player);
+		bool Blitz(ACharacter* player, AActor* enemy);
 	UFUNCTION()
 		bool SuperNova(ACharacter* player, FVector target);
 	UFUNCTION()
@@ -86,4 +95,6 @@ public:
 
 	UFUNCTION()
 		void CancelSkillTargetings();
+	UFUNCTION()
+		void DestroyDecals();
 };

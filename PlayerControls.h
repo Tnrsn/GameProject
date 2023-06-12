@@ -18,6 +18,7 @@
 #include "Public/ManageWidgets.h"
 #include "LootObject.h"
 #include "Public/MasterItem.h"
+//#include "Public/DialogTrigger.h"
 #include <Kismet/GameplayStatics.h>
 #include "Public/EnemyFinderComp.h"
 #include <GameFramework/CharacterMovementComponent.h>
@@ -173,6 +174,8 @@ public:
 	UPROPERTY()
 		bool onAIControl = true;
 	UPROPERTY()
+		bool onUserControl = false;
+	UPROPERTY()
 		APlayerControls* controlledChar;
 	UPROPERTY()
 		int charIndex;
@@ -184,8 +187,8 @@ public:
 		USaveSystem* saveSystem;
 	UPROPERTY()
 		FString currentWorldName;
-	static bool newLevelLoaded;
-	static bool loadAfterNewWorld;
+	//static bool newLevelLoaded;
+	//static bool loadAfterNewWorld;
 
 	bool firstEncounter = true;
 
@@ -402,6 +405,8 @@ public:
 		void SetHBInvisible();
 	UFUNCTION()
 		bool isMovingWithKeyboard();
+	UFUNCTION()
+		void HandleCollisionAfterDeath();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -411,5 +416,5 @@ public:
 
 };
 
-bool APlayerControls::newLevelLoaded = false; //It's for when player loads save
-bool APlayerControls::loadAfterNewWorld = false; //It's for when character transports between worlds
+//bool APlayerControls::newLevelLoaded = false; //It's for when player loads save
+//bool APlayerControls::loadAfterNewWorld = false; //It's for when character transports between worlds

@@ -33,12 +33,14 @@ public:
 		UNPCDialogSystem* dialogSystem;
 	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 		TSubclassOf<UUserWidget> dialogBoxUI;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Dialog System")
 		TArray<FConversations> Conversations;
 	UPROPERTY(BlueprintReadWrite)
 		int currentConservation = 0;
 	UPROPERTY(BlueprintReadWrite)
 		int currentTalk = 0;
+	UPROPERTY(BlueprintReadWrite)
+		int triggerConversationIndex = -2;
 
 	APlayerControls* playerControl;
 
@@ -51,6 +53,9 @@ public:
 		TEnumAsByte<FCharacterGender> charGender;
 	UPROPERTY(EditAnywhere)
 		TEnumAsByte<FCharacterClasses> charClass;
+
+	UPROPERTY(EditAnywhere)
+		FString charName;
 	//UPROPERTY(EditAnywhere)
 	//	FCharacterWearables characterWearables;
 
@@ -63,7 +68,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable)
-		void StartDialog();
+		void StartDialog(int conversationTriggerIndex = -2);
 	UFUNCTION(BlueprintCallable)
-		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest); //Returns if player still in a dialog
+		bool DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest, FString newName); //Returns if player still in a dialog
 };

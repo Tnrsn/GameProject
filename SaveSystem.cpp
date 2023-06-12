@@ -26,7 +26,7 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	FString FilePath;
 	if (autoSave)
 	{
-		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
+		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
 		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
 	}
 	else
@@ -86,6 +86,14 @@ void USaveSystem::CreateSaveFile(AActor* Actor, FString path, FString saveName, 
 	ActorData.characterArmor.weapon1 = player->characterProfile->characterArmor.weapon1;
 	ActorData.characterArmor.weapon2 = player->characterProfile->characterArmor.weapon2;
 
+	//NPCS savings
+	if (Cast<ANPC_Management>(player))
+	{
+		ANPC_Management* npc = Cast<ANPC_Management>(player);
+
+		ActorData.currentConversation = npc->currentConservation;
+	}
+
 
 	//----------------------------------------------------------------------------------------Savings End---------------------------------------------
 	//****************************
@@ -109,13 +117,14 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 	if (autoSave)
 	{
 		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + Actor->GetName() + "/" + path + ".dat";
-		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
+		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + "AutoSave/" + path + ".dat";
 	}
 	else
 	{
+		UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(Actor->GetGameInstance());
 		//FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
-		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + saveName + "/" + path + ".dat";
-
+		FilePath = UKismetSystemLibrary::GetProjectSavedDirectory() + "Saves/" + instance->playerName + "/" + path + ".dat";
+		//UE_LOG(LogTemp, Warning, TEXT("saveName: %s -- path: %s"), *instance->playerName, *path);
 	}
 
 	if(FPaths::FileExists(FilePath))
@@ -153,12 +162,12 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 		//	return false;
 		//}
 
-		if (!APlayerControls::loadAfterNewWorld)
-		{
-			//ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
-			ActorOut->Serialize(Ar);
-			player->currentWorldName = SpawnInfo.currentWorldName;
-		}
+		//if (!APlayerControls::loadAfterNewWorld)
+		//{
+		//	//ActorOut->SetActorTransform(SpawnInfo.ActorTransform);
+		//	ActorOut->Serialize(Ar);
+		//	player->currentWorldName = SpawnInfo.currentWorldName;
+		//}
 
 		if (!player->characterProfile) player->DispatchBeginPlay();
 
@@ -196,8 +205,8 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		//Character Stats
 		player->characterProfile->charName = SpawnInfo.charName;
-		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *player->characterProfile->charName);
-		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *SpawnInfo.charName);
+		//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *player->characterProfile->charName);
+		//UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *player->GetName(), *SpawnInfo.charName);
 
 		player->characterProfile->charGender = static_cast<FCharacterGender>(SpawnInfo.charGender);
 		player->characterProfile->charRace = static_cast<FCharacterRace>(SpawnInfo.charRace);
@@ -240,6 +249,14 @@ bool USaveSystem::LoadSaveFile(AActor* Actor, FString path, FString saveName, bo
 
 		//After wearing everything, resetting animations stabilizes character animation
 		player->ResetAnimations();
+
+		//NPCS
+		if (Cast<ANPC_Management>(player))
+		{
+			ANPC_Management* npc = Cast<ANPC_Management>(player);
+
+			npc->currentConservation = SpawnInfo.currentConversation;
+		}
 
 		//------------------------------------------------------------------------------Loading Done------------------------------------------------
 		//***********************
@@ -284,40 +301,40 @@ void USaveSystem::OnLevelLoad()
 				AAIController* NPCAI = GetWorld()->SpawnActor<AAIController>(AIController, Location, Rotation, Params);
 				NPCAI->Possess(NPCSave);
 
+
 				if (NPCSave->inGroup)
 				{
 					LoadGroupMembers(playerSave, NPCSave);
 
-					if (NPCSave->loadAfterNewWorld)
+					// Set NPCs' locations behind the player if they are moving to a new world
+					if (NPCSave->charIndex == 1)
 					{
-						// Set NPCs' locations behind the player if they are moving to a new world
-						if (NPCSave->charIndex == 1)
-						{
-							NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(155, 290));
-						}
-						else if (NPCSave->charIndex == 2)
-						{
-							NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(200, 0));
-						}
-						else if (NPCSave->charIndex == 3)
-						{
-							NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(140, -305));
-						}
+						NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(155, 290));
+					}
+					else if (NPCSave->charIndex == 2)
+					{
+						NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(200, 0));
+					}
+					else if (NPCSave->charIndex == 3)
+					{
+						NPCSave->SetActorLocation(NPCSave->GetPlayerBehindLocation(140, -305));
 					}
 				}
 
-				for (AActor* persistentActor : persistentLevelActors)
-				{
-					if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Find("_C_")) == actorName)
-					{
-						persistentActor->Rename(*FString::Printf(TEXT("DestroyedObject_%d"), FMath::Rand()));
-						persistentActor->Destroy();
-						break;
-					}
-				}
+				//for (AActor* persistentActor : persistentLevelActors)
+				//{
+					//************************************************************ This part breaks packaged game
+					//if (persistentActor && persistentActor->GetName().Left(persistentActor->GetName().Find("_C_")) == actorName)
+					//{
+					//	persistentActor->Rename(*FString::Printf(TEXT("DestroyedObject_%d"), FMath::Rand()));
+					//	persistentActor->Destroy();
+					//	break;
+					//}
+					//************************************************************************************
+				//}
 
-				FString newName = *NPCSave->GetName().Left(NPCSave->GetName().Find("_C_")) + FString("_C_1");
-				NPCSave->Rename(*newName);
+				//FString newName = *NPCSave->GetName().Left(NPCSave->GetName().Find("_C_")) + FString("_C_1");
+				//NPCSave->Rename(*newName);
 			}
 			else
 			{
@@ -337,7 +354,7 @@ void USaveSystem::OnLevelLoad()
 	}
 
 	timesLoaded++;
-	APlayerControls::loadAfterNewWorld = false;
+	//APlayerControls::loadAfterNewWorld = false;
 	TSave = false;
 	SName = "";
 
@@ -351,9 +368,10 @@ void USaveSystem::OnLevelLoad()
 }
 
 
-void USaveSystem::SaveGame(FString saveName, bool autoSave)
+void USaveSystem::SaveGame(UWorld* world, FString saveName, bool autoSave)
 {
-	TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
+	//TArray<AActor*> persistentLevelActors = GetWorld()->PersistentLevel->Actors;
+	TArray<AActor*> persistentLevelActors = world->PersistentLevel->Actors;
 
 	for (AActor* actor : persistentLevelActors)
 	{
@@ -445,8 +463,8 @@ void USaveSystem::LoadItem(APlayerControls* player, FItemProperties& SpawnItem, 
 		{
 			SpawnItem.staticMesh = LoadObject<UStaticMesh>(nullptr, *SpawnItem.staticMeshPath);
 			staticMeshComp->SetStaticMesh(SpawnItem.staticMesh);
-			staticMeshComp->SetRelativeLocation(SpawnItem.location);
-			staticMeshComp->SetRelativeRotation(SpawnItem.rotation);
+			//staticMeshComp->SetRelativeLocation(SpawnItem.location);
+			//staticMeshComp->SetRelativeRotation(SpawnItem.rotation);
 			staticMeshComp->SetRelativeScale3D(SpawnItem.scale);
 
 

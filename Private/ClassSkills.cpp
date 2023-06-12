@@ -3,7 +3,6 @@
 
 #include "ClassSkills.h"
 #include <Engine/EngineTypes.h>
-#include "DefaultGameInstance.h"
 #include "../PlayerControls.h"
 #include "NPC_Management.h"
 
@@ -27,35 +26,35 @@ bool UClassSkills::isDamageToHostile(ACharacter* player)
 	}
 }
 
-bool UClassSkills::CanHit(ACharacter* player)
+bool UClassSkills::CanHit(ACharacter* player, AActor* enemy)
 {
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	bool damageToHostile = isDamageToHostile(player);
 
-	if (Cast<ANPC_Management>(hitter->actorToBeGone))
+	if (Cast<ANPC_Management>(enemy))
 	{
-		ANPC_Management* enemy = Cast<ANPC_Management>(hitter->actorToBeGone);
-		if (enemy->NPCStyle == Hostile && damageToHostile)
+		ANPC_Management* enemyNPC = Cast<ANPC_Management>(enemy);
+		if (enemyNPC->NPCStyle == Hostile && damageToHostile)
 		{
-			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			enemyNPC->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
 			return true;
 		}
-		else if (enemy->inGroup && !damageToHostile)
+		else if (enemyNPC->inGroup && !damageToHostile)
 		{
-			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			enemyNPC->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
 			return true;
 		}
 	}
 	else if (!damageToHostile) //Hits to main character
 	{
-		APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
-		enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+		APlayerControls* enemyNPC = Cast<APlayerControls>(enemy);
+		enemyNPC->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
 		return true;
 	}
 	return false;
 }
 
-void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
+void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy)
 {
 	APlayerControls* plyr = Cast<APlayerControls>(player);
 
@@ -80,7 +79,16 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rogue: DualWield"));
 
-		if (DualWield(player))
+
+		if (!skillOneTargeting)
+		{
+			HandleAbilityAreaDecal(player, .45f, 0.f);
+
+			skillOneTargeting = true;
+			return;
+		}
+
+		if (DualWield(player, enemy))
 		{
 			plyr->characterProfile->characterCurrentEnergy -= 15;
 		}
@@ -89,7 +97,15 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Mage: Blitz"));
 
-		if (Blitz(player))
+		if (!skillOneTargeting)
+		{
+			HandleAbilityAreaDecal(player, 4.5, 0.f);
+
+			skillOneTargeting = true;
+			return;
+		}
+
+		if (Blitz(player, enemy))
 		{
 			plyr->characterProfile->characterCurrentEnergy -= 15;
 		}
@@ -99,7 +115,7 @@ void UClassSkills::SkillOne(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	skillOneTargeting = false;
 }
 
-void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
+void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy)
 {
 	APlayerControls* plyr = Cast<APlayerControls>(player);
 	if (plyr->characterProfile->characterCurrentEnergy < 25) return;
@@ -144,7 +160,7 @@ void UClassSkills::SkillTwo(TEnumAsByte<FCharacterClasses> charClass, ACharacter
 	skillTwoTargeting = false;
 }
 
-void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target)
+void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharacter* player, FVector target, AActor* enemy)
 {
 	APlayerControls* plyr = Cast<APlayerControls>(player);
 	if (plyr->characterProfile->characterCurrentEnergy < 35) return;
@@ -153,7 +169,14 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Warrior: Power Strike"));
 
-		if (PowerStrike(player))
+		if (!skillThreeTargeting)
+		{
+			HandleAbilityAreaDecal(player, .45f, 0.f);
+			skillThreeTargeting = true;
+			return;
+		}
+
+		if (PowerStrike(player, enemy))
 		{
 			plyr->characterProfile->characterCurrentEnergy -= 35;
 		}
@@ -162,7 +185,14 @@ void UClassSkills::SkillThree(TEnumAsByte<FCharacterClasses> charClass, ACharact
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Rogue: Backstab"));
 
-		if (BacksStab(player))
+		if (!skillThreeTargeting)
+		{
+			HandleAbilityAreaDecal(player, 3.85f, 0.f);
+			skillThreeTargeting = true;
+			return;
+		}
+
+		if (BacksStab(player, enemy))
 		{
 			plyr->characterProfile->characterCurrentEnergy -= 35;
 		}
@@ -193,15 +223,18 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 {
 	//Disables Friction so character can slide on ground
 	player->GetCharacterMovement()->GroundFriction = .0f;
+	UWorld* world = player->GetWorld();
 
 	// Get the current location of the character
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 	
 	//Set DamageZone
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
+	//ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
+	ADamageZone* damageZone = world->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
+
 	if (damageZone)
 	{
 		damageZone->damageArea->SetSphereRadius(100);
@@ -227,34 +260,40 @@ void UClassSkills::Charge(ACharacter* player, FVector target)
 	//Play Animation********
 	hitter->slashAnim = true;
 
-	//float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
-	//float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
-
-	player->GetWorldTimerManager().SetTimer(chargeTimer,
-		FTimerDelegate::CreateLambda([=]()
+	if (world)
+	{
+		float deltaSeconds = world->GetDeltaSeconds();
+	 
+	// //**********************************************************************************************
+		world->GetTimerManager().SetTimer(chargeTimer, [&, world, hitter, player, damageZone]() 
 			{
-				FVector currentLocation = player->GetActorLocation();
+				currentLocation = player->GetActorLocation();
 				damageZone->SetActorLocation(currentLocation);
-
+				GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("Hey"));
 				//Sets Friction to default value if character speed is normal or less than normal
 				if (player->GetVelocity().Size() <= 8500 || FVector::Distance(currentLocation, startLocation) > 1000.f)
 				{
 					player->GetCharacterMovement()->GroundFriction = 8.0f;
 
 					damageZone->Destroy();
-					hitter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
-					//Stops loop
-					player->GetWorldTimerManager().ClearTimer(chargeTimer);
 
+
+
+
+					hitter->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECollisionResponse::ECR_Block);
 					//Stop Animation*******
 					hitter->slashAnim = false;
+
+				//	//Stops loop
+					world->GetTimerManager().ClearTimer(chargeTimer);
 				}
-			}), player->GetWorld()->GetDeltaSeconds(), true);
+			}, deltaSeconds, true);
+	}
 }
 
 void UClassSkills::WhirlWind(ACharacter* player)
 {
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -262,7 +301,7 @@ void UClassSkills::WhirlWind(ACharacter* player)
 	ADamageZone* damageZone = player->GetWorld()->SpawnActor<ADamageZone>(ADamageZone::StaticClass(), currentLocation, FRotator::ZeroRotator, SpawnParams);
 	if (damageZone)
 	{
-		damageZone->damageArea->SetSphereRadius(250);
+		damageZone->damageArea->SetSphereRadius(125);
 		damageZone->damage = 50;
 
 		damageZone->damageToHostile = isDamageToHostile(player);
@@ -284,15 +323,15 @@ void UClassSkills::WhirlWind(ACharacter* player)
 			}), DelayTime, false);
 }
 
-bool UClassSkills::PowerStrike(ACharacter* player)
+bool UClassSkills::PowerStrike(ACharacter* player, AActor* enemy)
 {
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 	
-	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 120)
+	if (Cast<APlayerControls>(enemy) && hitter->GetDistanceTo(enemy) <= 120)
 	{
-		if (CanHit(hitter))
+		if (CanHit(hitter, enemy))
 		{
 			hitter->slashAnim = true;
 
@@ -317,15 +356,15 @@ bool UClassSkills::PowerStrike(ACharacter* player)
 }
 
 //Rogue Skills
-bool UClassSkills::DualWield(ACharacter* player)
+bool UClassSkills::DualWield(ACharacter* player, AActor* enemy)
 {
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 
-	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 120)
+	if (Cast<APlayerControls>(enemy) && hitter->GetDistanceTo(enemy) <= 120)
 	{
-		if (CanHit(hitter))
+		if (CanHit(hitter, enemy))
 		{
 			hitter->slashAnim = true;
 
@@ -377,19 +416,19 @@ void UClassSkills::Evasion(ACharacter* player)
 			}), DelayTime, false);
 }
 
-bool UClassSkills::BacksStab(ACharacter* player)
+bool UClassSkills::BacksStab(ACharacter* player, AActor* enemy)
 {
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 
-	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 1000)
+	if (Cast<APlayerControls>(enemy) && hitter->GetDistanceTo(enemy) <= 1000)
 	{
-		if (CanHit(hitter))
+		if (CanHit(hitter, enemy))
 		{
-			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
+			APlayerControls* enemyNPC = Cast<APlayerControls>(enemy);
 			hitter->SetActorLocation(enemy->GetActorLocation() + (enemy->GetActorForwardVector() * -25));
-			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
+			enemyNPC->ApplyDamage(hitter->characterProfile->characterStats.strength * 2);
 			//Play Animation
 
 			hitter->slashAnim = true;
@@ -413,23 +452,23 @@ bool UClassSkills::BacksStab(ACharacter* player)
 	}
 }
 
-bool UClassSkills::Blitz(ACharacter* player)
+bool UClassSkills::Blitz(ACharacter* player, AActor* enemy)
 {
-	FVector currentLocation = player->GetActorLocation();
+	currentLocation = player->GetActorLocation();
 
 	APlayerControls* hitter = Cast<APlayerControls>(player);
 
-	if (Cast<APlayerControls>(hitter->actorToBeGone) && hitter->GetDistanceTo(hitter->actorToBeGone) <= 1100)
+	if (Cast<APlayerControls>(enemy) && hitter->GetDistanceTo(enemy) <= 1100)
 	{
-		if (CanHit(hitter))
+		if (CanHit(hitter, enemy))
 		{
-			APlayerControls* enemy = Cast<APlayerControls>(hitter->actorToBeGone);
-			enemy->ApplyDamage(hitter->characterProfile->characterStats.strength * 3);
+			APlayerControls* enemyNPC = Cast<APlayerControls>(enemy);
+			enemyNPC->ApplyDamage(hitter->characterProfile->characterStats.strength * 3);
 			//Play Animation
 
 			hitter->spellCasting = true;
 
-			PlaySparks(player, enemy->GetActorLocation());
+			PlaySparks(player, enemyNPC->GetActorLocation());
 
 			float TimeDilation = UGameplayStatics::GetGlobalTimeDilation(player->GetWorld());
 			float DelayTime = player->GetWorld()->GetDeltaSeconds() / TimeDilation;
@@ -555,8 +594,8 @@ void UClassSkills::HandleAbilityAreaDecal(ACharacter* player, float abilityAreaS
 
 	UWorld* world = playerCharacter->GetWorld();
 	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(UGameplayStatics::GetGameInstance(world));
-	AAbilityDecal* abilityAreaDecal = world->SpawnActor<AAbilityDecal>(instance->abilityArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
-	AAbilityDecal* selectionDecal = world->SpawnActor<AAbilityDecal>(instance->selectionArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
+	abilityAreaDecal = world->SpawnActor<AAbilityDecal>(instance->abilityArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
+	selectionDecal = world->SpawnActor<AAbilityDecal>(instance->selectionArea, playerCharacter->GetActorLocation(), FRotator::ZeroRotator);
 
 	abilityAreaDecal->SetActorScale3D(FVector(6, abilityAreaSize, abilityAreaSize));
 	selectionDecal->SetActorScale3D(FVector(6, selectionAreaSize, selectionAreaSize));
@@ -564,29 +603,37 @@ void UClassSkills::HandleAbilityAreaDecal(ACharacter* player, float abilityAreaS
 	/*FTimerHandle decalTimer;*/
 	float deltaSeconds = world->GetDeltaSeconds();
 
-	world->GetTimerManager().SetTimer(decalTimer, [&, playerCharacter, abilityAreaDecal, selectionDecal, this, world]() {
+	world->GetTimerManager().SetTimer(decalTimer, [&, playerCharacter, this, world]() {
 		// Destroys decals after skill used
+
+		//UE_LOG(LogTemp, Warning, TEXT("test"));
 		if ((!skillOneTargeting && !skillTwoTargeting && !skillThreeTargeting && decalTimer.IsValid()) || playerCharacter->characterProfile->dead)
 		{
 			CancelSkillTargetings();
+			DestroyDecals();
 
-			if (selectionDecal)
+			//if (selectionDecal)
+			//{
+			//	selectionDecal->Destroy();
+			//}
+			//if (abilityAreaDecal)
+			//{
+			//	abilityAreaDecal->Destroy();
+			//}
+			if (world && decalTimer.IsValid())
 			{
-				selectionDecal->Destroy();
-			}
-			if (abilityAreaDecal)
-			{
-				abilityAreaDecal->Destroy();
-			}
-			if (world)
-			{
+				
+				//decalTimer.Invalidate();
 				world->GetTimerManager().ClearTimer(decalTimer);
 			}
 			return;
 		}
 
 		// Sets ability area position
-		abilityAreaDecal->SetActorLocation(playerCharacter->GetActorLocation());
+		if (abilityAreaDecal)
+		{
+			abilityAreaDecal->SetActorLocation(playerCharacter->GetActorLocation());
+		}
 
 		// Get the screen position of the mouse
 		FHitResult HitResult;
@@ -614,4 +661,21 @@ void UClassSkills::CancelSkillTargetings()
 	skillOneTargeting = false;
 	skillTwoTargeting = false;
 	skillThreeTargeting = false;
+}
+
+void UClassSkills::DestroyDecals()
+{
+	if (abilityAreaDecal)
+	{
+		abilityAreaDecal->Destroy();
+	}
+	if (selectionDecal)
+	{
+		selectionDecal->Destroy();
+	}
+
+	if (owner->GetWorld() && decalTimer.IsValid())
+	{
+		owner->GetWorld()->GetTimerManager().ClearTimer(decalTimer);
+	}
 }

@@ -19,6 +19,7 @@ class GAMEPROJECT_API UDefaultGameInstance : public UGameInstance
 public:
 	FString playerName;
 	bool reloading = false;
+	bool switchingAnotherWorld = false;
 
 	bool groupHold = false;
 

@@ -17,7 +17,8 @@ enum FAnswerType
 	Neutral,
 	EndDialog,
 	Fight,
-	JoinToPlayer
+	JoinToPlayer,
+	ChangeName
 };
 USTRUCT(BlueprintType)
 struct FDialogAnswer
@@ -36,6 +37,14 @@ struct FDialogAnswer
 		int relationEffect = 0;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
 		TEnumAsByte<FMainQuestLine> CompletesQuest;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		FString newName = "";
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		bool persuade = false;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		int requiredInt = 6;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog System")
+		int FailReplyIndex = 0;
 };
 USTRUCT(BlueprintType)
 struct FDialogTalk

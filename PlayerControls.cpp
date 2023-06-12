@@ -2,6 +2,8 @@
 
 
 #include "PlayerControls.h"
+#include <PhysicsEngine/PhysicsSettings.h>
+#include <Components/PrimitiveComponent.h>
 #include "NPC_Management.h"
 
 // Sets default values
@@ -9,7 +11,7 @@ APlayerControls::APlayerControls()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 
@@ -65,6 +67,7 @@ void APlayerControls::BeginPlay()
 	//**********************************************************************************************Create new companions previous ones are broken
 	characterProfile = NewObject<UCharacterProfiles>();
 	skills = NewObject<UClassSkills>();
+	skills->owner = this;
 
 	FName LevelName = FName(World->GetName());
 	if (LevelName != FName("MainMenu") && LevelName != FName("CharacterCreationMenu"))
@@ -84,6 +87,9 @@ void APlayerControls::BeginPlay()
 
 		springArm->LookFromFront();
 	}
+
+
+	
 }
 
 void APlayerControls::Tick(float DeltaTime)
@@ -94,6 +100,11 @@ void APlayerControls::Tick(float DeltaTime)
 	{
 		springArm->RotateCamera(playerController);
 	}
+
+	//if (findEnemyComponent->nearbyEnemies.Num() > 0)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("teeest %s"), *GetName());
+	//}
 
 	if (itemRef && itemRef->canLoot && itemRef->moveToObject)
 	{
@@ -120,11 +131,11 @@ void APlayerControls::Tick(float DeltaTime)
 
 	RefillHealthAndEnergy();
 
-	//Interactions with npcs (talking or combat)
-	NPCInteractions(DeltaTime);
-
 	//Stops ai movement If It's necessary
 	StopAIOnInput();
+
+	//Interactions with npcs (talking or combat)
+	NPCInteractions(DeltaTime);
 
 	//Character dies if their health is under 0
 	if (isGroupDead())
@@ -151,6 +162,20 @@ void APlayerControls::Tick(float DeltaTime)
 	characterProfile->HoldEnergyAndHealthAtMax();
 
 	WhenPaused();
+
+	if (instance->possessedActor == this && isMovingWithKeyboard())
+	{
+		onUserControl = true;
+	}
+
+	//if (onAIMovement)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("*************************** On ai %s"), *GetName());
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("NOT On ai %s"), *GetName());
+	//}
 }
 
 bool APlayerControls::IsInMenuLevel() const
@@ -186,6 +211,8 @@ void APlayerControls::InitCharacter(UWorld* world)
 
 		// Create questSystem
 		questSystem = NewObject<UQuestSystem>();
+
+		onUserControl = true;
 	}
 
 	// Set overlap events for findEnemyComponent
@@ -204,44 +231,27 @@ void APlayerControls::InitCharacter(UWorld* world)
 		controlledChar = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	}
 
-	//! DO NOT TOUCH HERE !
+
 	instance = Cast<UDefaultGameInstance>(GetGameInstance());
 	if (charClass == FString("PlayerControls"))
 	{
 		instance->possessedActor = this;
 	}
 
-	if (APlayerControls::newLevelLoaded && charClass == FString("PlayerControls"))
+	if (instance->switchingAnotherWorld && charClass == FString("PlayerControls"))
 	{
-		// Load the game
-		saveSystem->LoadGame("", true);
-
-		APlayerControls::newLevelLoaded = false;
+		//UE_LOG(LogTemp, Warning, TEXT("testtt"));
+		saveSystem->LoadGame(characterProfile->charName, false);
+		instance->switchingAnotherWorld = false;
 	}
-	if (APlayerControls::loadAfterNewWorld && charClass == FString("PlayerControls"))
-	{
-		// Load the game with "AutoSave" slot
-		saveSystem->LoadGame("AutoSave", true);
-	}
-	//*
 
-	//UDefaultGameInstance* gameInstance = Cast<UDefaultGameInstance>(GetGameInstance());
 	if (instance && instance->reloading && charClass == FString("PlayerControls"))
 	{
 		// Load the game with playerName
 		saveSystem->LoadGame(instance->playerName, false);
+		instance->reloading = false;
 	}
 	//^^^^^^^^^^
-	
-	if (charClass == FString("PlayerControls"))
-	{
-		// Set gameInstance possessedActor after a delay
-		FTimerHandle initTimer;
-		world->GetTimerManager().SetTimer(initTimer, [this]() {
-			instance->possessedActor = this;
-			}, .4f, false);
-	}
-	/*characterProfile->InitRefilling(world);*/
 
 	// Set a timer to call SetFirstItems after a delay
 	FTimerHandle TimerHandle;
@@ -311,6 +321,7 @@ void APlayerControls::OverlappedWithActor(AActor* OtherActor)
 
 				//If npc is not in group or if npc is not a Hostile then npc wont attack anyone
 				//To attack anyone npc has to be in group or has to be a hostile
+
 				if (ally->NPCStyle != Hostile && !ally->inGroup) return;
 
 				if (ally->NPCStyle == Hostile)
@@ -323,7 +334,8 @@ void APlayerControls::OverlappedWithActor(AActor* OtherActor)
 				}
 				else
 				{
-					if (onAIControl && enemy->NPCStyle == Hostile)
+					//if (onAIControl && enemy->NPCStyle == Hostile)
+					if (enemy->NPCStyle == Hostile)
 					{
 						StartCombat(enemy);
 					}
@@ -549,24 +561,27 @@ void APlayerControls::ClickEvents()
 		if (skills->skillOneTargeting) //Activating Skills
 		{
 			StopAIMovement(true);
-			skills->SkillOne(characterProfile->charClass, this, HitResult.Location);
+			skills->SkillOne(characterProfile->charClass, this, HitResult.Location, HitResult.GetActor());
 		}
 		else if (skills->skillTwoTargeting)
 		{
 			StopAIMovement(true);
-			skills->SkillTwo(characterProfile->charClass, this, HitResult.Location);
+			skills->SkillTwo(characterProfile->charClass, this, HitResult.Location, HitResult.GetActor());
 		}
 		else if (skills->skillThreeTargeting)
 		{
 			StopAIMovement(true);
-			skills->SkillThree(characterProfile->charClass, this, HitResult.Location);
+			skills->SkillThree(characterProfile->charClass, this, HitResult.Location, HitResult.GetActor());
 		}
+
+
 		//Moving to objects
 		else if (*SelectedActor->GetClass()->GetSuperClass()->GetName() == FName("BP_LootObject_C"))//Open Loot
 		{
 			lootObject = Cast<ALootObject>(SelectedActor);
 			lootObject->EnableLootUI();
 
+			onUserControl = false;
 			actorToBeGone = SelectedActor;
 			MoveToLocation(lootObject, FVector(0));
 			//inCombat = false;
@@ -576,6 +591,7 @@ void APlayerControls::ClickEvents()
 			itemRef = Cast<AMasterItem>(SelectedActor);
 			AddItemToInventoryFromGround();
 
+			onUserControl = false;
 			actorToBeGone = SelectedActor;
 			MoveToLocation(itemRef, FVector(0));
 			//inCombat = false;
@@ -604,6 +620,7 @@ void APlayerControls::ClickEvents()
 				}
 				else //If npc is far then character moves to npc
 				{
+					onUserControl = false;
 					onAIMovement = true;
 					actorToBeGone = SelectedActor;
 					MoveToLocation(actorToBeGone, FVector(0));
@@ -611,15 +628,18 @@ void APlayerControls::ClickEvents()
 			}
 			else if (npc->NPCStyle == Hostile)
 			{
+				//UE_LOG(LogTemp, Warning, TEXT("testttt"));
 				onAIMovement = true;
 				actorToBeGone = SelectedActor;
 				inCombat = true;
+				onUserControl = false;
 			}
 		}
 		else
 		{
 			if (!isMovingWithKeyboard())
 			{
+				onUserControl = false;
 				//inCombat = false;
 				onAIMovement = true;
 				targetLocation = HitResult.Location;
@@ -1189,8 +1209,10 @@ void APlayerControls::ControlFourthCharacter()
 
 void APlayerControls::ControlNPC(int index)
 {
-	if (!groupMembers[index]->characterProfile->dead && groupMembers.Find(this) != index && !inDialog && groupMembers.Num() >= index + 1)
+	if (groupMembers.Find(this) != index && !inDialog && groupMembers.Num() >= index + 1 && !groupMembers[index]->characterProfile->dead)
 	{
+		skills->DestroyDecals();
+
 		camRotating = false;
 
 		onAIControl = true;
@@ -1214,6 +1236,9 @@ void APlayerControls::ControlNPC(int index)
 			lootObject->moveToLootObject = false;
 			lootObject->DisableLootUI(SelectedActor);
 		}
+
+		onUserControl = false;
+		groupMembers[index]->onUserControl = true;
 
 		//Switch controllers
 		groupMembers[index]->GetController()->Possess(this);
@@ -1264,7 +1289,11 @@ void APlayerControls::ControlNPC(int index)
 			{
 				
 				AActor* enemy = groupMembers[index]->actorToBeGone;
-				groupMembers[index]->GetWorldTimerManager().ClearTimer(groupMembers[index]->pickEnemyTimer);
+				if (groupMembers[index]->pickEnemyTimer.IsValid())
+				{
+					groupMembers[index]->GetWorldTimerManager().ClearTimer(groupMembers[index]->pickEnemyTimer);
+				}
+				
 				groupMembers[index]->StopAIMovement(true);
 				groupMembers[index]->actorToBeGone = enemy;
 			}
@@ -1295,7 +1324,7 @@ void APlayerControls::ControlNPC(int index)
 
 void APlayerControls::SmoothCameraSwitch(int index, float moveSpeed)
 {
-	if (!loadAfterNewWorld) //Game crashes if this function works while moving to new world
+	if (!instance->switchingAnotherWorld) //Game crashes if this function works while moving to new world
 	{
 		groupMembers[index]->springArm->TargetOffset.X = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.X, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
 		groupMembers[index]->springArm->TargetOffset.Y = FMath::FInterpTo(groupMembers[index]->springArm->TargetOffset.Y, 0, GetWorld()->GetDeltaSeconds(), moveSpeed);
@@ -1357,6 +1386,7 @@ void APlayerControls::StopAIOnInput()
 	{
 		/*if (GetController() == playerController && (GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::W) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::A)
 			|| GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::S) || GetWorld()->GetFirstPlayerController()->IsInputKeyDown(EKeys::D)))*/
+			//UE_LOG(LogTemp, Warning, TEXT("test %s"), *GetName());
 		if (isMovingWithKeyboard())
 		{
 			StopAIMovement(true);
@@ -1469,7 +1499,7 @@ void APlayerControls::SaveGame()
 	{
 		int temp = groupMembers[0]->charIndex;
 		groupMembers[0]->charIndex = 0;
-		saveSystem->SaveGame("Save1");
+		saveSystem->SaveGame(GetWorld(), "Save1");
 		groupMembers[0]->charIndex = temp;
 	}
 }
@@ -1546,6 +1576,7 @@ void APlayerControls::Attack(float DeltaTime, AActor* enemyActor) //Melee attack
 		// If there is a barrier between character and target, or if character is too far away from the target then character changes Its position
 		if (GetWorld()->LineTraceSingleByChannel(OutHit, GetActorLocation(), enemy->GetActorLocation(), ECC_Visibility, CollisionParams) || GetDistanceTo(enemy) > 1000)
 		{
+			//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
 			MoveToLocation(enemy, FVector(0));
 		}
 		else
@@ -1648,7 +1679,7 @@ bool APlayerControls::isDamagedEnemy(AActor* enemyActor)
 
 void APlayerControls::NPCInteractions(float DeltaTime)
 {
-	if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C"))
+	if (!onUserControl && actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("BP_NPC_Management_C"))
 	{
 		ANPC_Management* npc = Cast<ANPC_Management>(actorToBeGone);
 		if (npc->characterProfile->dead)
@@ -1665,6 +1696,8 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 			//	inCombat = false;
 			//	StopAIMovement(true);
 			//}
+			//UE_LOG(LogTemp, Warning, TEXT("%s"), *GetName());
+
 			Attack(DeltaTime, npc);
 		}
 		else if (npc->NPCStyle == Talkable && GetDistanceTo(npc) < 250) //To Start a dialog
@@ -1678,7 +1711,7 @@ void APlayerControls::NPCInteractions(float DeltaTime)
 			SetActorRotation((npc->GetActorLocation() - GetActorLocation()).Rotation());
 		} 
 	}//Main characters combat with npcs
-	else if (actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
+	else if (!onUserControl && actorToBeGone && actorToBeGone->GetClass()->GetSuperClass()->GetName() == FString("PlayerControls"))
 	{
 		if (Cast<ANPC_Management>(this))
 		{
@@ -1708,7 +1741,10 @@ void APlayerControls::TurnToEnemy(FVector enemyLocation)
 
 void APlayerControls::StartCombat(AActor* enemy)
 {
-	GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+	if (pickEnemyTimer.IsValid())
+	{
+		GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+	}
 	inCombat = true;
 
 	if (enemy)
@@ -1755,23 +1791,37 @@ void APlayerControls::StartCombat(AActor* enemy)
 					inCombat = false;
 
 					//Stops loop
-					pickEnemyTimer.Invalidate();
-
-					UE_LOG(LogTemp, Warning, TEXT("Stopped because of death %s"), *GetName());
+					//pickEnemyTimer.Invalidate();
+					if (pickEnemyTimer.IsValid())
+					{
+						GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+						return;
+					}
+					//UE_LOG(LogTemp, Warning, TEXT("Stopped because of death %s"), *GetName());
 				}
 
 				//If there are no enemy stops combat
 				if (actorToBeGone == nullptr)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
+					//UE_LOG(LogTemp, Warning, TEXT("%s: stopped"), *GetName());
 					StopAIMovement(true);
 					inCombat = false;
 
 					//Stops loop
-					pickEnemyTimer.Invalidate();
-					//GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+					//pickEnemyTimer.Invalidate();
+					if (pickEnemyTimer.IsValid())
+					{
+						GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+						return;
+					}
 				}
 			}
+			else if(pickEnemyTimer.IsValid())
+			{
+				GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+				return;
+			}
+			//pickEnemyTimer.Invalidate();
 		}), 1.0f, true);
 }
 
@@ -1784,6 +1834,12 @@ void APlayerControls::ApplyDamage(int Damage)
 void APlayerControls::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	OverlappedWithActor(OtherActor);
+
+
+	//if (Cast<ADialogTrigger>(OtherActor))
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("dialog triggered"));
+	//}
 }
 
 void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -1791,7 +1847,10 @@ void APlayerControls::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* 
 	if (OtherActor && OtherActor != this && findEnemyComponent->nearbyEnemies.Contains(OtherActor))
 	{
 		findEnemyComponent->nearbyEnemies.Remove(OtherActor);
-		GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+		if (pickEnemyTimer.IsValid())
+		{
+			GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+		}
 		StartCombat(nullptr);
 	}
 }
@@ -1800,6 +1859,8 @@ void APlayerControls::SkillOne()
 {
 	if (skills && !skills->skillOneTargeting)
 	{
+		skills->DestroyDecals();
+
 		skills->SkillOne(characterProfile->charClass, this, FVector::ZeroVector);
 		skills->skillTwoTargeting = false;
 		skills->skillThreeTargeting = false;
@@ -1814,6 +1875,8 @@ void APlayerControls::SkillTwo()
 {
 	if (skills && !skills->skillTwoTargeting)
 	{
+		skills->DestroyDecals();
+
 		skills->SkillTwo(characterProfile->charClass, this, FVector::ZeroVector);
 		skills->skillOneTargeting = false;
 		skills->skillThreeTargeting = false;
@@ -1828,6 +1891,8 @@ void APlayerControls::SkillThree()
 {
 	if (skills && !skills->skillThreeTargeting)
 	{
+		skills->DestroyDecals();
+
 		skills->SkillThree(characterProfile->charClass, this, FVector::ZeroVector);
 		skills->skillOneTargeting = false;
 		skills->skillTwoTargeting = false;
@@ -1856,7 +1921,6 @@ void APlayerControls::CheckIfInCombat()
 		{
 			for (int i = 0; findEnemyComponent->nearbyEnemies.Num() > i; i++)
 			{
-				//UE_LOG(LogTemp, Warning, TEXT())
 				APlayerControls* enemy = Cast<APlayerControls>(findEnemyComponent->nearbyEnemies[i]);
 				if (enemy->characterProfile->characterCurrentHealth > 0)
 				{
@@ -1866,6 +1930,21 @@ void APlayerControls::CheckIfInCombat()
 				}
 			}
 		}
+
+		APlayerControls* enemy;
+		if (Cast<APlayerControls>(SelectedActor))
+		{
+			enemy = Cast<APlayerControls>(SelectedActor);
+		}
+		else return;
+
+		if (enemy->characterProfile->characterCurrentHealth > 0) return;
+
+		if (pickEnemyTimer.IsValid())
+		{
+			GetWorldTimerManager().ClearTimer(pickEnemyTimer);
+		}
+		onAIMovement = false;
 		inCombat = false;
 	}
 }
@@ -2134,8 +2213,6 @@ void APlayerControls::PutOnItem(TSubclassOf<AMasterItem> itemClass)
 
 void APlayerControls::PutOn2FirstHand(FItemProperties itemProperties, bool DecreaseFromInventory)
 {
-	//hand1->SetRelativeLocation(itemProperties.location);
-	//hand1->SetRelativeRotation(itemProperties.rotation);
 	hand1->SetRelativeScale3D(itemProperties.scale);
 	hand1->SetStaticMesh(itemProperties.staticMesh);
 
@@ -2177,13 +2254,11 @@ void APlayerControls::CancelSkill()
 
 void APlayerControls::SetHBVisible()
 {
-	//UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
 	instance->showHealthBars = true;
 }
 
 void APlayerControls::SetHBInvisible()
 {
-	//UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
 	instance->showHealthBars = false;
 }
 
@@ -2200,10 +2275,29 @@ bool APlayerControls::isMovingWithKeyboard()
 	}
 }
 
+void APlayerControls::HandleCollisionAfterDeath()
+{
+	if (characterProfile->dead && Cast<UPrimitiveComponent>(GetRootComponent()))
+	{
+		UPrimitiveComponent* RootComponenta = Cast<UPrimitiveComponent>(GetRootComponent());
+		// Disable collision
+		RootComponenta->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		RootComponenta->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
+	}
+	else
+	{
+		UPrimitiveComponent* RootComponenta = Cast<UPrimitiveComponent>(GetRootComponent());
+		// Enable collision
+		RootComponenta->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		RootComponenta->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+}
+
 bool APlayerControls::DealHealthAfterDeath()
 {
 	if (characterProfile->dead)
 	{
+		HandleCollisionAfterDeath();
 		if (inGroup && !inCombat)
 		{
 			for (int i = 0; i < groupMembers.Num(); i++)
@@ -2230,6 +2324,7 @@ bool APlayerControls::DealHealthAfterDeath()
 			characterProfile->canRefill = true;
 			RefillHealthAndEnergy();
 			characterProfile->dead = false;
+			HandleCollisionAfterDeath();
 			return true;
 		}
 

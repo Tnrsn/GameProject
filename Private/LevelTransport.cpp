@@ -38,18 +38,26 @@ void ALevelTransport::Tick(float DeltaTime)
 void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, FKey ButtonPressed)
 {
 	UWorld* world = GetWorld();
-
-
-
 	USaveSystem* saveSystem;
 	saveSystem = world->GetSubsystem<USaveSystem>();
+	UDefaultGameInstance* instance = Cast<UDefaultGameInstance>(GetGameInstance());
 
 	APlayerControls* player = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(world, 0));
+	
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("1"));
+
+	if (player->skills->skillOneTargeting || player->skills->skillTwoTargeting || player->skills->skillThreeTargeting)
+	{
+		return;
+	}
+
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("2"));
 	if (player->groupMembers.Num() != 0)
 	{
 		player = player->groupMembers[0];
-		if (!player->questSystem->mainQuestLine[opensAfter])
+		if (opensAfter != FMainQuestLine::None && !player->questSystem->mainQuestLine[opensAfter])
 		{
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("3"));
 			return;
 		}
 
@@ -63,73 +71,55 @@ void ALevelTransport::TransportCharacter(UPrimitiveComponent* ClickedComponent, 
 
 	if (worldName == "MainMenu")
 	{
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("4"));
+		ResetTimers(world);
 		UGameplayStatics::OpenLevel(world, worldName);
 		return;
 	}
 
 	player->currentWorldName = worldName.ToString();
 
-	APlayerControls::loadAfterNewWorld = true;
-	if (!player->groupMembers[0]->characterProfile->charName.IsEmpty() && *world->GetName() != FName("CharacterCreationMenu"))
+	//APlayerControls::loadAfterNewWorld = true;
+	if (*world->GetName() == FName("CharacterCreationMenu"))
 	{
-		saveSystem->SaveGame(player->groupMembers[0]->characterProfile->charName, false);
-		saveSystem->SaveGame("", true);
-	}
-	else
-	{
-		saveSystem->SaveGame("", true);
+		instance->playerName = player->groupMembers[0]->characterProfile->charName;
 	}
 
+	if (!player->groupMembers[0]->characterProfile->charName.IsEmpty())
+	{
+		saveSystem->SaveGame(player->GetWorld(), instance->playerName, false);
+		instance->switchingAnotherWorld = true;
+	}
+
+	ResetTimers(world);
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, TEXT("5"));
 	UGameplayStatics::OpenLevel(world, worldName);
 
-	//LoadingScreen(worldName.ToString());
 }
 
-//void ALevelTransport::LoadingScreen(FString LevelName)
-//{
-//	// Get the level's asset registry
-//	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-//	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-//
-//	// Retrieve all assets in the level
-//	TArray<FAssetData> LevelAssets;
-//	FARFilter Filter;
-//	FString PackagePath = "/Content/Levels/" + LevelName;
-//	Filter.PackagePaths.Add(*PackagePath); // Assuming all assets are located in "/Game/LevelName" directory
-//	AssetRegistry.GetAssets(Filter, LevelAssets);
-//
-//	// Create an array to store the asset paths to load
-//	TArray<FSoftObjectPath> AssetPathsToLoad;
-//
-//	// Add the asset paths to load
-//	for (const FAssetData& AssetData : LevelAssets)
-//	{
-//		FSoftObjectPath AssetPath = AssetData.ToSoftObjectPath();
-//		AssetPathsToLoad.Add(AssetPath);
-//	}
-//
-//	// Request asynchronous loading of assets
-//	StreamableManager.RequestAsyncLoad(AssetPathsToLoad, FStreamableDelegate());
-//
-//	// Display your loading screen
-//	// Check if all assets have finished loading
-//	bool AllAssetsLoaded = true;
-//	for (const FSoftObjectPath& AssetPath : AssetPathsToLoad)
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("loading"));
-//		if (!StreamableManager.IsAsyncLoadComplete(AssetPath))
-//		{
-//			UE_LOG(LogTemp, Warning, TEXT("Something went wrong"));
-//			AllAssetsLoaded = false;
-//			break;
-//		}
-//	}
-//
-//	if (AllAssetsLoaded)
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("Everything loaded"));
-//		// All assets have finished loading, hide the loading screen
-//		// ...
-//	}
-//}
-//
+void ALevelTransport::ResetTimers(UWorld* world)
+{
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(world, APlayerControls::StaticClass(), actors);
+
+	for (AActor* actor : actors)
+	{
+		if (actor && Cast<APlayerControls>(actor))
+		{
+			APlayerControls* character = Cast<APlayerControls>(actor);
+			
+			if (character->characterProfile->refillCooldownTimerHandle.IsValid())
+			{
+				world->GetTimerManager().ClearTimer(character->characterProfile->refillCooldownTimerHandle);
+			}
+			if (character->characterProfile->refillTimerHandle.IsValid())
+			{
+				world->GetTimerManager().ClearTimer(character->characterProfile->refillTimerHandle);
+			}
+			if (character->skills->chargeTimer.IsValid())
+			{
+				world->GetTimerManager().ClearTimer(character->skills->chargeTimer);
+			}
+		}
+	}
+}

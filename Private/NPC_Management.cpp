@@ -27,6 +27,7 @@ void ANPC_Management::BeginPlay()
 		characterProfile->charGender = charGender;
 		characterProfile->charRace = charRace;
 		characterProfile->charClass = charClass;
+		characterProfile->charName = charName;
 
 		UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *GetName(), *StaticEnum<FCharacterClasses>()->GetValueAsString(characterProfile->charGender));
 
@@ -45,18 +46,25 @@ void ANPC_Management::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void ANPC_Management::StartDialog()
+void ANPC_Management::StartDialog(int conversationIndex)
 {
 	playerControl = Cast<APlayerControls>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	playerControl->SelectedActor = this;
 	playerControl->inDialog = true;
 	dialogSystem->conversation = Conversations;
+
+	if (conversationIndex != -2)
+	{
+		triggerConversationIndex = conversationIndex;
+	}
+
 	dialogSystem->EnableDialogUI(dialogBoxUI, this);
 
 	SetActorRotation((UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)->GetActorLocation() - GetActorLocation()).Rotation());
+	//triggerConversationIndex = -2;
 }
 
-bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest)
+bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEffect, TEnumAsByte<FMainQuestLine> completedQuest, FString newName)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("%s"), *StaticEnum<FMainQuestLine>()->GetValueAsString(completedQuest));
 	//Sets true of the quest if it's completed
@@ -74,6 +82,7 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 	}
 	else if (type == EndDialog)
 	{
+		triggerConversationIndex = -2;
 		dialogSystem->DisableDialogUI();
 		return false;
 	}
@@ -89,7 +98,9 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 			groupMember->findEnemyComponent->RefreshNearbyEnemies(groupMember);
 		}
 
-		return true;
+		triggerConversationIndex = -2;
+		dialogSystem->DisableDialogUI();
+		return false;
 	}
 	else if (type == JoinToPlayer)
 	{
@@ -108,6 +119,13 @@ bool ANPC_Management::DialogEffect(TEnumAsByte<FAnswerType> type, int relationEf
 				}
 			}
 		}
+		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
+		return true;
+	}
+	else if (type == ChangeName)
+	{
+		charName = newName;
+		characterProfile->charName = newName;
 		dialogSystem->RefreshDialogUI(dialogBoxUI, this);
 		return true;
 	}

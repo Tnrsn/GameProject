@@ -155,6 +155,9 @@ struct FActorSpawnInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 		bool firstEncounter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
+		int currentConversation;
 //---------------------------------------------------------------------------------------^^^^ Datas to save ^^^^----------------------------
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
@@ -220,6 +223,8 @@ struct FActorSpawnInfo
 		ActorData.SaveItem(Ar, ActorData.characterArmor.weapon1);
 		ActorData.SaveItem(Ar, ActorData.characterArmor.weapon2);
 
+		//----NPC--------
+		Ar << ActorData.currentConversation;
 		
 		return Ar;
 	}
@@ -249,7 +254,7 @@ public:
 	UFUNCTION()
 		void OnLevelLoad();
 	UFUNCTION()
-		void SaveGame(FString saveName = "", bool transportSave = false);
+		void SaveGame(UWorld* world, FString saveName = "", bool transportSave = false);
 	UFUNCTION()
 		void LoadGame(FString saveName = "", bool transportSave = false);
 	UFUNCTION()
